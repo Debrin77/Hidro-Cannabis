@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydroGrow Pro — Cannabis Hidropónico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0f0d;--bg2:#111810;--bg3:#182014;--surface:#1c2318;--surface2:#232b1e;--surface3:#2a3324;
+  --border:#2d3d28;--border2:#3a4f32;
+  --g50:#e8f5e2;--g100:#c5e6b5;--g200:#9dd486;--g300:#71c259;--g400:#4caf30;--g500:#3d9426;--g600:#2e791c;
+  --a50:#fff8e6;--a200:#ffd97a;--a400:#f5b800;--a600:#c68f00;
+  --b50:#e6f3ff;--b200:#7ab8f0;--b400:#3490dc;--b600:#1a6bb5;
+  --r50:#ffe6e6;--r200:#f09090;--r400:#e24b4a;--r600:#b52d2d;
+  --p50:#f0edff;--p200:#b8b0f0;--p400:#7f77dd;--p600:#534ab7;
+  --text:#e8f0e4;--text2:#9dba94;--text3:#5a7a54;
+  --radius:10px;--radius2:16px;--radius3:24px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+
+/* LAYOUT */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;max-width:1400px;margin:0 auto}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.main{padding:2rem;overflow-y:auto}
+
+/* LOGO */
+.logo{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.logo-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--g400);text-transform:uppercase;margin-bottom:6px}
+.logo-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);line-height:1}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* NAV */
+.nav{padding:1rem 0.75rem;flex:1}
+.nav-section{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);font-weight:500;padding:0.75rem 0.5rem 0.4rem;font-family:'DM Mono',monospace}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.15s;margin-bottom:2px;font-weight:400}
+.nav-item i{font-size:16px;flex-shrink:0}
+.nav-item:hover{background:var(--surface);color:var(--text)}
+.nav-item.active{background:var(--g600);color:#fff;font-weight:500}
+.nav-item.active i{color:#fff}
+
+/* STATUS BAR */
+.status-bar{padding:1rem 1.25rem;border-top:1px solid var(--border);font-size:11px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--g400);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.status-text{color:var(--text2)}
+
+/* VIEWS */
+.view{display:none;animation:fadeIn 0.2s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:2rem}
+.page-header h1{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:6px}
+.page-header p{font-size:13px;color:var(--text2);line-height:1.6}
+.breadcrumb{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:0.05em;margin-bottom:8px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:1.5rem;margin-bottom:1rem}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:500;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:8px}
+.card-title i{font-size:14px;color:var(--g400)}
+
+/* GRID UTILS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* METRIC CARDS */
+.metric{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.metric-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px}
+.metric-val{font-size:24px;font-weight:600;font-family:'Syne',sans-serif;line-height:1}
+.metric-unit{font-size:11px;color:var(--text3);margin-top:3px}
+.metric-bar{height:3px;background:var(--border2);border-radius:2px;margin-top:8px;overflow:hidden}
+.metric-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.c-green{color:var(--g400)}.c-amber{color:var(--a400)}.c-blue{color:var(--b400)}.c-red{color:var(--r400)}.c-purple{color:var(--p400)}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:3px;margin-bottom:1.5rem}
+.tab{flex:1;padding:7px 10px;border-radius:calc(var(--radius) - 3px);font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;text-align:center;transition:all 0.15s}
+.tab:hover{color:var(--text2)}
+.tab.active{background:var(--g600);color:#fff}
+
+/* STRAIN GRID */
+.strain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.strain-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:1.25rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.strain-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:transparent;transition:background 0.2s}
+.strain-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.strain-card:hover::before{background:var(--g400)}
+.strain-card.selected{border-color:var(--g500);}
+.strain-card.selected::before{background:var(--g400)}
+.strain-type{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;padding:3px 8px;border-radius:20px;display:inline-block;margin-bottom:8px;font-family:'DM Mono',monospace}
+.t-indica{background:rgba(127,119,221,0.15);color:var(--p200);border:1px solid rgba(127,119,221,0.3)}
+.t-sativa{background:rgba(52,144,220,0.15);color:var(--b200);border:1px solid rgba(52,144,220,0.3)}
+.t-hybrid{background:rgba(76,175,48,0.15);color:var(--g300);border:1px solid rgba(76,175,48,0.3)}
+.t-auto{background:rgba(245,184,0,0.15);color:var(--a200);border:1px solid rgba(245,184,0,0.3)}
+.strain-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:3px}
+.strain-bank{font-size:11px;color:var(--text3);margin-bottom:10px}
+.strain-stats{display:flex;flex-direction:column;gap:4px}
+.sstat{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.sstat-label{color:var(--text3)}
+.sstat-val{color:var(--text);font-weight:500;font-family:'DM Mono',monospace}
+.sstat-val.hi{color:var(--g400)}
+.strain-check{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;background:var(--g500);display:none;align-items:center;justify-content:center}
+.strain-check i{font-size:11px;color:#fff}
+.strain-card.selected .strain-check{display:flex}
+
+/* NUTRIENT RANKING */
+.nutri-rank{display:flex;flex-direction:column;gap:8px}
+.nutri-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;gap:14px;align-items:flex-start;cursor:pointer;transition:border-color 0.15s}
+.nutri-item:hover{border-color:var(--border2)}
+.nutri-item.expanded{border-color:var(--g600)}
+.nutri-rank-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--border2);line-height:1;min-width:28px}
+.nutri-item:nth-child(1) .nutri-rank-num{color:var(--a400)}
+.nutri-item:nth-child(2) .nutri-rank-num{color:var(--text3)}
+.nutri-item:nth-child(3) .nutri-rank-num{color:var(--a600)}
+.nutri-body{flex:1}
+.nutri-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px}
+.nutri-brand{font-size:11px;color:var(--text3);margin-bottom:8px}
+.nutri-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.nutri-tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;font-family:'DM Mono',monospace;letter-spacing:0.03em}
+.tag-system{background:rgba(76,175,48,0.15);color:var(--g300);border:1px solid rgba(76,175,48,0.25)}
+.tag-level{background:rgba(52,144,220,0.15);color:var(--b200);border:1px solid rgba(52,144,220,0.25)}
+.tag-organic{background:rgba(245,184,0,0.15);color:var(--a200);border:1px solid rgba(245,184,0,0.25)}
+.nutri-desc{font-size:12px;color:var(--text2);line-height:1.6;display:none}
+.nutri-item.expanded .nutri-desc{display:block}
+.nutri-score{display:flex;gap:3px;margin-top:6px}
+.score-dot{width:8px;height:8px;border-radius:50%}
+.score-dot.on{background:var(--g400)}
+.score-dot.off{background:var(--border2)}
+
+/* WEEK TABLE */
+.week-table{width:100%;border-collapse:collapse;font-size:12px}
+.week-table th{background:var(--surface2);padding:8px 12px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;font-weight:500;border-bottom:1px solid var(--border)}
+.week-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.week-table tr:last-child td{border-bottom:none}
+.week-table tr:hover td{background:var(--surface2)}
+.phase-pill{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:0.05em;white-space:nowrap}
+.ph-germ{background:rgba(88,88,88,0.3);color:#aaa}
+.ph-veg{background:rgba(76,175,48,0.2);color:var(--g300)}
+.ph-pre{background:rgba(245,184,0,0.2);color:var(--a200)}
+.ph-flower{background:rgba(127,119,221,0.2);color:var(--p200)}
+.ph-engorde{background:rgba(226,75,74,0.15);color:#e88}
+.ph-flush{background:rgba(52,144,220,0.2);color:var(--b200)}
+.ec-bar{display:flex;align-items:center;gap:6px}
+.ec-fill{height:4px;border-radius:2px;background:var(--g500)}
+.ec-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);min-width:30px}
+
+/* ENVIRONMENT TABLE */
+.env-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden}
+.env-col-header{background:var(--surface2);padding:10px 8px;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-family:'DM Mono',monospace;text-align:center;border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+.env-col-header:last-child{border-right:none}
+.env-row{display:contents}
+.env-cell{padding:8px;text-align:center;font-size:11px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+.env-cell:last-child{border-right:none}
+.env-row:last-child .env-cell{border-bottom:none}
+.env-phase{background:var(--surface2);font-weight:600;color:var(--text2);font-size:11px;text-align:left;padding:8px 12px}
+.env-val{color:var(--text);font-family:'DM Mono',monospace;font-size:11px}
+.env-val.ok{color:var(--g400)}
+.env-val.warn{color:var(--a400)}
+.env-val.red{color:var(--r400)}
+
+/* PROGRESS BAR (week timeline) */
+.timeline-bar{display:flex;gap:2px;margin:12px 0 6px}
+.tl-seg{flex:1;height:8px;border-radius:4px;cursor:pointer;transition:opacity 0.15s}
+.tl-seg:hover{opacity:0.8}
+.tl-germ{background:#555}
+.tl-veg{background:var(--g600)}
+.tl-pre{background:var(--a600)}
+.tl-flower{background:var(--p600)}
+.tl-flush{background:var(--b600)}
+.tl-seg.past{opacity:0.35}
+
+/* ALERTS */
+.alert{display:flex;gap:10px;padding:10px 14px;border-radius:var(--radius);margin-bottom:8px;align-items:flex-start}
+.alert i{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert p,.alert div{font-size:12px;line-height:1.6}
+.alert.info{background:rgba(52,144,220,0.08);border:1px solid rgba(52,144,220,0.2)}
+.alert.info i,.alert.info p{color:var(--b200)}
+.alert.warn{background:rgba(245,184,0,0.08);border:1px solid rgba(245,184,0,0.2)}
+.alert.warn i,.alert.warn p,.alert.warn div{color:var(--a200)}
+.alert.danger{background:rgba(226,75,74,0.08);border:1px solid rgba(226,75,74,0.2)}
+.alert.danger i,.alert.danger p{color:#e88}
+
+/* MONITOR GAUGES */
+.gauge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.gauge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center}
+.gauge-label{font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px}
+.gauge-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+.gauge-range{font-size:10px;color:var(--text3)}
+.gauge-status{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:2px 8px;border-radius:20px;margin-top:6px;display:inline-block}
+.status-ok{background:rgba(76,175,48,0.15);color:var(--g300)}
+.status-warn{background:rgba(245,184,0,0.15);color:var(--a200)}
+.status-bad{background:rgba(226,75,74,0.15);color:#e88}
+
+/* LOG */
+.log-list{display:flex;flex-direction:column;gap:0}
+.log-entry{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.log-entry:last-child{border-bottom:none}
+.log-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.log-icon.ok{background:rgba(76,175,48,0.15);color:var(--g400)}
+.log-icon.warn{background:rgba(245,184,0,0.15);color:var(--a400)}
+.log-icon.info{background:rgba(52,144,220,0.15);color:var(--b400)}
+.log-text{font-size:13px;color:var(--text)}
+.log-time{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;border:none;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--g500);color:#fff}
+.btn-primary:hover{background:var(--g400)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text);background:var(--surface2)}
+.btn-row{display:flex;gap:8px;margin-top:1.25rem}
+
+/* FORM */
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px}
+.form-group input,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Inter',sans-serif}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--g500)}
+
+/* STRAIN DETAIL */
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.param-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.param-row:last-child{border-bottom:none}
+.param-key{font-size:12px;color:var(--text3)}
+.param-val{font-size:13px;font-weight:500;color:var(--text);font-family:'DM Mono',monospace}
+.param-val.green{color:var(--g400)}.param-val.amber{color:var(--a400)}.param-val.blue{color:var(--b400)}.param-val.purple{color:var(--p400)}
+
+/* LEGAL */
+.legal-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:1.5rem;margin-bottom:1rem}
+.legal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.legal-title i{color:var(--a400)}
+.legal-list{list-style:none}
+.legal-list li{font-size:13px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;line-height:1.5}
+.legal-list li:last-child{border-bottom:none}
+.legal-list li::before{content:'›';color:var(--g400);font-size:16px;flex-shrink:0;line-height:1.3}
+
+/* WIZARD */
+.wizard-progress{display:flex;gap:6px;margin-bottom:2rem}
+.wiz-step{flex:1;height:3px;border-radius:2px;background:var(--border2);transition:background 0.3s}
+.wiz-step.done{background:var(--g500)}
+.wiz-step.active{background:var(--g300)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;bottom:0;left:0;right:0;height:60px;flex-direction:row;z-index:100;border-top:1px solid var(--border);border-right:none}
+  .logo,.status-bar,.nav-section{display:none}
+  .nav{display:flex;flex-direction:row;padding:6px;overflow-x:auto}
+  .nav-item{flex-direction:column;font-size:9px;gap:3px;padding:6px 10px;min-width:56px}
+  .nav-item i{font-size:18px}
+  .main{padding:1rem;padding-bottom:72px}
+  .gauge-grid{grid-template-columns:repeat(2,1fr)}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .env-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-badge">v2.0 · Autoconsumo</div>
+    <div class="logo-title">HydroGrow<br>Pro</div>
+    <div class="logo-sub">Cannabis · Hidropónico</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Cultivo</div>
+    <div class="nav-item active" onclick="nav(this,'variedades')"><i class="ti ti-seedling"></i>Variedades</div>
+    <div class="nav-item" onclick="nav(this,'nutrientes')"><i class="ti ti-flask"></i>Nutrientes Top 10</div>
+    <div class="nav-item" onclick="nav(this,'cultivo')"><i class="ti ti-settings-2"></i>Mi Cultivo</div>
+    <div class="nav-section">Control</div>
+    <div class="nav-item" onclick="nav(this,'monitor')"><i class="ti ti-dashboard"></i>Monitor</div>
+    <div class="nav-item" onclick="nav(this,'semanas')"><i class="ti ti-calendar-stats"></i>Calendario</div>
+    <div class="nav-section">Info</div>
+    <div class="nav-item" onclick="nav(this,'ambiental')"><i class="ti ti-temperature"></i>Parámetros</div>
+    <div class="nav-item" onclick="nav(this,'legal')"><i class="ti ti-shield-check"></i>Legal España</div>
+  </nav>
+  <div class="status-bar">
+    <span class="status-dot"></span>
+    <span class="status-text" id="sideStatus">Sin cultivo activo</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══════════════ VARIEDADES ══════════════ -->
+<div class="view active" id="view-variedades">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Variedades</div>
+    <h1>Variedades para hidropónico</h1>
+    <p>8 cepas seleccionadas por rendimiento, adaptación al sistema RDWC/DWC y facilidad de cultivo en autoconsumo.</p>
+  </div>
+
+  <div class="tabs" id="strainTabs">
+    <div class="tab active" onclick="filterStrains('all',this)">Todas</div>
+    <div class="tab" onclick="filterStrains('indica',this)">Índica</div>
+    <div class="tab" onclick="filterStrains('sativa',this)">Sativa</div>
+    <div class="tab" onclick="filterStrains('hybrid',this)">Híbrida</div>
+    <div class="tab" onclick="filterStrains('auto',this)">Autoflo.</div>
+  </div>
+
+  <div class="strain-grid" id="strainGrid"></div>
+  <div id="strainDetail" style="margin-top:1.5rem"></div>
+</div>
+
+<!-- ══════════════ NUTRIENTES ══════════════ -->
+<div class="view" id="view-nutrientes">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Nutrientes</div>
+    <h1>Top 10 Nutrientes Hidropónico</h1>
+    <p>Clasificados por eficacia contrastada en cultivos de cannabis en DWC/RDWC. Haz clic en cada uno para ver dosis y detalles completos.</p>
+  </div>
+
+  <div class="nutri-rank" id="nutriList"></div>
+</div>
+
+<!-- ══════════════ CULTIVO ══════════════ -->
+<div class="view" id="view-cultivo">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Mi Cultivo</div>
+    <h1>Configurar cultivo</h1>
+    <p>Define tu setup y obtén un plan personalizado semana a semana con todos los parámetros.</p>
+  </div>
+  <div id="cultivoContent"></div>
+</div>
+
+<!-- ══════════════ MONITOR ══════════════ -->
+<div class="view" id="view-monitor">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Monitor</div>
+    <h1>Monitor de cultivo</h1>
+    <p>Estado en tiempo real y registro de eventos de tu cultivo activo.</p>
+  </div>
+  <div id="monitorContent"></div>
+</div>
+
+<!-- ══════════════ SEMANAS ══════════════ -->
+<div class="view" id="view-semanas">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Calendario</div>
+    <h1>Calendario semanal</h1>
+    <p>Tabla completa semana a semana con EC, pH, nutrientes y acciones para cada fase.</p>
+  </div>
+  <div id="semanasContent"></div>
+</div>
+
+<!-- ══════════════ AMBIENTAL ══════════════ -->
+<div class="view" id="view-ambiental">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Parámetros Ambientales</div>
+    <h1>Parámetros completos</h1>
+    <p>Todas las variables que debes controlar en cada fase: temperatura, humedad, VPD, CO₂, luz, agua y aire.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-table"></i>Tabla maestra de parámetros por fase</div></div>
+    <div class="env-grid">
+      <div class="env-col-header">Fase</div>
+      <div class="env-col-header">Temp. día/noche</div>
+      <div class="env-col-header">Humedad (HR)</div>
+      <div class="env-col-header">VPD objetivo</div>
+      <div class="env-col-header">CO₂ ppm</div>
+      <div class="env-col-header">Luz (PPFD)</div>
+
+      <div class="env-row">
+        <div class="env-cell env-phase">🌱 Germinación</div>
+        <div class="env-cell"><span class="env-val ok">22–26 / 20–22°C</span></div>
+        <div class="env-cell"><span class="env-val ok">70–90%</span></div>
+        <div class="env-cell"><span class="env-val">0.4–0.8 kPa</span></div>
+        <div class="env-cell"><span class="env-val">400–600</span></div>
+        <div class="env-cell"><span class="env-val">200–400 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">🌿 Vegetación</div>
+        <div class="env-cell"><span class="env-val ok">24–28 / 18–22°C</span></div>
+        <div class="env-cell"><span class="env-val ok">55–70%</span></div>
+        <div class="env-cell"><span class="env-val ok">0.8–1.2 kPa</span></div>
+        <div class="env-cell"><span class="env-val">800–1200</span></div>
+        <div class="env-cell"><span class="env-val ok">400–700 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">🌸 Prefloración</div>
+        <div class="env-cell"><span class="env-val ok">22–26 / 18–20°C</span></div>
+        <div class="env-cell"><span class="env-val ok">50–60%</span></div>
+        <div class="env-cell"><span class="env-val ok">1.0–1.4 kPa</span></div>
+        <div class="env-cell"><span class="env-val">1000–1200</span></div>
+        <div class="env-cell"><span class="env-val ok">600–900 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">💜 Floración plena</div>
+        <div class="env-cell"><span class="env-val ok">20–26 / 16–20°C</span></div>
+        <div class="env-cell"><span class="env-val warn">40–55%</span></div>
+        <div class="env-cell"><span class="env-val ok">1.2–1.6 kPa</span></div>
+        <div class="env-cell"><span class="env-val">1000–1500</span></div>
+        <div class="env-cell"><span class="env-val ok">700–1000 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">🔴 Engorde/Maduración</div>
+        <div class="env-cell"><span class="env-val ok">18–24 / 14–18°C</span></div>
+        <div class="env-cell"><span class="env-val warn">35–50%</span></div>
+        <div class="env-cell"><span class="env-val ok">1.4–1.8 kPa</span></div>
+        <div class="env-cell"><span class="env-val">1000–1200</span></div>
+        <div class="env-cell"><span class="env-val">800–1000 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">💧 Flush / Cosecha</div>
+        <div class="env-cell"><span class="env-val">18–22 / 14–18°C</span></div>
+        <div class="env-cell"><span class="env-val warn">35–45%</span></div>
+        <div class="env-cell"><span class="env-val">1.4–2.0 kPa</span></div>
+        <div class="env-cell"><span class="env-val">800–1000</span></div>
+        <div class="env-cell"><span class="env-val">600–800 µmol</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-droplet"></i>Parámetros de agua (solución)</div></div>
+      <div class="param-row"><span class="param-key">pH germinación</span><span class="param-val green">5.5–5.8</span></div>
+      <div class="param-row"><span class="param-key">pH vegetación</span><span class="param-val green">5.6–6.0</span></div>
+      <div class="param-row"><span class="param-key">pH floración</span><span class="param-val green">6.0–6.5</span></div>
+      <div class="param-row"><span class="param-key">Temp. agua óptima</span><span class="param-val blue">18–20°C</span></div>
+      <div class="param-row"><span class="param-key">Temp. agua máxima</span><span class="param-val amber">23°C</span></div>
+      <div class="param-row"><span class="param-key">DO (oxígeno disuelto)</span><span class="param-val green">&gt;6 mg/L</span></div>
+      <div class="param-row"><span class="param-key">Renovar solución</span><span class="param-val">Cada 10–14 días</span></div>
+      <div class="param-row"><span class="param-key">Agua recomendada</span><span class="param-val blue">Ósmosis RO</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-wind"></i>Ventilación y CO₂</div></div>
+      <div class="param-row"><span class="param-key">Renovación aire</span><span class="param-val green">1 vez/min</span></div>
+      <div class="param-row"><span class="param-key">CO₂ ambiente normal</span><span class="param-val">400 ppm</span></div>
+      <div class="param-row"><span class="param-key">CO₂ con enriquecimiento</span><span class="param-val green">1000–1500 ppm</span></div>
+      <div class="param-row"><span class="param-key">Velocidad aire (m/s)</span><span class="param-val">0.3–1.0</span></div>
+      <div class="param-row"><span class="param-key">Extractor (m³/h por m²)</span><span class="param-val green">60–100</span></div>
+      <div class="param-row"><span class="param-key">Filtro carbón activo</span><span class="param-val green">Obligatorio</span></div>
+      <div class="param-row"><span class="param-key">Diferencia día/noche T°</span><span class="param-val">Max 10°C</span></div>
+      <div class="param-row"><span class="param-key">VPD crítico floración</span><span class="param-val amber">1.0–1.6 kPa</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-sun"></i>Iluminación por tipo de sistema</div></div>
+    <table class="week-table">
+      <thead>
+        <tr><th>Tipo de luz</th><th>Potencia/m²</th><th>Ventajas</th><th>PPFD máx</th><th>Calor generado</th><th>Recomendado para</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong style="color:var(--g300)">LED Full Spectrum</strong></td><td class="ec-val">300–500W</td><td style="color:var(--text2)">Eficiencia, bajo calor, espectro completo</td><td class="ec-val">1000–1500 µmol</td><td style="color:var(--g400)">Bajo</td><td style="color:var(--g400)">★ Recomendado</td></tr>
+        <tr><td><strong style="color:var(--a200)">LEC CMH 315W</strong></td><td class="ec-val">250–315W</td><td style="color:var(--text2)">Espectro UV, más terpenos y resina</td><td class="ec-val">600–800 µmol</td><td style="color:var(--a200)">Medio</td><td style="color:var(--a200)">Calidad premium</td></tr>
+        <tr><td><strong style="color:var(--text2)">HPS 600W</strong></td><td class="ec-val">400W/m²</td><td style="color:var(--text2)">Penetración, coste bajo, probado</td><td class="ec-val">800–1000 µmol</td><td style="color:var(--r400)">Alto</td><td style="color:var(--text3)">Setup ya existente</td></tr>
+        <tr><td><strong style="color:var(--text3)">HM (Metal Halide)</strong></td><td class="ec-val">250–400W</td><td style="color:var(--text2)">Espectro azul, ideal vegetación</td><td class="ec-val">500–700 µmol</td><td style="color:var(--r400)">Alto</td><td style="color:var(--text3)">Solo vegetación</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert warn"><i class="ti ti-thermometer"></i><div>En <strong>Castelló de la Plana</strong> los veranos superan habitualmente 35°C. La temperatura de la solución nutritiva debe monitorizarse especialmente en julio–agosto. Por encima de 24°C el DO cae por debajo de los 6 mg/L necesarios, causando raíces anóxicas. Se recomienda un chiller o congelar botellas de agua RO para la solución en meses de calor.</div></div>
+</div>
+
+<!-- ══════════════ LEGAL ══════════════ -->
+<div class="view" id="view-legal">
+  <div class="page-header">
+    <div class="breadcrumb">HydroGrow Pro / Legal España</div>
+    <h1>Marco legal en España</h1>
+    <p>Situación legal del autocultivo de cannabis a mayo de 2025. Esta información es orientativa — consulta siempre un abogado especialista.</p>
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-title"><i class="ti ti-balance"></i>Situación jurídica actual</div>
+    <ul class="legal-list">
+      <li>El cultivo en espacio privado para autoconsumo <strong>no es delito</strong> según el artículo 368 CP, pero tampoco está expresamente permitido — zona de alegalidad</li>
+      <li>La jurisprudencia española tolera entre <strong>2 y 4 plantas adultas</strong> por adulto consumidor en interior privado</li>
+      <li>No existe un límite numérico oficial de plantas — cada caso lo valora el juez según contexto</li>
+      <li>La <strong>compraventa siempre es delito</strong> — solo autoconsumo exclusivo propio</li>
+      <li>Posesión hasta ~100g sin presumirse tráfico; más de 200g ya genera riesgo de imputación por tráfico</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-title"><i class="ti ti-alert-triangle"></i>Infracciones administrativas graves (Ley Mordaza art. 36.18)</div>
+    <ul class="legal-list">
+      <li>Cultivo <strong>visible desde espacio público</strong>: ventanas, balcones, terrazas — multa de <strong>601 a 30.000€</strong> + incautación</li>
+      <li>Consumo en vía pública — multa de hasta 1.000€</li>
+      <li>Portación en público — multa de hasta 10.400€ según cantidad</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-title"><i class="ti ti-shield-x"></i>Indicadores de presunta intención de tráfico (evitar siempre)</div>
+    <ul class="legal-list">
+      <li>Básculas de precisión junto al cultivo</li>
+      <li>Bolsitas herméticas pequeñas o material de empaquetado</li>
+      <li>Grandes cantidades de efectivo en el domicilio</li>
+      <li>Listas o registros de ventas / clientes</li>
+      <li>Merodeo constante de personas en el domicilio</li>
+    </ul>
+  </div>
+
+  <div class="grid2">
+    <div class="legal-section" style="margin-bottom:0">
+      <div class="legal-title"><i class="ti ti-map-pin"></i>Comunidad Valenciana (tu zona)</div>
+      <ul class="legal-list">
+        <li>Legislación estatal general aplicable sin restricciones adicionales autonómicas</li>
+        <li>Práctica policial generalmente tolerante con cultivos pequeños bien ocultados</li>
+        <li>Filtro de carbón activo esencial — calor veraniego intensifica aromas</li>
+      </ul>
+    </div>
+    <div class="legal-section" style="margin-bottom:0">
+      <div class="legal-title"><i class="ti ti-shield-check"></i>Precauciones esenciales</div>
+      <ul class="legal-list">
+        <li>Armario o habitación opaca, sin luz exterior visible</li>
+        <li>Filtro de carbón + extractor silencioso</li>
+        <li>No comentar el cultivo con terceros no convivientes</li>
+        <li>Ante cualquier problema: abogado especialista en cannabis</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert info" style="margin-top:1rem"><i class="ti ti-info-circle"></i><p>Información actualizada a mayo 2026. La ley española es ambigua y evolutiva. Cada juez puede interpretarla diferente. Esta app no constituye asesoría jurídica.</p></div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ═══════════ DATA ═══════════
+
+const strains = [
+  {id:'ww',name:'White Widow',bank:'Various Banks',type:'hybrid',typeName:'Híbrida',
+   thc:'20–22%',cbd:'<1%',flower:'8–9 sem',yieldIn:'450–550',yieldOut:'550–600 g/pl',
+   height:'80–110cm',diff:'Fácil',system:'RDWC / DWC',technique:'ScrOG / LST',
+   ecVeg:1.0,ecFlower:2.0,ecPeak:2.2,ph:'5.8–6.3',phFlower:'6.0–6.5',tempWater:18,
+   vegW:4,flowerW:9,
+   desc:'La cepa clásica por excelencia. Equilibrio perfecto entre facilidad de cultivo y rendimiento. Alta producción de resina, excelente para extracción. Muy estable en DWC/RDWC. Tolera variaciones de EC mejor que la mayoría.',
+   ambNotes:'Resistente a variaciones de temperatura. En Castelló aguanta bien veranos cálidos si la solución se mantiene fresca.',
+   nutriProfile:{veg:'Equilibrado N-P-K 3-1-2. Responde bien a CalMag en hidro.',flower:'Subir P-K semana 5-6. PK 13/14 en semanas 6-7. Flush 10-14 días.'},
+   tags:['Resina','Clásica','Equilibrada','Fácil hidro']},
+
+  {id:'ak47',name:'AK-47',bank:'Serious Seeds',type:'hybrid',typeName:'Híbrida',
+   thc:'20–23%',cbd:'<1%',flower:'8–9 sem',yieldIn:'500–600',yieldOut:'650 g/pl',
+   height:'90–120cm',diff:'Moderada',system:'RDWC / NFT',technique:'ScrOG + LST',
+   ecVeg:1.1,ecFlower:2.2,ecPeak:2.4,ph:'5.8–6.2',phFlower:'6.0–6.4',tempWater:19,
+   vegW:4,flowerW:9,
+   desc:'Sativa dominante de ciclo corto. Perfil aromático complejo con notas de madera y tierra. Excelente en hidro por su vigor y asimilación de nutrientes elevada. Requiere ScrOG obligatorio por su tendencia vertical.',
+   ambNotes:'Sensible a temperaturas nocturnas <16°C. Ventilación cruzada importante en floración para evitar botrytis en cogollos compactos.',
+   nutriProfile:{veg:'Alta demanda N fase inicial. Micronutrientes quelatados importantes.',flower:'Responde muy bien a estimuladores de floración. Bajada gradual de N desde semana 3.'},
+   tags:['Aromática','Sativa-dom','Alta EC','ScrOG ideal']},
+
+  {id:'northl',name:'Northern Lights',bank:'Sensi Seeds',type:'indica',typeName:'Índica',
+   thc:'18–20%',cbd:'<1%',flower:'7–8 sem',yieldIn:'500–600',yieldOut:'600 g/pl',
+   height:'80–100cm',diff:'Muy fácil',system:'DWC / RDWC',technique:'SOG / ScrOG',
+   ecVeg:1.0,ecFlower:1.9,ecPeak:2.0,ph:'5.5–6.2',phFlower:'5.8–6.3',tempWater:18,
+   vegW:3,flowerW:8,
+   desc:'Índica pura legendaria. La más sencilla en sistema hidropónico. Ciclo corto, compacta y con excelente relación esfuerzo/resultado. Perfecta primera cepa en DWC. Sin stretch en floración.',
+   ambNotes:'Tolera temperaturas más bajas que otras cepas (mínimo 16°C). Ideal para cultivos en zonas con inviernos frescos.',
+   nutriProfile:{veg:'Dieta ligera. Sensible a sobrealimentación. EC máxima en veg: 1.4',flower:'Floración rápida, no sobrealimentar. EC máxima 2.0 suficiente.'},
+   tags:['Compacta','SOG ideal','Indoor','Principiantes']},
+
+  {id:'amnesia',name:'Amnesia Haze',bank:'Dinafem / HSO',type:'sativa',typeName:'Sativa',
+   thc:'20–22%',cbd:'<1%',flower:'10–11 sem',yieldIn:'600–650',yieldOut:'700 g/pl',
+   height:'120–160cm',diff:'Avanzada',system:'RDWC',technique:'ScrOG + Topping',
+   ecVeg:1.2,ecFlower:2.3,ecPeak:2.6,ph:'5.8–6.5',phFlower:'6.0–6.5',tempWater:20,
+   vegW:5,flowerW:11,
+   desc:'Sativa de alto rendimiento y ciclo largo. En RDWC el ciclo se reduce 1-2 semanas vs tierra. Requiere control de altura mediante ScrOG desde semana 2 de veg. Aroma muy intenso: filtro de carbón imprescindible.',
+   ambNotes:'En Castelló adaptar el cultivo para evitar la floración en agosto (temperatura extrema). Mejor iniciar en otoño para florar en noviembre-diciembre.',
+   nutriProfile:{veg:'Gran demanda de N. Tolera EC alta (hasta 1.6 en veg avanzada).',flower:'Alta tolerancia a EC elevada. PK 13/14 semanas 7-8. Flush mínimo 14 días.'},
+   tags:['Alta producción','Sativa pura','Aroma intenso','RDWC óptimo']},
+
+  {id:'gg4',name:'Gorilla Glue #4',bank:'GG Strains / Barney\'s',type:'hybrid',typeName:'Híbrida',
+   thc:'25–30%',cbd:'<1%',flower:'8–9 sem',yieldIn:'550–600',yieldOut:'700 g/pl',
+   height:'90–130cm',diff:'Moderada',system:'RDWC',technique:'ScrOG',
+   ecVeg:1.2,ecFlower:2.4,ecPeak:2.6,ph:'5.8–6.3',phFlower:'6.0–6.5',tempWater:19,
+   vegW:4,flowerW:9,
+   desc:'Genética moderna de altísima potencia y resina extrema. En hidropónico desarrolla un vigor impresionante. Tolera EC muy alta en floración. Los filtros de carbón se saturan rápido por la resina — planificar mantenimiento.',
+   ambNotes:'Muy resinosa: los vapores de terpenos pueden saturar el espacio. Ventilación reforzada en floración semanas 5-8.',
+   nutriProfile:{veg:'Vigorosa, demanda alta de N y CalMag.',flower:'Aguanta hasta EC 2.6 sin quema. Amplificadores de resina muy efectivos.'},
+   tags:['Alta potencia','Resina XXL','Popular','EC alta']},
+
+  {id:'critk',name:'Critical Kush',bank:"Barney's Farm",type:'indica',typeName:'Índica',
+   thc:'20–25%',cbd:'1–2%',flower:'8 sem',yieldIn:'550–600',yieldOut:'700 g/pl',
+   height:'80–100cm',diff:'Fácil',system:'RDWC / DWC',technique:'SOG / ScrOG',
+   ecVeg:1.1,ecFlower:2.1,ecPeak:2.3,ph:'5.8–6.3',phFlower:'6.0–6.5',tempWater:19,
+   vegW:3,flowerW:8,
+   desc:'Índica potente con CBD apreciable (1-2%). Muy productiva en hidropónico y compacta. Resistente al calor mediterráneo. Cogollos extremadamente densos — vigilar botrytis con HR >55% en floración.',
+   ambNotes:'Excelente para Castelló: tolera el calor estival mejor que otras índicas. Defoliar en semana 4 de floración para mejorar ventilación de cogollos.',
+   nutriProfile:{veg:'Dieta moderada. CalMag importante en hidro duro.',flower:'Cogollos densos responden a PK booster. No exceder EC 2.3.'},
+   tags:['CBD','Mediterráneo','Productiva','Compacta']},
+
+  {id:'northlauto',name:'Northern Lights Auto',bank:'Greenhouse Seeds',type:'auto',typeName:'Autoflo.',
+   thc:'15–18%',cbd:'<1%',flower:'70 días total',yieldIn:'400–500',yieldOut:'200–300 g/pl',
+   height:'60–80cm',diff:'Muy fácil',system:'DWC',technique:'LST suave',
+   ecVeg:0.8,ecFlower:1.6,ecPeak:1.8,ph:'5.5–6.2',phFlower:'5.8–6.3',tempWater:18,
+   vegW:3,flowerW:6,
+   desc:'La autofloreciente perfecta para iniciarse en DWC. Sin cambio de fotoperiodo: 20h luz todo el ciclo. Sensible a sobrealimentación — empezar con EC baja. Ciclos cortos permiten 4-5 cosechas/año.',
+   ambNotes:'20h luz todo el ciclo. No hacer topping en autos — solo LST suave desde semana 2.',
+   nutriProfile:{veg:'EC muy baja (0.6–0.8). Sensible a exceso de N.',flower:'Floración automática. EC máxima 1.8. Flush solo 5-7 días.'},
+   tags:['Automática','Ciclo corto','4-5/año','Sin fotoperiodo']},
+
+  {id:'ggauto',name:'Gorilla Zkittlez Auto',bank:'Fast Buds',type:'auto',typeName:'Autoflo.',
+   thc:'22–26%',cbd:'<1%',flower:'63–70 días',yieldIn:'500–600',yieldOut:'250–350 g/pl',
+   height:'80–120cm',diff:'Moderada',system:'DWC / RDWC',technique:'ScrOG + LST',
+   ecVeg:1.0,ecFlower:2.0,ecPeak:2.2,ph:'5.8–6.3',phFlower:'6.0–6.5',tempWater:19,
+   vegW:4,flowerW:6,
+   desc:'Auto de alta potencia y producción XXL para ser autofloreciente. Una de las más demandadas 2024-2025. En DWC consigue tiempos récord. ScrOG adaptado a autos desde semana 2 sin topping.',
+   ambNotes:'Responde excepcionalmente a 20h luz todo el ciclo. No bajar de 18h aunque sea auto.',
+   nutriProfile:{veg:'EC moderada-alta para auto (hasta 1.2). Tolera bien los nutrientes.',flower:'Potencia alta, aguanta EC 2.0–2.2. PK booster semanas 5-6.'},
+   tags:['Auto potente','Alta producción','Modernas','2024-25']}
+];
+
+const nutrients = [
+  {rank:1,name:'CANNA Aqua Vega/Flores A+B',brand:'CANNA (Países Bajos)',score:5,
+   system:'RDWC / DWC / NFT (recirculación)',level:'Todos los niveles',organic:false,
+   price:'€€€',
+   desc:'Formulado específicamente para sistemas de recirculación cerrada (RDWC, DWC). Mantiene pH y EC estables durante días, reduciendo ajustes. El estándar de referencia en la industria del cannabis hidropónico europeo. Dos componentes A+B evitan precipitación de nutrientes.',
+   phases:{germ:'No usar (agua RO pura)',veg:'Aqua Vega A+B: 4+4 mL/L. EC base: 0.8–1.4',flower:'Aqua Flores A+B: 4+4 mL/L. EC: 1.6–2.4',flush:'Canna Flush: 2 mL/L'},
+   aditivos:['Rhizotonic (raíces)', 'Cannazym (enzimas)', 'PK 13/14 (semanas 6-7)', 'Boost Accelerator'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.4 mS/cm',
+   pros:'Estabilidad de pH excepcional en recirculación. Resultados muy consistentes. Disponible en toda España.',
+   cons:'Precio elevado. No apto para sistemas de drenaje libre (usar Hydro en ese caso).'},
+
+  {rank:2,name:'General Hydroponics Flora Series',brand:'GHE / Terra Aquatica',score:5,
+   system:'Todos los sistemas hidropónicos',level:'Principiantes a avanzados',organic:false,
+   price:'€€',
+   desc:'El sistema de 3 partes más usado del mundo desde 1976. FloraGro + FloraMicro + FloraBloom permiten personalización total por fase. Usado por NASA, universidades y productores profesionales. Relación calidad-precio imbatible. Ahora comercializado como Terra Aquatica en Europa.',
+   phases:{germ:'FloraMicro: 1.5 mL/L. EC: 0.4–0.6',veg:'Micro 2.5 + Gro 3 + Bloom 1 mL/L. EC: 0.8–1.4',flower:'Micro 2.5 + Gro 1 + Bloom 3 mL/L. EC: 1.4–2.2',flush:'FloraKleen: 2 mL/L'},
+   aditivos:['Pro Roots (enraizante)', 'Diamond Nectar (ácidos húmicos)', 'Ripen (maduración)', 'Bio Bloom'],
+   pHrange:'5.5–6.5',ECrange:'0.4–2.4 mS/cm',
+   pros:'Máxima flexibilidad y personalización. Precio accesible. Enorme comunidad de soporte. Tablas detalladas por fase.',
+   cons:'Requiere mezclar 3 productos por cada solución. Curva de aprendizaje inicial.'},
+
+  {rank:3,name:'Advanced Nutrients pH Perfect Sensi',brand:'Advanced Nutrients (Canadá)',score:4,
+   system:'DWC / RDWC / Aeroponía',level:'Principiantes',organic:false,
+   price:'€€€€',
+   desc:'Tecnología de auto-corrección de pH integrada (pH Perfect®). El sistema ajusta el pH automáticamente entre 5.5 y 6.5 en agua de calidad. Ideal para cultivadores que tienen dificultades con el control de pH. Formulación en 2 partes: Grow A+B y Bloom A+B.',
+   phases:{germ:'No usar (demasiado potente)',veg:'Sensi Grow A+B: 4 mL/L c/u. EC: 1.0–1.4',flower:'Sensi Bloom A+B: 4 mL/L c/u. EC: 1.6–2.4',flush:'Final Phase: 2 mL/L'},
+   aditivos:['Voodoo Juice (microbios)', 'Big Bud (floración)', 'Overdrive (maduración)', 'B-52 (vitaminas)'],
+   pHrange:'Auto 5.5–6.5 (con agua pura)',ECrange:'1.0–2.4 mS/cm',
+   pros:'Control de pH automático. Formulaciones específicas para cannabis. Soporte técnico excepcional.',
+   cons:'Precio muy elevado. pH Perfect solo funciona con agua RO o baja en minerales. No usar con agua dura.'},
+
+  {rank:4,name:'Plagron Hydro A+B',brand:'Plagron (Países Bajos)',score:4,
+   system:'DWC / RDWC / Lana de roca',level:'Intermedio',organic:false,
+   price:'€€',
+   desc:'Fertilizante de dos componentes equilibrado para hidroponía. Excelente relación calidad-precio. Muy utilizado en España. Fórmula estable que no precipita fácilmente. Compatibilidad probada con la mayoría de aditivos del mercado.',
+   phases:{germ:'Agua RO + CalMag. EC: 0.3',veg:'Hydro A+B: 3.5+3.5 mL/L. EC: 0.8–1.4',flower:'Hydro A+B: 3.5+3.5 mL/L + PK booster. EC: 1.4–2.2',flush:'Agua RO. EC: 0.1–0.3'},
+   aditivos:['Green Sensation (floración)', 'Sugar Royal (terpenos)', 'Vita Race (foliar)', 'Alga Bloom'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.2 mS/cm',
+   pros:'Excelente precio. Muy disponible en growshops españoles. Fórmula estable y fiable.',
+   cons:'Menos precisión que CANNA o AN. Sistema de 2 partes con menos personalización.'},
+
+  {rank:5,name:'House & Garden Aqua Flakes',brand:'House & Garden (Países Bajos)',score:4,
+   system:'DWC / RDWC (recirculación)',level:'Avanzado',organic:false,
+   price:'€€€',
+   desc:'Nutriente premium especialmente formulado para sistemas de recirculación con agua dura. Muy popular entre cultivadores profesionales europeos. Sistema A+B con alta pureza de minerales. Produce cogollos extremadamente densos y aromáticos.',
+   phases:{germ:'No usar',veg:'Aqua Flakes A+B: 4+4 mL/L. EC: 0.8–1.4',flower:'Aqua Flakes A+B: 4+4 mL/L. EC: 1.6–2.6',flush:'Drip Clean: 0.1 mL/L'},
+   aditivos:['Roots Excelurator (raíces)', 'Shooting Powder (floración)', 'Top Shooter', 'Bud XL'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.6 mS/cm',
+   pros:'Formulación premium de alta pureza. Excellent en agua dura. Cogollos muy densos.',
+   cons:'Precio elevado. Disponibilidad limitada en tiendas locales españolas. Menos documentación en español.'},
+
+  {rank:6,name:'BioBizz Fish·Mix + Bloom',brand:'BioBizz (Países Bajos)',score:3,
+   system:'Coco / DWC con precaución',level:'Principiantes (orgánico)',organic:true,
+   price:'€€',
+   desc:'La opción 100% orgánica más popular. Basado en extractos de pescado y algas marinas. Produce cogollos con sabor y aroma superiores al finalizar. Más complejo de controlar en hidropónico puro — riesgo de microorganismos en el depósito. Ideal con coco como complemento al sistema.',
+   phases:{germ:'Worm Humus: 1 mL/L',veg:'Fish·Mix: 4 mL/L + Grow: 2 mL/L. EC: 0.8–1.2',flower:'Bloom: 4 mL/L + Top·Max: 2 mL/L. EC: 1.2–1.8',flush:'Agua limpia 10 días'},
+   aditivos:['Top·Max (floración)', 'Alg·A·Mic (estrés)', 'Bio·Heaven (aminoácidos)', 'CalMag'],
+   pHrange:'6.0–7.0 (orgánico)',ECrange:'0.8–1.8 mS/cm',
+   pros:'100% orgánico. Sabor final excepcional. Sin riesgo de sobrealimentación con minerales.',
+   cons:'No ideal para hidropónico puro — bacterias en depósito. pH más alto requerido. Menos rendimiento que mineral.'},
+
+  {rank:7,name:'Remo Nutrients SuperVeg/Bloom',brand:'Remo Nutrients (Canadá)',score:3,
+   system:'DWC / RDWC / Coco',level:'Intermedio',organic:false,
+   price:'€€€',
+   desc:'Sistema completo de 7 productos desarrollado por el cultivador Remo Collussi. Muy popular en la comunidad cannábica anglosajona y con creciente presencia en Europa. Formulación equilibrada con énfasis en densidad y sabor de cogollos.',
+   phases:{germ:'AstroFlower: 1 mL/L',veg:'SuperVeg: 3 mL/L. EC: 0.8–1.4',flower:'Bloom: 3 + Magnifical: 2 mL/L. EC: 1.6–2.2',flush:'No especificado — agua RO'},
+   aditivos:['Magnifical (Ca+Mg)', 'Natures Candy (terpenos)', 'Velokelp (algas)', 'AstroFlower'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.2 mS/cm',
+   pros:'Sistema completo e integrado. Buen soporte comunidad. Resultados muy consistentes.',
+   cons:'Sistema propietario (7 productos). Precio total del kit elevado. Poca disponibilidad en España.'},
+
+  {rank:8,name:'Atami Wilma / Hydro Nutrients',brand:'Atami B\'cuzz (Países Bajos)',score:3,
+   system:'DWC / RDWC / NFT',level:'Intermedio',organic:false,
+   price:'€€',
+   desc:'Línea europea de nutrientes hidropónicos con larga trayectoria. Especialmente buena relación calidad-precio para el mercado español. Sistema A+B sencillo con aditivos opcionales. Buen rendimiento en agua de red tratada.',
+   phases:{germ:'Coco A+B: 1+1 mL/L',veg:'Hydro A+B: 3+3 mL/L. EC: 0.8–1.4',flower:'Hydro A+B: 3+3 mL/L + PK Booster. EC: 1.4–2.0',flush:'Root Stimulator + agua'},
+   aditivos:['Root Stimulator', 'Bloom Stimulator', 'B\'cuzz Coco', 'Silic Rock'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.0 mS/cm',
+   pros:'Muy accesible en growshops españoles. Precio razonable. Simple de usar.',
+   cons:'Rendimientos algo inferiores a CANNA o GHE con las mismas condiciones.'},
+
+  {rank:9,name:'Shogun Katana Roots / Shogun',brand:'Shogun Fertilisers (UK)',score:3,
+   system:'DWC / RDWC / Aeroponía',level:'Avanzado',organic:false,
+   price:'€€€',
+   desc:'Nutrientes premium del Reino Unido con tecnología SmartZen®. Formulados para maximizar el DO y la absorción en sistemas de alta oxigenación. Especialmente efectivos en aeroponía y RDWC con alta recirculación. Cogollos muy densos y compactos.',
+   phases:{germ:'Katana Roots: 1 mL/L',veg:'Shogun Grow A+B: 3+3 mL/L. EC: 0.8–1.4',flower:'Shogun Bloom A+B: 3+3 mL/L. EC: 1.6–2.4',flush:'Dragon Force (2 sem)'},
+   aditivos:['Katana Roots', 'CalMag', 'Sumo Boost', 'Dragon Force (flush activo)'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.4 mS/cm',
+   pros:'Tecnología avanzada SmartZen. Excelente en RDWC. Dragon Force mejora el flush activo.',
+   cons:'Poca disponibilidad en España. Documentación principalmente en inglés.'},
+
+  {rank:10,name:'Masterblend 4-18-38 + CalMag',brand:'Masterblend (EEUU)',score:3,
+   system:'DWC / NFT / Goteo',level:'Avanzado (DIY)',organic:false,
+   price:'€',
+   desc:'El fertilizante en polvo más económico del mercado. Utilizado en agricultura profesional y adaptado al cannabis por la comunidad. Requiere mezcla precisa con nitrato cálcico y sulfato de magnesio. Curva de aprendizaje alta pero coste mínimo: ideal para setups grandes.',
+   phases:{germ:'No usar',veg:'Mezcla: 2.4g Masterblend + 2.4g CaNO3 + 1.2g MgSO4 por 10L. EC: 0.8–1.2',flower:'Ajustar ratio P-K subiendo Masterblend. EC: 1.4–2.2',flush:'Agua RO pura'},
+   aditivos:['Nitrato cálcico (Ca)', 'Sulfato de magnesio (Mg)', 'Silicato de potasio (Si)', 'Opcional: ácidos húmicos'],
+   pHrange:'5.5–6.5',ECrange:'0.8–2.2 mS/cm',
+   pros:'Precio imbatible (€/kg). Control total de la fórmula. Ideal para escalar producción.',
+   cons:'Requiere balanza de precisión. Más cálculo/preparación. No apto para principiantes.'}
+];
+
+// ═══════════ STATE ═══════════
+let selectedStrain = null;
+let myGrow = null;
+let wizStep = 0;
+let wizData = {};
+
+// ═══════════ NAVIGATION ═══════════
+function nav(el, view){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-'+view).classList.add('active');
+  if(view==='cultivo') renderCultivo();
+  if(view==='monitor') renderMonitor();
+  if(view==='semanas') renderSemanas();
+  if(view==='nutrientes') renderNutrientes();
+}
+
+// ═══════════ STRAINS ═══════════
+function filterStrains(type, el){
+  document.querySelectorAll('#strainTabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderStrains(type);
+}
+
+function renderStrains(filter='all'){
+  const list = filter==='all' ? strains : strains.filter(s=>s.type===filter);
+  document.getElementById('strainGrid').innerHTML = list.map(s=>`
+    <div class="strain-card ${selectedStrain===s.id?'selected':''}" onclick="selectStrain('${s.id}')">
+      <div class="strain-check"><i class="ti ti-check"></i></div>
+      <span class="strain-type t-${s.type}">${s.typeName}</span>
+      <div class="strain-name">${s.name}</div>
+      <div class="strain-bank">${s.bank}</div>
+      <div class="strain-stats">
+        <div class="sstat"><span class="sstat-label">THC</span><span class="sstat-val hi">${s.thc}</span></div>
+        <div class="sstat"><span class="sstat-label">Floración</span><span class="sstat-val">${s.flower}</span></div>
+        <div class="sstat"><span class="sstat-label">Rendimiento</span><span class="sstat-val">${s.yieldIn} g/m²</span></div>
+        <div class="sstat"><span class="sstat-label">Sistema</span><span class="sstat-val" style="font-size:10px">${s.system.split('/')[0].trim()}</span></div>
+        <div class="sstat"><span class="sstat-label">EC floración</span><span class="sstat-val hi">${s.ecFlower} mS/cm</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectStrain(id){
+  selectedStrain = selectedStrain===id ? null : id;
+  renderStrains(document.querySelector('#strainTabs .tab.active')?.dataset?.type||'all');
+  const s = strains.find(x=>x.id===id);
+  const det = document.getElementById('strainDetail');
+  if(!selectedStrain||!s){det.innerHTML='';return;}
+  det.innerHTML=`
+    <div class="card">
+      <div class="detail-header">
+        <div>
+          <span class="strain-type t-${s.type}" style="margin-bottom:8px;display:inline-block">${s.typeName}</span>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px">${s.name}</div>
+          <div style="font-size:13px;color:var(--text3)">${s.bank} · ${s.diff}</div>
+        </div>
+        <button class="btn btn-primary" onclick="startGrow('${s.id}')"><i class="ti ti-plant"></i> Iniciar cultivo</button>
+      </div>
+      <div class="grid2" style="margin-bottom:1.25rem">
+        <div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.7">${s.desc}</div>
+          <div style="font-size:11px;color:var(--a200);background:rgba(245,184,0,0.08);border:1px solid rgba(245,184,0,0.2);border-radius:8px;padding:8px 10px;line-height:1.6"><i class="ti ti-map-pin" style="font-size:12px"></i> ${s.ambNotes}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:8px">Parámetros técnicos</div>
+          <div class="param-row"><span class="param-key">EC vegetación</span><span class="param-val green">${s.ecVeg}–${(s.ecVeg+0.4).toFixed(1)} mS/cm</span></div>
+          <div class="param-row"><span class="param-key">EC floración</span><span class="param-val green">${s.ecFlower} mS/cm</span></div>
+          <div class="param-row"><span class="param-key">EC pico (semanas 5-7)</span><span class="param-val amber">${s.ecPeak} mS/cm</span></div>
+          <div class="param-row"><span class="param-key">pH vegetación</span><span class="param-val blue">${s.ph}</span></div>
+          <div class="param-row"><span class="param-key">pH floración</span><span class="param-val blue">${s.phFlower}</span></div>
+          <div class="param-row"><span class="param-key">Temp. agua óptima</span><span class="param-val purple">${s.tempWater}–${s.tempWater+2}°C</span></div>
+          <div class="param-row"><span class="param-key">Sistema óptimo</span><span class="param-val">${s.system}</span></div>
+          <div class="param-row"><span class="param-key">Técnica recomendada</span><span class="param-val">${s.technique}</span></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:8px">Nutrición recomendada</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7"><strong style="color:var(--g400)">Vegetación:</strong> ${s.nutriProfile.veg}</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px"><strong style="color:var(--p400)">Floración:</strong> ${s.nutriProfile.flower}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:8px">Tags</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${s.tags.map(t=>`<span style="font-size:10px;background:rgba(76,175,48,0.12);color:var(--g300);padding:3px 10px;border-radius:20px;border:1px solid rgba(76,175,48,0.25);font-family:'DM Mono',monospace">${t}</span>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════ NUTRIENTS ═══════════
+function renderNutrientes(){
+  document.getElementById('nutriList').innerHTML = nutrients.map(n=>`
+    <div class="nutri-item" onclick="toggleNutri(this)">
+      <div class="nutri-rank-num">${n.rank}</div>
+      <div class="nutri-body">
+        <div class="nutri-name">${n.name}</div>
+        <div class="nutri-brand">${n.brand}</div>
+        <div class="nutri-tags">
+          <span class="nutri-tag tag-system"><i class="ti ti-droplet" style="font-size:9px"></i> ${n.system.split('/')[0].trim()}</span>
+          <span class="nutri-tag tag-level">${n.level}</span>
+          ${n.organic?'<span class="nutri-tag tag-organic">100% Orgánico</span>':''}
+          <span class="nutri-tag" style="background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border2)">${n.price}</span>
+        </div>
+        <div class="nutri-score">${Array.from({length:5},(_,i)=>`<div class="score-dot ${i<n.score?'on':'off'}"></div>`).join('')}</div>
+        <div class="nutri-desc">
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">${n.desc}</div>
+          <div class="grid2" style="margin-bottom:10px;font-size:12px">
+            <div><div style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:6px">Dosis por fase</div>
+              <div style="color:var(--text2);line-height:1.8"><span style="color:var(--g400)">Germ:</span> ${n.phases.germ}<br><span style="color:var(--g400)">Veg:</span> ${n.phases.veg}<br><span style="color:var(--p400)">Flor:</span> ${n.phases.flower}<br><span style="color:var(--b400)">Flush:</span> ${n.phases.flush}</div>
+            </div>
+            <div><div style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:6px">Parámetros</div>
+              <div style="line-height:1.8;color:var(--text2)">pH: <span style="color:var(--b400);font-family:'DM Mono'">${n.pHrange}</span><br>EC: <span style="color:var(--g400);font-family:'DM Mono'">${n.ECrange}</span></div>
+              <div style="margin-top:8px;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:4px">Aditivos complementarios</div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px">${n.aditivos.map(a=>`<span style="font-size:10px;background:var(--surface3);color:var(--text3);padding:2px 8px;border-radius:20px;border:1px solid var(--border)">${a}</span>`).join('')}</div>
+            </div>
+          </div>
+          <div class="grid2" style="font-size:12px">
+            <div style="background:rgba(76,175,48,0.07);border:1px solid rgba(76,175,48,0.2);border-radius:8px;padding:8px 10px"><span style="color:var(--g400);font-weight:600">✓ Pros:</span><div style="color:var(--text2);margin-top:3px;line-height:1.6">${n.pros}</div></div>
+            <div style="background:rgba(226,75,74,0.05);border:1px solid rgba(226,75,74,0.15);border-radius:8px;padding:8px 10px"><span style="color:#e88;font-weight:600">✕ Contras:</span><div style="color:var(--text2);margin-top:3px;line-height:1.6">${n.cons}</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleNutri(el){
+  el.classList.toggle('expanded');
+}
+
+// ═══════════ CULTIVO WIZARD ═══════════
+function startGrow(id){
+  wizData.strainId = id;
+  wizStep = 1;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[2].classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-cultivo').classList.add('active');
+  renderCultivo();
+}
+
+function renderCultivo(){
+  if(myGrow){ renderActiveGrow(); return; }
+  const steps=['—','Variedad','Sistema','Ambiente','Confirmar'];
+  document.getElementById('cultivoContent').innerHTML=`
+    <div class="wizard-progress">${[0,1,2,3].map(i=>`<div class="wiz-step ${i<wizStep?'done':i===wizStep?'active':''}"></div>`).join('')}</div>
+    <div id="wizBody"></div>
+  `;
+  renderWizStep();
+}
+
+function renderWizStep(){
+  const s = strains.find(x=>x.id===wizData.strainId);
+  const bodies = [
+    // 0
+    `<div class="card" style="text-align:center;padding:3rem 2rem">
+      <div style="font-size:48px;margin-bottom:1rem">🌿</div>
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px">Configurar nuevo cultivo</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:2rem;max-width:360px;margin-left:auto;margin-right:auto">Sigue el asistente para obtener tu plan completo con parámetros exactos semana a semana.</div>
+      <button class="btn btn-primary" onclick="wizStep=1;renderWizStep()">Comenzar <i class="ti ti-arrow-right"></i></button>
+    </div>`,
+    // 1 variedad
+    `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Paso 1 · Variedad</div></div>
+      <div class="grid2">
+        <div class="form-group"><label>Variedad</label>
+          <select id="wStrain">${strains.map(s=>`<option value="${s.id}" ${wizData.strainId===s.id?'selected':''}>${s.name} (${s.typeName} · ${s.thc} THC)</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Número de plantas</label>
+          <input type="number" id="wPlants" min="1" max="12" value="${wizData.plants||2}">
+        </div>
+      </div>
+      ${s?`<div class="alert info"><i class="ti ti-info-circle"></i><p>Seleccionada: <strong>${s.name}</strong> — EC floración: ${s.ecFlower} mS/cm · pH: ${s.phFlower} · Duración: ${s.vegW+s.flowerW} semanas</p></div>`:''}
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="wizStep=0;renderWizStep()">Atrás</button>
+        <button class="btn btn-primary" onclick="wizData.strainId=document.getElementById('wStrain').value;wizData.plants=parseInt(document.getElementById('wPlants').value)||2;wizStep=2;renderWizStep()">Siguiente <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>`,
+    // 2 sistema
+    `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-settings-2"></i>Paso 2 · Sistema y espacio</div></div>
+      <div class="grid2">
+        <div class="form-group"><label>Sistema hidropónico</label>
+          <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'sel':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'sel':''}>DWC</option><option value="NFT">NFT</option></select>
+        </div>
+        <div class="form-group"><label>Metros cuadrados</label>
+          <input type="number" id="wM2" min="0.5" max="10" step="0.25" value="${wizData.m2||1.2}">
+        </div>
+        <div class="form-group"><label>Iluminación</label>
+          <select id="wLight"><option value="LED">LED Full Spectrum (recomendado)</option><option value="LEC">LEC CMH 315W</option><option value="HPS">HPS 600W</option></select>
+        </div>
+        <div class="form-group"><label>Técnica de entrenamiento</label>
+          <select id="wTech"><option value="ScrOG">ScrOG</option><option value="SOG">SOG</option><option value="LST">LST + Topping</option><option value="Sin técnica">Sin técnica</option></select>
+        </div>
+        <div class="form-group"><label>Nutriente principal</label>
+          <select id="wNutri">${nutrients.map(n=>`<option value="${n.rank}">${n.rank}. ${n.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Tipo de agua</label>
+          <select id="wWater"><option value="RO">Ósmosis inversa (recomendado)</option><option value="red">Agua de red filtrada</option><option value="destilada">Agua destilada</option></select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="wizStep=1;renderWizStep()">Atrás</button>
+        <button class="btn btn-primary" onclick="wizData.system=document.getElementById('wSys').value;wizData.m2=parseFloat(document.getElementById('wM2').value)||1.2;wizData.light=document.getElementById('wLight').value;wizData.technique=document.getElementById('wTech').value;wizData.nutri=parseInt(document.getElementById('wNutri').value);wizData.water=document.getElementById('wWater').value;wizStep=3;renderWizStep()">Siguiente <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>`,
+    // 3 ambiente
+    `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-temperature"></i>Paso 3 · Parámetros ambientales</div></div>
+      <div class="grid2">
+        <div class="form-group"><label>Temperatura ambiente habitual</label>
+          <input type="number" id="wTemp" min="15" max="35" value="${wizData.ambTemp||22}"> <span style="font-size:11px;color:var(--text3);margin-top:3px;display:block">°C</span>
+        </div>
+        <div class="form-group"><label>Humedad base del espacio</label>
+          <input type="number" id="wHum" min="30" max="80" value="${wizData.ambHum||55}"> <span style="font-size:11px;color:var(--text3);margin-top:3px;display:block">%</span>
+        </div>
+        <div class="form-group"><label>Fecha inicio germinación</label>
+          <input type="date" id="wDate" value="${wizData.startDate||new Date().toISOString().split('T')[0]}">
+        </div>
+        <div class="form-group"><label>CO₂ adicional</label>
+          <select id="wCO2"><option value="no">No (400 ppm ambiente)</option><option value="si">Sí (enriquecimiento 1000-1500 ppm)</option></select>
+        </div>
+      </div>
+      <div class="alert warn"><i class="ti ti-map-pin"></i><p>Castelló de la Plana: veranos calurosos (35°C+). Si inicias en primavera, la floración caerá en verano — refrigeración de agua imprescindible. Mejor inicio en agosto para florar en octubre-noviembre.</p></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="wizStep=2;renderWizStep()">Atrás</button>
+        <button class="btn btn-primary" onclick="wizData.ambTemp=parseInt(document.getElementById('wTemp').value)||22;wizData.ambHum=parseInt(document.getElementById('wHum').value)||55;wizData.startDate=document.getElementById('wDate').value;wizData.co2=document.getElementById('wCO2').value;wizStep=4;renderWizStep()">Siguiente <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>`,
+    // 4 confirm
+    `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-check"></i>Paso 4 · Confirmar y activar</div></div>
+      ${buildConfirmSummary()}
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="wizStep=3;renderWizStep()">Atrás</button>
+        <button class="btn btn-primary" onclick="activateGrow()"><i class="ti ti-plant"></i> Activar cultivo</button>
+      </div>
+    </div>`
+  ];
+  document.getElementById('wizBody').innerHTML = bodies[wizStep]||bodies[0];
+}
+
+function buildConfirmSummary(){
+  const s = strains.find(x=>x.id===wizData.strainId);
+  const n = nutrients.find(x=>x.rank===wizData.nutri);
+  if(!s) return '<div class="alert danger"><i class="ti ti-x"></i><p>Por favor selecciona una variedad primero.</p></div>';
+  const watts = Math.round((wizData.m2||1.2)*400);
+  const estYield = Math.round((wizData.m2||1.2)*parseInt(s.yieldIn)*0.85);
+  const totalW = s.vegW + s.flowerW + 2;
+  const startD = new Date(wizData.startDate||new Date());
+  const endD = new Date(startD.getTime() + totalW*7*86400000);
+  return `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius2);padding:1.5rem;margin-bottom:1rem">
+      <div class="grid2" style="gap:1.5rem">
+        <div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono';margin-bottom:10px">Variedad y sistema</div>
+          <div class="param-row"><span class="param-key">Variedad</span><span class="param-val">${s.name}</span></div>
+          <div class="param-row"><span class="param-key">Plantas</span><span class="param-val">${wizData.plants||2}</span></div>
+          <div class="param-row"><span class="param-key">Sistema</span><span class="param-val">${wizData.system||'RDWC'}</span></div>
+          <div class="param-row"><span class="param-key">Técnica</span><span class="param-val">${wizData.technique||'ScrOG'}</span></div>
+          <div class="param-row"><span class="param-key">Espacio</span><span class="param-val">${wizData.m2||1.2} m²</span></div>
+          <div class="param-row"><span class="param-key">Iluminación</span><span class="param-val">~${watts}W ${wizData.light||'LED'}</span></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono';margin-bottom:10px">Parámetros y estimaciones</div>
+          <div class="param-row"><span class="param-key">Nutriente elegido</span><span class="param-val">${n?n.name.split(' ')[0]+' '+n.name.split(' ')[1]:'—'}</span></div>
+          <div class="param-row"><span class="param-key">Duración total</span><span class="param-val">${totalW} semanas</span></div>
+          <div class="param-row"><span class="param-key">Inicio germinación</span><span class="param-val">${startD.toLocaleDateString('es-ES')}</span></div>
+          <div class="param-row"><span class="param-key">Cosecha estimada</span><span class="param-val c-amber">${endD.toLocaleDateString('es-ES')}</span></div>
+          <div class="param-row"><span class="param-key">Rendimiento est.</span><span class="param-val c-green">${estYield} g</span></div>
+          <div class="param-row"><span class="param-key">Temp. ambiente</span><span class="param-val">${wizData.ambTemp||22}°C</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function activateGrow(){
+  const s = strains.find(x=>x.id===wizData.strainId);
+  if(!s) return;
+  myGrow = {
+    strain: s,
+    plants: wizData.plants||2,
+    system: wizData.system||'RDWC',
+    technique: wizData.technique||'ScrOG',
+    m2: wizData.m2||1.2,
+    light: wizData.light||'LED',
+    nutri: wizData.nutri||1,
+    water: wizData.water||'RO',
+    ambTemp: wizData.ambTemp||22,
+    ambHum: wizData.ambHum||55,
+    co2: wizData.co2||'no',
+    startDate: new Date(wizData.startDate||new Date()),
+    log: [
+      {date:new Date().toISOString(),text:'Cultivo activado: '+s.name+' en '+wizData.system,type:'ok'},
+      {date:new Date().toISOString(),text:'Germinación iniciada. Solución EC 0.3 mS/cm · pH 5.5',type:'info'}
+    ]
+  };
+  document.getElementById('sideStatus').textContent = s.name + ' · S1';
+  renderActiveGrow();
+}
+
+function renderActiveGrow(){
+  const s = myGrow.strain;
+  const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
+  const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
+  const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
+  const totalW = s.vegW+s.flowerW+2;
+  document.getElementById('sideStatus').textContent = s.name+' · S'+weekNum;
+
+  let phase='Germinación',phClass='ph-germ',currentEC=0.4,currentPH='5.5–5.8',lightSched='18/6',humidity='70–90%',tempRange='22–26°C',co2='400 ppm';
+  if(weekNum<=1){phase='Germinación';phClass='ph-germ';currentEC=0.4;currentPH='5.5–5.8';lightSched='18/6';humidity='70–90%';tempRange='22–26°C';}
+  else if(weekNum<=s.vegW){phase='Vegetación';phClass='ph-veg';currentEC=s.ecVeg+(weekNum/s.vegW)*0.3;currentPH=s.ph;lightSched='18/6';humidity='55–70%';tempRange='24–28°C';}
+  else if(weekNum<=s.vegW+2){phase='Prefloración';phClass='ph-pre';currentEC=(s.ecVeg+s.ecFlower)/2;currentPH='5.8–6.2';lightSched='12/12';humidity='50–60%';tempRange='22–26°C';}
+  else if(weekNum<=s.vegW+s.flowerW-2){phase='Floración plena';phClass='ph-flower';currentEC=s.ecFlower;currentPH=s.phFlower;lightSched='12/12';humidity='40–55%';tempRange='20–26°C';}
+  else if(weekNum<=s.vegW+s.flowerW){phase='Engorde';phClass='ph-engorde';currentEC=s.ecPeak;currentPH=s.phFlower;lightSched='12/12';humidity='35–50%';tempRange='18–24°C';}
+  else{phase='Flush / Cosecha';phClass='ph-flush';currentEC=0.2;currentPH='6.0–6.5';lightSched='12/12';humidity='35–45%';tempRange='18–22°C';}
+  currentEC = Math.round(currentEC*10)/10;
+
+  const segs = Array.from({length:totalW},(_,i)=>{
+    let cls='tl-veg';
+    if(i===0)cls='tl-germ';
+    else if(i>=s.vegW&&i<s.vegW+2)cls='tl-pre';
+    else if(i>=s.vegW+2&&i<s.vegW+s.flowerW)cls='tl-flower';
+    else if(i>=s.vegW+s.flowerW)cls='tl-flush';
+    return `<div class="tl-seg ${cls} ${i<weekNum-1?'past':''}" title="S${i+1}: ${i===0?'Germinación':i<s.vegW?'Vegetación':i<s.vegW+2?'Prefloración':i<s.vegW+s.flowerW?'Floración':'Flush'}"></div>`;
+  }).join('');
+
+  document.getElementById('cultivoContent').innerHTML=`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+        <div>
+          <span class="strain-type t-${s.type}">${s.typeName}</span>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin:4px 0">${s.name}</div>
+          <div style="font-size:12px;color:var(--text3)">Inicio: ${myGrow.startDate.toLocaleDateString('es-ES')} · Semana ${weekNum} de ${totalW}</div>
+        </div>
+        <div style="text-align:right">
+          <span class="phase-pill ${phClass}">${phase}</span>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">Nutriente: ${n.name.split(' ').slice(0,2).join(' ')}</div>
+        </div>
+      </div>
+      <div class="timeline-bar">${segs}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'DM Mono'">
+        <span>Germ</span><span>Veg (${s.vegW}s)</span><span>Floración (${s.flowerW}s)</span><span>Flush</span>
+      </div>
+    </div>
+
+    <div class="gauge-grid">
+      <div class="gauge"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span></div>
+      <div class="gauge"><div class="gauge-label">pH objetivo</div><div class="gauge-value c-blue">${currentPH.split('–')[0]}</div><div class="gauge-range">${currentPH}</div><span class="gauge-status status-ok">En rango</span></div>
+      <div class="gauge"><div class="gauge-label">Fotoperiodo</div><div class="gauge-value" style="font-size:18px">${lightSched}</div><div class="gauge-range">h luz/oscuridad</div></div>
+      <div class="gauge"><div class="gauge-label">Temp. agua</div><div class="gauge-value c-purple">${s.tempWater}</div><div class="gauge-range">°C objetivo</div><span class="gauge-status ${myGrow.ambTemp>28?'status-warn':'status-ok'}">${myGrow.ambTemp>28?'Vigilar':'OK'}</span></div>
+      <div class="gauge"><div class="gauge-label">Humedad (HR)</div><div class="gauge-value" style="font-size:18px">${humidity}</div></div>
+      <div class="gauge"><div class="gauge-label">Temp. aire día</div><div class="gauge-value" style="font-size:18px">${tempRange}</div></div>
+      <div class="gauge"><div class="gauge-label">CO₂</div><div class="gauge-value" style="font-size:18px">${myGrow.co2==='si'?'1200':'400'}</div><div class="gauge-range">ppm</div></div>
+      <div class="gauge"><div class="gauge-label">Rendimiento est.</div><div class="gauge-value c-amber" style="font-size:20px">${Math.round(myGrow.m2*parseInt(s.yieldIn)*0.85)}</div><div class="gauge-range">g total</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-flask"></i>Dosis nutriente hoy</div></div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7">
+          ${phase.includes('Germ')?n.phases.germ:phase.includes('Veg')?n.phases.veg:phase.includes('Flush')?n.phases.flush:n.phases.flower}
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text3)">Fuente: ${n.name}</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-bulb"></i>Acción recomendada</div></div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7">
+          ${phase.includes('Germ')?'Mantener humedad >70%. Temperatura cúpula 24°C. Luz tenue 18/6.':
+            phase.includes('Veg')?s.phaseDesc?s.nutriProfile.veg:'Aplicar técnica '+myGrow.technique+'. Revisar EC y pH cada 48h.':
+            phase.includes('Pre')?'Cambiar a 12/12. Subir EC gradualmente. Stretch esperado: 50-100% de altura.':
+            phase.includes('Flush')?'Solo agua RO, EC 0.1–0.3. Tricomas: iniciar con lupa 60x.':
+            'Floración plena. '+s.nutriProfile.flower}
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost" style="margin-top:0.5rem" onclick="myGrow=null;wizStep=0;wizData={};document.getElementById('sideStatus').textContent='Sin cultivo activo';renderCultivo()">
+      <i class="ti ti-trash"></i> Reiniciar cultivo
+    </button>
+  `;
+}
+
+// ═══════════ MONITOR ═══════════
+function renderMonitor(){
+  const mc = document.getElementById('monitorContent');
+  if(!myGrow){
+    mc.innerHTML=`<div class="alert info"><i class="ti ti-info-circle"></i><p>Activa un cultivo en <strong>Mi Cultivo</strong> para usar el monitor.</p></div>`;
+    return;
+  }
+  const s = myGrow.strain;
+  const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
+  const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
+  const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
+
+  mc.innerHTML=`
+    <div class="grid4" style="margin-bottom:1rem">
+      <div class="metric"><div class="metric-label">pH actual</div><div class="metric-val c-blue">6.1</div><div class="metric-unit">5.8–6.5 objetivo</div><div class="metric-bar"><div class="metric-fill" style="width:72%;background:var(--b400)"></div></div></div>
+      <div class="metric"><div class="metric-label">EC actual</div><div class="metric-val c-green">${s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill" style="width:${Math.min(100,s.ecFlower/3*100).toFixed(0)}%;background:var(--g400)"></div></div></div>
+      <div class="metric"><div class="metric-label">Temp. agua</div><div class="metric-val c-purple">${s.tempWater+1}°C</div><div class="metric-unit">óptimo ${s.tempWater}–${s.tempWater+2}°C</div></div>
+      <div class="metric"><div class="metric-label">DO estimado</div><div class="metric-val c-blue">8.2</div><div class="metric-unit">mg/L (>6 óptimo)</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-list"></i>Registro de cultivo</div></div>
+        <div class="log-list">
+          ${myGrow.log.map(e=>`<div class="log-entry"><div class="log-icon ${e.type}"><i class="ti ti-${e.type==='ok'?'check':e.type==='warn'?'alert-triangle':'info-circle'}"></i></div><div><div class="log-text">${e.text}</div><div class="log-time">${new Date(e.date).toLocaleDateString('es-ES')} ${new Date(e.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:1rem">
+          <input id="logInput" type="text" placeholder="Añadir observación..." style="flex:1;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px">
+          <button class="btn btn-primary" onclick="addLog()" style="padding:8px 14px">Añadir</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-alert-triangle"></i>Alertas activas</div></div>
+        ${myGrow.ambTemp>28?`<div class="alert warn"><i class="ti ti-thermometer"></i><p>Temperatura ambiente ${myGrow.ambTemp}°C detectada. Riesgo de solución caliente. Monitorear agua — no superar 23°C.</p></div>`:''}
+        <div class="alert info"><i class="ti ti-calendar"></i><p>Próxima renovación de solución recomendada: en ${10-(daysSince%10)} días.</p></div>
+        <div class="alert info"><i class="ti ti-droplet"></i><p>Calibrar medidor pH con tampón 7.0 cada 7 días. Último calibrado: verificar manualmente.</p></div>
+        ${weekNum>=myGrow.strain.vegW+myGrow.strain.flowerW-2?`<div class="alert warn"><i class="ti ti-scissors"></i><p>Inicio del periodo de Flush recomendado. Cambiar a agua RO · EC 0.1–0.3 · pH 6.0</p></div>`:''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-flask"></i>Nutriente activo: ${n.name}</div></div>
+      <div class="grid2">
+        <div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Dosis esta semana</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.8">
+            ${weekNum<=1?n.phases.germ:weekNum<=s.vegW?n.phases.veg:weekNum>=s.vegW+s.flowerW?n.phases.flush:n.phases.flower}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Aditivos recomendados</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${n.aditivos.map(a=>`<span style="font-size:11px;background:var(--surface2);color:var(--text2);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">${a}</span>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addLog(){
+  const inp=document.getElementById('logInput');
+  if(!inp||!inp.value.trim()||!myGrow)return;
+  myGrow.log.unshift({date:new Date().toISOString(),text:inp.value.trim(),type:'info'});
+  inp.value='';
+  renderMonitor();
+}
+
+// ═══════════ SEMANAS ═══════════
+function renderSemanas(){
+  const sc=document.getElementById('semanasContent');
+  if(!myGrow){
+    sc.innerHTML=`<div class="alert info"><i class="ti ti-info-circle"></i><p>Activa un cultivo en <strong>Mi Cultivo</strong> para ver el calendario semanal.</p></div>`;
+    return;
+  }
+  const s = myGrow.strain;
+  const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
+  const totalW = s.vegW+s.flowerW+2;
+  const rows = [];
+  for(let w=1;w<=totalW;w++){
+    let phase,phClass,ec,ph,light,hum,temp,accion,nutri;
+    if(w===1){phase='Germinación';phClass='ph-germ';ec='0.3–0.5';ph='5.5–5.7';light='18/6';hum='70–90%';temp='22–26°C';accion='Germinar en papel húmedo o jiffy. Cúpula de humedad.';nutri=n.phases.germ;}
+    else if(w<=s.vegW){
+      phase='Vegetación';phClass='ph-veg';
+      const p=(w-1)/(s.vegW-1);
+      const ecLow=(s.ecVeg+p*0.4).toFixed(1);
+      const ecHi=(s.ecVeg+0.1+p*0.5).toFixed(1);
+      ec=ecLow+'–'+ecHi;ph=s.ph;light='18/6';hum='55–70%';temp='24–28°C';
+      accion=w===2?'Trasplantar a sistema hidro. Iniciar nutrientes. Primeros LST.':
+             w===3?'Topping (si procede). ScrOG: guiar ramas por la malla.':
+             w<=5?'Continuar entrenamiento. Defoliar 20-30% hojas basales.':'Verificar que la malla ScrOG esté completa.';
+      nutri=n.phases.veg;
+    } else if(w<=s.vegW+2){
+      phase='Prefloración';phClass='ph-pre';ec=((s.ecVeg+s.ecFlower)/2).toFixed(1)+'–'+((s.ecVeg+s.ecFlower)/2+0.2).toFixed(1);ph='5.8–6.2';light='12/12';hum='50–60%';temp='22–26°C';
+      accion=w===s.vegW+1?'CAMBIAR FOTOPERIODO 12/12. Plantas se estirarán 50-100%. Subir EC gradualmente.':'Continuar stretch. Ajustar EC. Primeros pistilos visibles.';
+      nutri=n.phases.veg+' (transición a bloom)';
+    } else if(w<=s.vegW+s.flowerW-2){
+      const fp=w-s.vegW-2;const ftotal=s.flowerW-2;
+      phase='Floración S'+fp;phClass='ph-flower';
+      const ecN=(s.ecFlower+Math.min(fp/ftotal,1)*0.2).toFixed(1);
+      ec=ecN+'–'+(parseFloat(ecN)+0.2).toFixed(1);ph=s.phFlower;light='12/12';hum='40–55%';temp='20–26°C';
+      accion=fp===1?'Cogollos formándose. No tocar técnica. Solo mantenimiento solución.':
+             fp===3?'Defoliación floración si hay exceso de follaje.':
+             fp>=ftotal-1?'Monitorear tricomas con lupa. PK Booster si corresponde.':
+             'Mantenimiento rutinario. Revisar EC/pH diariamente.';
+      nutri=n.phases.flower;
+    } else if(w<=s.vegW+s.flowerW){
+      phase='Engorde';phClass='ph-engorde';ec=s.ecPeak+'–'+(s.ecPeak-0.2).toFixed(1)+' (bajar)';ph=s.phFlower;light='12/12';hum='35–50%';temp='18–24°C';
+      accion='Tricomas ámbar 10-20%. Preparar agua RO para flush. Última dosis nutrientes.';
+      nutri='Últimas dosis de '+n.phases.flower;
+    } else {
+      phase='Flush';phClass='ph-flush';ec='0.1–0.3';ph='6.0–6.5';light='12/12';hum='35–45%';temp='18–22°C';
+      accion='Solo agua RO. EC <0.3. Tricomas: 20-30% ámbar = COSECHAR. Oscuridad 48h opcional antes de cosecha.';
+      nutri=n.phases.flush;
+    }
+    rows.push(`<tr>
+      <td style="font-weight:600;color:var(--text);font-family:'DM Mono'">${w}</td>
+      <td><span class="phase-pill ${phClass}">${phase}</span></td>
+      <td><div class="ec-bar"><div class="ec-fill" style="width:${Math.min(100,parseFloat(ec)*35).toFixed(0)}px"></div><span class="ec-val">${ec}</span></div></td>
+      <td style="font-family:'DM Mono';color:var(--b400)">${ph}</td>
+      <td style="color:var(--a200)">${light}</td>
+      <td style="color:var(--text2)">${hum}</td>
+      <td style="color:var(--text2)">${temp}</td>
+      <td style="color:var(--text2);font-size:11px;max-width:160px">${accion}</td>
+    </tr>`);
+  }
+  sc.innerHTML=`
+    <div class="card" style="overflow-x:auto">
+      <div class="card-header"><div class="card-title"><i class="ti ti-calendar"></i>${s.name} — Calendario completo ${totalW} semanas · ${n.name.split(' ').slice(0,2).join(' ')}</div></div>
+      <table class="week-table">
+        <thead><tr><th>Sem</th><th>Fase</th><th>EC (mS/cm)</th><th>pH</th><th>Luz</th><th>Humedad</th><th>Temp.</th><th>Acción principal</th></tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>
+    <div class="alert info"><i class="ti ti-info-circle"></i><p>Dosis nutriente de referencia: <strong>${n.name}</strong>. Ajustar siempre por respuesta de la planta — estas son guías, no valores absolutos. Cada fenotipo es único.</p></div>
+  `;
+}
+
+// ═══════════ INIT ═══════════
+renderStrains('all');
+renderNutrientes();
+renderCultivo();
+renderMonitor();
+renderSemanas();
+</script>
+</body>
+</html>
