@@ -3,11 +3,8 @@
 function startGrow(id){
   wizData.strainId = id;
   wizStep = 1;
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.nav-item')[2].classList.add('active');
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-cultivo').classList.add('active');
-  renderCultivo();
+  const cultivoNav = document.querySelector('.nav-item[data-view="cultivo"]');
+  if (cultivoNav) nav(cultivoNav, 'cultivo');
 }
 
 function renderCultivo(){
@@ -29,8 +26,8 @@ function renderInitialOnboarding() {
 
   document.getElementById('cultivoContent').innerHTML = `
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-rocket"></i>Bienvenida Pro · Primer inicio</div></div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:0.8rem">HydroGrow Pro centraliza configuración, clima, nutrición y monitorización para minimizar errores y mejorar consistencia del cultivo.</p>
+      <div class="card-header"><div class="card-title"><i class="ti ti-rocket"></i>Checklist experto · Primer inicio</div></div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:0.8rem"><strong>Hydro Cannabis</strong> centraliza sistema hidropónico, clima, nutrición (según tipo de agua) y monitorización diaria, alineado con buenas prácticas de cultivo en RDWC/DWC.</p>
       <div class="grid3">
         <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Checklist guiado de sistema</div></div>
         <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Cálculo de mezcla por tipo de agua</div></div>
@@ -46,7 +43,7 @@ function renderInitialOnboarding() {
     </div>
 
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-list-check"></i>Checklist de configuración inicial</div></div>
+      <div class="card-header"><div class="card-title"><i class="ti ti-list-check"></i>Paso 1–2 · Sistema, ubicación y clima</div></div>
       ${errorBox}
       <div class="grid2">
         <div class="form-group">
@@ -73,7 +70,7 @@ function renderInitialOnboarding() {
     </div>
 
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Cultivo y nutrición inicial</div></div>
+      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Paso 3 · Variedad, trasplante y nutrición</div></div>
       <div class="grid2">
         <div class="form-group"><label>Variedad</label><select id="onbStrain">${strains.map(s=>`<option value="${s.id}" ${(cfg.strainId||'ww')===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
         <div class="form-group"><label>Edad (días)</label><input id="onbAge" type="number" min="0" max="120" value="${Number.isFinite(cfg.ageDays)?cfg.ageDays:0}"></div>
@@ -363,6 +360,7 @@ function activateGrow(){
   renderActiveGrow();
   renderMonitor();
   renderSemanas();
+  if (typeof renderInicio === 'function') renderInicio();
 }
 
 function renderActiveGrow(){
@@ -798,7 +796,7 @@ function exportSystemSvg() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `hydrogrow-${(myGrow?.system||'sistema').toLowerCase()}-${new Date().toISOString().slice(0,10)}.svg`;
+  a.download = `hydro-cannabis-${(myGrow?.system||'sistema').toLowerCase()}-${new Date().toISOString().slice(0,10)}.svg`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

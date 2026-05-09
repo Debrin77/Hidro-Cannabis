@@ -12,4 +12,5 @@
   .env-grid{grid-template-columns:repeat(3,1fr)}
   .system-svg{min-width:560px}
   .plant-trend-svg{min-width:560px}
+  .home-hero{grid-template-columns:1fr}
 }

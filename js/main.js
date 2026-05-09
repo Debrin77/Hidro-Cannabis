@@ -60,6 +60,7 @@ initSplashScreen();
 renderStrains('all');
 renderNutrientes();
 loadGrowState();
+renderInicio();
 renderCultivo();
 renderMonitor();
 renderSemanas();

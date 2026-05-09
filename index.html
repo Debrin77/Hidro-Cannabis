@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HydroGrow Pro — Cannabis Hidropónico</title>
+<title>Hydro Cannabis — Hidrocultivo</title>
 <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -32,20 +32,22 @@
 <aside class="sidebar">
   <div class="logo">
     <div class="logo-badge">v2.0 · Autoconsumo</div>
-    <div class="logo-title">HydroGrow<br>Pro</div>
-    <div class="logo-sub">Cannabis · Hidropónico</div>
+    <div class="logo-title">Hydro<br>Cannabis</div>
+    <div class="logo-sub">Hidrocultivo guiado</div>
   </div>
   <nav class="nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" data-view="inicio" onclick="nav(this,'inicio')"><i class="ti ti-home"></i>Inicio</div>
     <div class="nav-section">Cultivo</div>
-    <div class="nav-item active" onclick="nav(this,'variedades')"><i class="ti ti-seedling"></i>Variedades</div>
-    <div class="nav-item" onclick="nav(this,'nutrientes')"><i class="ti ti-flask"></i>Nutrientes Top 10</div>
-    <div class="nav-item" onclick="nav(this,'cultivo')"><i class="ti ti-settings-2"></i>Mi Cultivo</div>
+    <div class="nav-item" data-view="variedades" onclick="nav(this,'variedades')"><i class="ti ti-seedling"></i>Variedades</div>
+    <div class="nav-item" data-view="nutrientes" onclick="nav(this,'nutrientes')"><i class="ti ti-flask"></i>Nutrientes Top 10</div>
+    <div class="nav-item" data-view="cultivo" onclick="nav(this,'cultivo')"><i class="ti ti-list-check"></i>Checklist y cultivo</div>
     <div class="nav-section">Control</div>
-    <div class="nav-item" onclick="nav(this,'monitor')"><i class="ti ti-dashboard"></i>Monitor</div>
-    <div class="nav-item" onclick="nav(this,'semanas')"><i class="ti ti-calendar-stats"></i>Calendario</div>
+    <div class="nav-item" data-view="monitor" onclick="nav(this,'monitor')"><i class="ti ti-dashboard"></i>Monitor</div>
+    <div class="nav-item" data-view="semanas" onclick="nav(this,'semanas')"><i class="ti ti-calendar-stats"></i>Calendario</div>
     <div class="nav-section">Info</div>
-    <div class="nav-item" onclick="nav(this,'ambiental')"><i class="ti ti-temperature"></i>Parámetros</div>
-    <div class="nav-item" onclick="nav(this,'legal')"><i class="ti ti-shield-check"></i>Legal España</div>
+    <div class="nav-item" data-view="ambiental" onclick="nav(this,'ambiental')"><i class="ti ti-temperature"></i>Parámetros</div>
+    <div class="nav-item" data-view="legal" onclick="nav(this,'legal')"><i class="ti ti-shield-check"></i>Legal España</div>
   </nav>
   <div class="status-bar">
     <span class="status-dot"></span>
@@ -60,12 +62,29 @@
 <!-- MAIN -->
 <main class="main">
 
-<!-- ══════════════ VARIEDADES ══════════════ -->
-<div class="view active" id="view-variedades">
+<!-- ══════════════ INICIO ══════════════ -->
+<div class="view active" id="view-inicio">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Variedades</div>
+    <div class="breadcrumb">Hydro Cannabis / Inicio</div>
+    <h1>Bienvenido</h1>
+    <p>Empieza por el checklist de configuración o repasa las buenas prácticas antes de tocar la instalación.</p>
+  </div>
+  <div id="inicioContent"></div>
+</div>
+
+<!-- ══════════════ VARIEDADES ══════════════ -->
+<div class="view" id="view-variedades">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Variedades</div>
     <h1>Variedades para hidropónico</h1>
     <p>8 cepas seleccionadas por rendimiento, adaptación al sistema RDWC/DWC y facilidad de cultivo en autoconsumo.</p>
+  </div>
+
+  <div class="monitor-toolbar">
+    <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
+    <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
+    <button type="button" class="btn btn-ghost" onclick="goToMonitor()"><i class="ti ti-dashboard"></i> Monitor</button>
+    <button type="button" class="btn btn-ghost" onclick="goToNutrientes()"><i class="ti ti-flask"></i> Nutrientes</button>
   </div>
 
   <div class="tabs" id="strainTabs">
@@ -83,9 +102,16 @@
 <!-- ══════════════ NUTRIENTES ══════════════ -->
 <div class="view" id="view-nutrientes">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Nutrientes</div>
+    <div class="breadcrumb">Hydro Cannabis / Nutrientes</div>
     <h1>Top 10 Nutrientes Hidropónico</h1>
     <p>Clasificados por eficacia contrastada en cultivos de cannabis en DWC/RDWC. Haz clic en cada uno para ver dosis y detalles completos.</p>
+  </div>
+
+  <div class="monitor-toolbar">
+    <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
+    <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
+    <button type="button" class="btn btn-ghost" onclick="goToMonitor()"><i class="ti ti-dashboard"></i> Monitor</button>
+    <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
   </div>
 
   <div class="nutri-rank" id="nutriList"></div>
@@ -94,17 +120,26 @@
 <!-- ══════════════ CULTIVO ══════════════ -->
 <div class="view" id="view-cultivo">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Mi Cultivo</div>
-    <h1>Configurar cultivo</h1>
-    <p>Define tu setup y obtén un plan personalizado semana a semana con todos los parámetros.</p>
+    <div class="breadcrumb">Hydro Cannabis / Checklist y cultivo</div>
+    <h1>Configuración guiada</h1>
+    <p>Checklist experto al primer inicio (sistema, clima, variedad, agua y nutriente). Si ya lo completaste, aquí verás tu cultivo activo o el asistente clásico.</p>
   </div>
+
+  <div class="monitor-toolbar">
+    <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
+    <button type="button" class="btn btn-ghost" onclick="goToMonitor()"><i class="ti ti-dashboard"></i> Monitor</button>
+    <button type="button" class="btn btn-ghost" onclick="goToSemanas()"><i class="ti ti-calendar-stats"></i> Calendario</button>
+    <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
+    <button type="button" class="btn btn-ghost" onclick="goToNutrientes()"><i class="ti ti-flask"></i> Nutrientes</button>
+  </div>
+
   <div id="cultivoContent"></div>
 </div>
 
 <!-- ══════════════ MONITOR ══════════════ -->
 <div class="view" id="view-monitor">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Monitor</div>
+    <div class="breadcrumb">Hydro Cannabis / Monitor</div>
     <h1>Monitor de cultivo</h1>
     <p>Estado en tiempo real y registro de eventos de tu cultivo activo.</p>
   </div>
@@ -114,7 +149,7 @@
 <!-- ══════════════ SEMANAS ══════════════ -->
 <div class="view" id="view-semanas">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Calendario</div>
+    <div class="breadcrumb">Hydro Cannabis / Calendario</div>
     <h1>Calendario semanal</h1>
     <p>Tabla completa semana a semana con EC, pH, nutrientes y acciones para cada fase.</p>
   </div>
@@ -124,9 +159,16 @@
 <!-- ══════════════ AMBIENTAL ══════════════ -->
 <div class="view" id="view-ambiental">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Parámetros Ambientales</div>
+    <div class="breadcrumb">Hydro Cannabis / Parámetros Ambientales</div>
     <h1>Parámetros completos</h1>
     <p>Todas las variables que debes controlar en cada fase: temperatura, humedad, VPD, CO₂, luz, agua y aire.</p>
+  </div>
+
+  <div class="monitor-toolbar">
+    <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
+    <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
+    <button type="button" class="btn btn-ghost" onclick="goToMonitor()"><i class="ti ti-dashboard"></i> Monitor</button>
+    <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
   </div>
 
   <div class="card">
@@ -236,9 +278,16 @@
 <!-- ══════════════ LEGAL ══════════════ -->
 <div class="view" id="view-legal">
   <div class="page-header">
-    <div class="breadcrumb">HydroGrow Pro / Legal España</div>
+    <div class="breadcrumb">Hydro Cannabis / Legal España</div>
     <h1>Marco legal en España</h1>
     <p>Situación legal del autocultivo de cannabis a mayo de 2025. Esta información es orientativa — consulta siempre un abogado especialista.</p>
+  </div>
+
+  <div class="monitor-toolbar">
+    <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
+    <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
+    <button type="button" class="btn btn-ghost" onclick="goToMonitor()"><i class="ti ti-dashboard"></i> Monitor</button>
+    <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
   </div>
 
   <div class="legal-section">
@@ -306,6 +355,7 @@
 <script src="js/cultivo.js"></script>
 <script src="js/monitor.js"></script>
 <script src="js/semanas.js"></script>
+<script src="js/home.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

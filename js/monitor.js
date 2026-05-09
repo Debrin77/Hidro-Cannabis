@@ -3,7 +3,7 @@
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
-    mc.innerHTML=`<div class="alert info"><i class="ti ti-info-circle"></i><p>Activa un cultivo en <strong>Mi Cultivo</strong> para usar el monitor.</p></div>`;
+    mc.innerHTML=`<div class="monitor-toolbar"><button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button><button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button></div><div class="alert info"><i class="ti ti-info-circle"></i><p>Activa un cultivo desde <strong>Inicio</strong> o <strong>Checklist y cultivo</strong> para usar el monitor.</p></div>`;
     return;
   }
   const s = myGrow.strain;
@@ -17,6 +17,11 @@ function renderMonitor(){
     : '';
 
   mc.innerHTML=`
+    <div class="monitor-toolbar">
+      <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
+      <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
+      <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
+    </div>
     ${climateCard}
     <div class="grid4" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">pH actual</div><div class="metric-val c-blue">6.1</div><div class="metric-unit">5.8–6.5 objetivo</div><div class="metric-bar"><div class="metric-fill" style="width:72%;background:var(--b400)"></div></div></div>
