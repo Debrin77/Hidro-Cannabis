@@ -191,6 +191,8 @@
 .plant-trend-svg{width:100%;min-width:700px;height:auto;display:block}
 .trend-bg{fill:var(--surface2)}
 .trend-axis{stroke:var(--border2);stroke-width:1.5}
+.trend-ph-band{fill:rgba(52,144,220,0.08)}
+.trend-ec-band{fill:rgba(76,175,48,0.08)}
 .trend-ph{stroke:var(--b400);stroke-width:2.5}
 .trend-ec{stroke:var(--g400);stroke-width:2.5}
 .trend-ph-dot{fill:var(--b200)}

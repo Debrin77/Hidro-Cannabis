@@ -170,17 +170,21 @@ function renderPlantTrendCard() {
   const plantId = myGrow.selectedPlant || 1;
   const rows = getMeasurementsByPlant(myGrow, plantId).slice(0, 10).reverse();
   if (!rows.length) return '';
+  const strain = myGrow.strain;
+  const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
+  const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
+  const phaseRef = getPhaseReference(strain, weekNum);
   return `
     <div class="card-sm" style="margin-top:1rem">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">
-        Tendencia pH y EC · Planta P${plantId}
+        Tendencia pH y EC · Planta P${plantId} · ${phaseRef.phase}
       </div>
-      ${renderPlantTrendSvg(rows)}
+      ${renderPlantTrendSvg(rows, phaseRef)}
     </div>
   `;
 }
 
-function renderPlantTrendSvg(rows) {
+function renderPlantTrendSvg(rows, phaseRef) {
   const valid = rows.filter((r) => Number.isFinite(r.ph) && Number.isFinite(r.ec));
   if (valid.length < 2) {
     return `<div class="alert info"><i class="ti ti-info-circle"></i><p>Necesitas al menos 2 mediciones válidas para ver la tendencia.</p></div>`;
@@ -202,6 +206,10 @@ function renderPlantTrendSvg(rows) {
   const toY = (v, min, max) => padT + (1 - (Math.max(min, Math.min(max, v)) - min) / (max - min)) * innerH;
   const phPoints = valid.map((r, i) => `${toX(i)},${toY(r.ph, phMin, phMax)}`).join(' ');
   const ecPoints = valid.map((r, i) => `${toX(i)},${toY(r.ec, ecMin, ecMax)}`).join(' ');
+  const phTargetY1 = toY(phaseRef.phMin, phMin, phMax);
+  const phTargetY2 = toY(phaseRef.phMax, phMin, phMax);
+  const ecTargetY1 = toY(phaseRef.ecMin, ecMin, ecMax);
+  const ecTargetY2 = toY(phaseRef.ecMax, ecMin, ecMax);
 
   const labels = valid.map((r, i) => {
     const x = toX(i);
@@ -215,13 +223,16 @@ function renderPlantTrendSvg(rows) {
       <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${height-padB}" class="trend-axis"></line>
       <line x1="${padL}" y1="${height-padB}" x2="${width-padR}" y2="${height-padB}" class="trend-axis"></line>
 
+      <rect x="${padL}" y="${Math.min(phTargetY1, phTargetY2)}" width="${innerW}" height="${Math.abs(phTargetY2-phTargetY1)}" class="trend-ph-band"></rect>
+      <rect x="${padL}" y="${Math.min(ecTargetY1, ecTargetY2)}" width="${innerW}" height="${Math.abs(ecTargetY2-ecTargetY1)}" class="trend-ec-band"></rect>
+
       <polyline points="${phPoints}" fill="none" class="trend-ph"></polyline>
       <polyline points="${ecPoints}" fill="none" class="trend-ec"></polyline>
 
       ${valid.map((r, i) => `<circle cx="${toX(i)}" cy="${toY(r.ph, phMin, phMax)}" r="3" class="trend-ph-dot"></circle>`).join('')}
       ${valid.map((r, i) => `<circle cx="${toX(i)}" cy="${toY(r.ec, ecMin, ecMax)}" r="3" class="trend-ec-dot"></circle>`).join('')}
 
-      <text x="${padL}" y="12" class="trend-title">pH (azul) y EC (verde)</text>
+      <text x="${padL}" y="12" class="trend-title">pH (azul) y EC (verde) · banda objetivo por fase</text>
       ${labels}
     </svg>
   `;
