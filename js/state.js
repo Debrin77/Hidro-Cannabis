@@ -4,8 +4,10 @@ let selectedStrain = null;
 let myGrow = null;
 let wizStep = 0;
 let wizData = {};
+let appConfig = null;
 
 const STORAGE_KEY = 'hydrogrow-pro.v1.myGrow';
+const APP_CONFIG_KEY = 'hydrogrow-pro.v1.appConfig';
 const THEME_KEY = 'hydrogrow-pro.v1.theme';
 
 function serializeGrow(grow) {
@@ -62,6 +64,28 @@ function loadGrowState() {
 function clearGrowState() {
   myGrow = null;
   localStorage.removeItem(STORAGE_KEY);
+}
+
+function loadAppConfig() {
+  try {
+    const raw = localStorage.getItem(APP_CONFIG_KEY);
+    appConfig = raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn('No se pudo recuperar la configuración inicial.', error);
+    appConfig = null;
+  }
+}
+
+function saveAppConfig() {
+  try {
+    if (!appConfig) {
+      localStorage.removeItem(APP_CONFIG_KEY);
+      return;
+    }
+    localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
+  } catch (error) {
+    console.warn('No se pudo guardar la configuración inicial.', error);
+  }
 }
 
 function applyTheme(theme) {

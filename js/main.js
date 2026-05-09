@@ -1,6 +1,7 @@
 // Init
 
 initTheme();
+loadAppConfig();
 renderStrains('all');
 renderNutrientes();
 loadGrowState();

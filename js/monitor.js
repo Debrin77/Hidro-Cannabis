@@ -12,8 +12,12 @@ function renderMonitor(){
   const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
   const selectedPlant = myGrow.selectedPlant || 1;
   const smartAlerts = buildSmartAlerts(myGrow, s, weekNum);
+  const climateCard = myGrow.climate
+    ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>${myGrow.location || 'Ubicación'} (${myGrow.placement})</strong> · ${myGrow.climate.summary} · ${myGrow.climate.temperature}°C · HR ${myGrow.climate.humidity}% · Viento ${myGrow.climate.wind} km/h · Fuente: ${myGrow.climate.source}</p></div>`
+    : '';
 
   mc.innerHTML=`
+    ${climateCard}
     <div class="grid4" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">pH actual</div><div class="metric-val c-blue">6.1</div><div class="metric-unit">5.8–6.5 objetivo</div><div class="metric-bar"><div class="metric-fill" style="width:72%;background:var(--b400)"></div></div></div>
       <div class="metric"><div class="metric-label">EC actual</div><div class="metric-val c-green">${s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill" style="width:${Math.min(100,s.ecFlower/3*100).toFixed(0)}%;background:var(--g400)"></div></div></div>

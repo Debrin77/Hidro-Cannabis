@@ -12,11 +12,174 @@ function startGrow(id){
 
 function renderCultivo(){
   if(myGrow){ renderActiveGrow(); return; }
+  if(!appConfig?.completed){ renderInitialOnboarding(); return; }
   document.getElementById('cultivoContent').innerHTML=`
     <div class="wizard-progress">${[0,1,2,3].map(i=>`<div class="wiz-step ${i<wizStep?'done':i===wizStep?'active':''}"></div>`).join('')}</div>
     <div id="wizBody"></div>
   `;
   renderWizStep();
+}
+
+function renderInitialOnboarding() {
+  const cfg = appConfig || {};
+  const errorBox = cfg.error ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${cfg.error}</p></div>` : '';
+  const weatherBox = cfg.climate
+    ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>Clima detectado:</strong> ${cfg.climate.summary} · ${cfg.climate.temperature}°C · HR ${cfg.climate.humidity}% · Viento ${cfg.climate.wind} km/h · Fuente: ${cfg.climate.source}</p></div>`
+    : `<div class="alert info"><i class="ti ti-info-circle"></i><p>Aún sin análisis climático. Pulsa "Analizar clima" tras indicar ubicación.</p></div>`;
+
+  document.getElementById('cultivoContent').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-rocket"></i>Bienvenida Pro · Primer inicio</div></div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:0.8rem">HydroGrow Pro centraliza configuración, clima, nutrición y monitorización para minimizar errores y mejorar consistencia del cultivo.</p>
+      <div class="grid3">
+        <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Checklist guiado de sistema</div></div>
+        <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Cálculo de mezcla por tipo de agua</div></div>
+        <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Alertas inteligentes por planta</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-list-check"></i>Checklist de configuración inicial</div></div>
+      ${errorBox}
+      <div class="grid2">
+        <div class="form-group">
+          <label>Sistemas disponibles (elige uno o varios)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${['RDWC','DWC','NFT'].map(s=>`<label class="nutri-tag tag-level" style="cursor:pointer"><input type="checkbox" value="${s}" ${Array.isArray(cfg.systems)&&cfg.systems.includes(s)?'checked':''} onchange="toggleSystemType('${s}',this.checked)" style="margin-right:6px">${s}</label>`).join('')}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Sistema activo inicial</label>
+          <select id="onbSystem"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option></select>
+        </div>
+        <div class="form-group">
+          <label>Ubicación (ciudad o zona)</label>
+          <input id="onbLocation" type="text" value="${cfg.location||''}" placeholder="Ej: Castelló de la Plana">
+        </div>
+        <div class="form-group">
+          <label>Tipo de instalación</label>
+          <select id="onbPlacement"><option value="interior" ${(cfg.placement||'interior')==='interior'?'selected':''}>Interior</option><option value="exterior" ${cfg.placement==='exterior'?'selected':''}>Exterior</option></select>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="analyzeClimateContext()"><i class="ti ti-cloud-search"></i> Analizar clima (AEMET/Open-Meteo)</button>
+      ${weatherBox}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Cultivo y nutrición inicial</div></div>
+      <div class="grid2">
+        <div class="form-group"><label>Variedad</label><select id="onbStrain">${strains.map(s=>`<option value="${s.id}" ${(cfg.strainId||'ww')===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Edad (días)</label><input id="onbAge" type="number" min="0" max="120" value="${Number.isFinite(cfg.ageDays)?cfg.ageDays:0}"></div>
+        <div class="form-group"><label>Origen (semilla/esqueje/proveedor)</label><input id="onbOrigin" type="text" value="${cfg.origin||''}" placeholder="Ej: Esqueje propio"></div>
+        <div class="form-group"><label>Fecha trasplante al sistema</label><input id="onbTransplantDate" type="date" value="${cfg.transplantDate||new Date().toISOString().split('T')[0]}"></div>
+        <div class="form-group"><label>Nutriente principal</label><select id="onbNutri">${nutrients.map(n=>`<option value="${n.rank}" ${(cfg.nutri||1)===n.rank?'selected':''}>${n.rank}. ${n.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Tipo de agua</label><select id="onbWater"><option value="RO" ${(cfg.water||'RO')==='RO'?'selected':''}>Ósmosis</option><option value="destilada" ${cfg.water==='destilada'?'selected':''}>Destilada</option><option value="red" ${cfg.water==='red'?'selected':''}>Grifo</option></select></div>
+      </div>
+      <button class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
+    </div>
+  `;
+}
+
+function toggleSystemType(systemName, enabled) {
+  if (!appConfig) appConfig = {};
+  const list = Array.isArray(appConfig.systems) ? [...appConfig.systems] : [];
+  const exists = list.includes(systemName);
+  if (enabled && !exists) list.push(systemName);
+  if (!enabled && exists) list.splice(list.indexOf(systemName), 1);
+  appConfig.systems = list;
+  saveAppConfig();
+}
+
+async function analyzeClimateContext() {
+  if (!appConfig) appConfig = {};
+  appConfig.error = '';
+  appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
+  appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
+  appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
+  saveAppConfig();
+  if (!appConfig.location) {
+    appConfig.error = 'Debes indicar una ubicación para analizar clima.';
+    saveAppConfig();
+    renderInitialOnboarding();
+    return;
+  }
+  try {
+    const geoResp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(appConfig.location)}&count=1&language=es&format=json`);
+    const geoData = await geoResp.json();
+    const place = geoData?.results?.[0];
+    if (!place) throw new Error('Ubicación no encontrada');
+    const lat = place.latitude;
+    const lon = place.longitude;
+    const wxResp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`);
+    const wxData = await wxResp.json();
+    const current = wxData?.current || {};
+    appConfig.climate = {
+      source: 'Open-Meteo (fallback AEMET)',
+      lat,
+      lon,
+      station: place.name,
+      temperature: Number.isFinite(current.temperature_2m) ? current.temperature_2m.toFixed(1) : '—',
+      humidity: Number.isFinite(current.relative_humidity_2m) ? current.relative_humidity_2m : '—',
+      wind: Number.isFinite(current.wind_speed_10m) ? current.wind_speed_10m.toFixed(1) : '—',
+      summary: `Estación cercana: ${place.name}, ${place.country || ''}`,
+      weatherCode: current.weather_code,
+    };
+  } catch (error) {
+    appConfig.error = 'No se pudo obtener clima automático. Puedes continuar y configurar interior/exterior manualmente.';
+  }
+  saveAppConfig();
+  renderInitialOnboarding();
+}
+
+function completeInitialSetup() {
+  if (!appConfig) appConfig = {};
+  appConfig.error = '';
+  appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
+  appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
+  appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
+  appConfig.strainId = document.getElementById('onbStrain')?.value || 'ww';
+  appConfig.ageDays = parseInt(document.getElementById('onbAge')?.value, 10) || 0;
+  appConfig.origin = (document.getElementById('onbOrigin')?.value || '').trim();
+  appConfig.transplantDate = document.getElementById('onbTransplantDate')?.value || new Date().toISOString().split('T')[0];
+  appConfig.nutri = parseInt(document.getElementById('onbNutri')?.value, 10) || 1;
+  appConfig.water = document.getElementById('onbWater')?.value || 'RO';
+  if (!Array.isArray(appConfig.systems) || !appConfig.systems.length) appConfig.systems = [appConfig.system];
+
+  if (!appConfig.location) {
+    appConfig.error = 'Debes indicar ubicación del sistema.';
+    saveAppConfig();
+    renderInitialOnboarding();
+    return;
+  }
+  if (!appConfig.origin) {
+    appConfig.error = 'Debes indicar el origen del cultivo (semilla/esqueje/proveedor).';
+    saveAppConfig();
+    renderInitialOnboarding();
+    return;
+  }
+  appConfig.completed = true;
+  saveAppConfig();
+
+  wizData = {
+    strainId: appConfig.strainId,
+    plants: 2,
+    system: appConfig.system,
+    m2: 1.2,
+    light: 'LED',
+    technique: 'ScrOG',
+    nutri: appConfig.nutri,
+    water: appConfig.water,
+    ambTemp: 22,
+    ambHum: appConfig.placement === 'exterior' ? 60 : 55,
+    startDate: appConfig.transplantDate,
+    co2: appConfig.placement === 'interior' ? 'si' : 'no',
+    ageDays: appConfig.ageDays,
+    origin: appConfig.origin,
+    location: appConfig.location,
+    placement: appConfig.placement,
+    climate: appConfig.climate || null,
+  };
+  activateGrow();
 }
 
 function renderWizStep(){
@@ -167,6 +330,12 @@ function activateGrow(){
     ambHum: wizData.ambHum||55,
     co2: wizData.co2||'no',
     startDate: new Date(wizData.startDate||new Date()),
+    ageDays: wizData.ageDays || 0,
+    origin: wizData.origin || 'No especificado',
+    transplantDate: wizData.startDate || new Date().toISOString().split('T')[0],
+    location: wizData.location || appConfig?.location || '',
+    placement: wizData.placement || appConfig?.placement || 'interior',
+    climate: wizData.climate || appConfig?.climate || null,
     reservoirL: 60,
     sourceEC: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).baseEC,
     sourcePH: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).basePH,
