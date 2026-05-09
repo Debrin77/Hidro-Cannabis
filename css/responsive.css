@@ -10,4 +10,6 @@
   .gauge-grid{grid-template-columns:repeat(2,1fr)}
   .grid4{grid-template-columns:repeat(2,1fr)}
   .env-grid{grid-template-columns:repeat(3,1fr)}
+  .system-svg{min-width:560px}
+  .plant-trend-svg{min-width:560px}
 }

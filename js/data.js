@@ -183,3 +183,22 @@ const nutrients = [
    pros:'Precio imbatible (€/kg). Control total de la fórmula. Ideal para escalar producción.',
    cons:'Requiere balanza de precisión. Más cálculo/preparación. No apto para principiantes.'}
 ];
+
+const waterProfiles = {
+  destilada: { label: 'Destilada', baseEC: 0.02, basePH: 6.0, calmagMlL: 0.6 },
+  RO: { label: 'Ósmosis', baseEC: 0.1, basePH: 6.1, calmagMlL: 0.4 },
+  red: { label: 'Grifo', baseEC: 0.45, basePH: 7.2, calmagMlL: 0.1 },
+};
+
+const doseByNutrientRank = {
+  1: { baseMlL: 3.6, supplementsMlL: 0.5 },
+  2: { baseMlL: 3.0, supplementsMlL: 0.6 },
+  3: { baseMlL: 3.8, supplementsMlL: 0.6 },
+  4: { baseMlL: 3.2, supplementsMlL: 0.5 },
+  5: { baseMlL: 3.9, supplementsMlL: 0.7 },
+  6: { baseMlL: 2.8, supplementsMlL: 0.4 },
+  7: { baseMlL: 3.1, supplementsMlL: 0.6 },
+  8: { baseMlL: 3.0, supplementsMlL: 0.5 },
+  9: { baseMlL: 3.3, supplementsMlL: 0.6 },
+  10: { baseMlL: 2.4, supplementsMlL: 0.4 },
+};

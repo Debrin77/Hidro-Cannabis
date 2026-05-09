@@ -167,6 +167,11 @@ function activateGrow(){
     ambHum: wizData.ambHum||55,
     co2: wizData.co2||'no',
     startDate: new Date(wizData.startDate||new Date()),
+    reservoirL: 60,
+    sourceEC: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).baseEC,
+    sourcePH: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).basePH,
+    selectedPlant: 1,
+    measurements: [],
     log: [
       {date:new Date().toISOString(),text:'Cultivo activado: '+s.name+' en '+wizData.system,type:'ok'},
       {date:new Date().toISOString(),text:'Germinación iniciada. Solución EC 0.3 mS/cm · pH 5.5',type:'info'}
@@ -195,6 +200,9 @@ function renderActiveGrow(){
   else if(weekNum<=s.vegW+s.flowerW){phase='Engorde';phClass='ph-engorde';currentEC=s.ecPeak;currentPH=s.phFlower;lightSched='12/12';humidity='35–50%';tempRange='18–24°C';}
   else{phase='Flush / Cosecha';phClass='ph-flush';currentEC=0.2;currentPH='6.0–6.5';lightSched='12/12';humidity='35–45%';tempRange='18–22°C';}
   currentEC = Math.round(currentEC*10)/10;
+  const mixPlan = calculateMixPlan(myGrow, n, phase);
+  const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
+  const selectedPlantInfo = getSelectedPlantInfo(myGrow, s, weekNum, phase);
 
   const segs = Array.from({length:totalW},(_,i)=>{
     let cls='tl-veg';
@@ -253,6 +261,70 @@ function renderActiveGrow(){
             'Floración plena. '+s.nutriProfile.flower}
         </div>
       </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-adjustments"></i>Configuración manual del sistema</div></div>
+        <div class="grid2">
+          <div class="form-group">
+            <label>Tipo de agua</label>
+            <select id="cfgWater" onchange="updateMixConfig()">
+              <option value="RO" ${myGrow.water==='RO'?'selected':''}>Ósmosis</option>
+              <option value="destilada" ${myGrow.water==='destilada'?'selected':''}>Destilada</option>
+              <option value="red" ${myGrow.water==='red'?'selected':''}>Grifo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Volumen depósito (L)</label>
+            <input id="cfgReservoir" type="number" min="5" max="1000" step="1" value="${myGrow.reservoirL||60}" onchange="updateMixConfig()">
+          </div>
+          <div class="form-group">
+            <label>EC agua base (mS/cm)</label>
+            <input id="cfgSourceEC" type="number" min="0" max="2.5" step="0.01" value="${myGrow.sourceEC||0.1}" onchange="updateMixConfig()">
+          </div>
+          <div class="form-group">
+            <label>pH agua base</label>
+            <input id="cfgSourcePH" type="number" min="4.5" max="9" step="0.1" value="${myGrow.sourcePH||6.1}" onchange="updateMixConfig()">
+          </div>
+        </div>
+        <div class="alert info"><i class="ti ti-database"></i><p>Estos valores se guardan en memoria local para tus próximos cálculos.</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-calculator"></i>Cálculo automático de mezcla</div></div>
+        <div class="param-row"><span class="param-key">Fase</span><span class="param-val">${phase}</span></div>
+        <div class="param-row"><span class="param-key">Agua</span><span class="param-val">${mixPlan.waterLabel}</span></div>
+        <div class="param-row"><span class="param-key">Nutriente base</span><span class="param-val green">${mixPlan.baseMl} mL</span></div>
+        <div class="param-row"><span class="param-key">CalMag recomendado</span><span class="param-val amber">${mixPlan.calmagMl} mL</span></div>
+        <div class="param-row"><span class="param-key">Aditivos</span><span class="param-val">${mixPlan.additivesMl} mL</span></div>
+        <div class="param-row"><span class="param-key">EC estimada final</span><span class="param-val blue">${mixPlan.estimatedEC} mS/cm</span></div>
+        <div class="param-row"><span class="param-key">pH objetivo sugerido</span><span class="param-val purple">${mixPlan.targetPH}</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (${myGrow.system})</div>
+        <button class="btn btn-ghost" onclick="exportSystemSvg()" style="padding:7px 12px;font-size:11px"><i class="ti ti-download"></i> Exportar SVG</button>
+      </div>
+      <div class="system-svg-wrap">${systemSvg}</div>
+      <div class="grid2" style="margin-top:0.75rem">
+        <div class="card-sm">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Planta seleccionada</div>
+          <div class="param-row"><span class="param-key">ID planta</span><span class="param-val">${selectedPlantInfo.plantLabel}</span></div>
+          <div class="param-row"><span class="param-key">Cultivar</span><span class="param-val">${selectedPlantInfo.cultivar}</span></div>
+          <div class="param-row"><span class="param-key">Estado semanal</span><span class="param-val">${phase}</span></div>
+          <div class="param-row"><span class="param-key">Rendimiento estimado/planta</span><span class="param-val c-amber">${selectedPlantInfo.estimatedPlantYield} g</span></div>
+        </div>
+        <div class="card-sm">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Última medición asociada</div>
+          <div class="param-row"><span class="param-key">pH</span><span class="param-val blue">${selectedPlantInfo.latestPH}</span></div>
+          <div class="param-row"><span class="param-key">EC</span><span class="param-val green">${selectedPlantInfo.latestEC}</span></div>
+          <div class="param-row"><span class="param-key">Temp. agua</span><span class="param-val purple">${selectedPlantInfo.latestWaterTemp}</span></div>
+          <div class="param-row"><span class="param-key">Fecha medición</span><span class="param-val">${selectedPlantInfo.latestDate}</span></div>
+        </div>
+      </div>
+      <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista prototipo cenital. Se adapta al sistema elegido y al número de plantas configurado.</p></div>
     </div>
 
     <button class="btn btn-ghost" style="margin-top:0.5rem" onclick="resetGrow()">
@@ -341,4 +413,213 @@ function goStep4() {
   wizData.co2 = document.getElementById('wCO2')?.value || 'no';
   wizStep = 4;
   renderWizStep();
+}
+
+function updateMixConfig() {
+  if (!myGrow) return;
+  const water = document.getElementById('cfgWater')?.value || 'RO';
+  const profile = waterProfiles[water] || waterProfiles.RO;
+  const reservoirL = parseFloat(document.getElementById('cfgReservoir')?.value);
+  const sourceEC = parseFloat(document.getElementById('cfgSourceEC')?.value);
+  const sourcePH = parseFloat(document.getElementById('cfgSourcePH')?.value);
+  myGrow.water = water;
+  myGrow.reservoirL = Number.isFinite(reservoirL) ? Math.max(5, reservoirL) : 60;
+  myGrow.sourceEC = Number.isFinite(sourceEC) ? Math.max(0, sourceEC) : profile.baseEC;
+  myGrow.sourcePH = Number.isFinite(sourcePH) ? sourcePH : profile.basePH;
+  saveGrowState();
+  renderActiveGrow();
+}
+
+function calculateMixPlan(grow, nutrient, phaseName) {
+  const water = waterProfiles[grow.water] || waterProfiles.RO;
+  const dose = doseByNutrientRank[nutrient.rank] || { baseMlL: 3, supplementsMlL: 0.5 };
+  const phaseMultiplier = phaseName.includes('Germ') ? 0.35 : phaseName.includes('Veg') ? 0.85 : phaseName.includes('Flush') ? 0.1 : 1;
+  const reservoirL = Number.isFinite(grow.reservoirL) ? grow.reservoirL : 60;
+  const sourceEC = Number.isFinite(grow.sourceEC) ? grow.sourceEC : water.baseEC;
+  const baseMl = (dose.baseMlL * phaseMultiplier * reservoirL).toFixed(1);
+  const calmagMl = (water.calmagMlL * reservoirL * (phaseName.includes('Flush') ? 0 : 1)).toFixed(1);
+  const additivesMl = (dose.supplementsMlL * phaseMultiplier * reservoirL).toFixed(1);
+  const estimatedEC = (sourceEC + (dose.baseMlL * phaseMultiplier * 0.35) + (water.calmagMlL * 0.2)).toFixed(2);
+  const targetPH = phaseName.includes('Veg') ? '5.7–6.0' : phaseName.includes('Flush') ? '6.0–6.2' : '5.8–6.2';
+  return {
+    waterLabel: water.label,
+    baseMl,
+    calmagMl,
+    additivesMl,
+    estimatedEC,
+    targetPH,
+  };
+}
+
+function renderSystemSvg(grow, strain, weekNum, phaseName) {
+  const plantCount = Math.max(1, Math.min(8, parseInt(grow.plants, 10) || 1));
+  return grow.system === 'RDWC'
+    ? renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName)
+    : renderDwcSvg(grow, strain, plantCount, weekNum, phaseName);
+}
+
+function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
+  const perRow = Math.ceil(plantCount / 2);
+  const nodeSpacing = 85;
+  const startX = 80;
+  const topY = 95;
+  const bottomY = 235;
+  const nodes = [];
+  for (let i = 0; i < plantCount; i++) {
+    const row = i < perRow ? 0 : 1;
+    const col = row === 0 ? i : i - perRow;
+    const x = startX + col * nodeSpacing;
+    const y = row === 0 ? topY : bottomY;
+    nodes.push({ x, y, label: `P${i + 1}`, index: i + 1 });
+  }
+
+  const pipes = [];
+  for (let i = 0; i < perRow - 1; i++) {
+    const x1 = startX + i * nodeSpacing + 24;
+    const x2 = startX + (i + 1) * nodeSpacing - 24;
+    pipes.push(`<line x1="${x1}" y1="${topY}" x2="${x2}" y2="${topY}" class="pipe" />`);
+  }
+  const bottomCount = plantCount - perRow;
+  for (let i = 0; i < Math.max(0, bottomCount - 1); i++) {
+    const x1 = startX + i * nodeSpacing + 24;
+    const x2 = startX + (i + 1) * nodeSpacing - 24;
+    pipes.push(`<line x1="${x1}" y1="${bottomY}" x2="${x2}" y2="${bottomY}" class="pipe" />`);
+  }
+  if (bottomCount > 0) {
+    pipes.push(`<line x1="${startX + 8}" y1="${topY + 24}" x2="${startX + 8}" y2="${bottomY - 24}" class="pipe" />`);
+    const rightX = startX + (Math.max(perRow, bottomCount) - 1) * nodeSpacing + 8;
+    pipes.push(`<line x1="${rightX}" y1="${topY + 24}" x2="${rightX}" y2="${bottomY - 24}" class="pipe" />`);
+  }
+
+  const reservoirX = startX + Math.max(perRow, bottomCount, 1) * nodeSpacing + 30;
+  const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  return `
+    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama cenital RDWC">
+      <defs>
+        <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3490dc"></path>
+        </marker>
+      </defs>
+      <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
+      <text x="28" y="38" class="svg-title">RDWC · Circuito recirculante cenital</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · Cultivar ${cultivar}</text>
+
+      ${pipes.join('')}
+      <line x1="${reservoirX - 15}" y1="${topY}" x2="${reservoirX - 15}" y2="${bottomY}" class="pipe flow" marker-end="url(#arrowBlue)" />
+
+      ${nodes.map(node=>`
+        <g class="plant-node" onclick="selectPlantInDiagram(${node.index})">
+          <rect x="${node.x-24}" y="${node.y-24}" width="48" height="48" rx="8" class="bucket ${grow.selectedPlant===node.index?'bucket-selected':''}"></rect>
+          <circle cx="${node.x}" cy="${node.y}" r="11" class="netpot"></circle>
+          <text x="${node.x}" y="${node.y+4}" class="bucket-label">${node.label}</text>
+          <text x="${node.x}" y="${node.y+35}" class="cultivar-label">${cultivar}</text>
+        </g>
+      `).join('')}
+
+      <g>
+        <rect x="${reservoirX}" y="140" width="90" height="110" rx="10" class="reservoir"></rect>
+        <text x="${reservoirX+45}" y="198" class="reservoir-label">DEPÓSITO</text>
+        <text x="${reservoirX+45}" y="216" class="reservoir-sub">${grow.reservoirL || 60} L</text>
+      </g>
+
+      <g>
+        <rect x="${reservoirX+112}" y="182" width="48" height="28" rx="6" class="pump"></rect>
+        <text x="${reservoirX+136}" y="200" class="pump-label">BOMBA</text>
+      </g>
+    </svg>
+  `;
+}
+
+function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
+  const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  const maxVisible = Math.min(plantCount, 5);
+  const spacing = 130;
+  const startX = 150;
+  const y = 120;
+  const waterY = 178;
+  return `
+    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama cenital DWC">
+      <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
+      <text x="28" y="38" class="svg-title">DWC · Depósito único cenital</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · Cultivar ${cultivar}</text>
+
+      <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
+      <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
+      <text x="370" y="305" class="reservoir-sub">Depósito ${grow.reservoirL || 60} L · Agua ${waterProfiles[grow.water]?.label || 'Ósmosis'}</text>
+
+      ${Array.from({length:maxVisible}, (_,i)=>{
+        const x = startX + i * spacing;
+        const idx = i + 1;
+        return `
+          <g class="plant-node" onclick="selectPlantInDiagram(${idx})">
+            <circle cx="${x}" cy="${y}" r="22" class="netpot ${grow.selectedPlant===idx?'bucket-selected':''}"></circle>
+            <text x="${x}" y="${y+5}" class="bucket-label">P${i+1}</text>
+            <text x="${x}" y="${y+42}" class="cultivar-label">${cultivar}</text>
+            <line x1="${x}" y1="${y+24}" x2="${x}" y2="${waterY+18}" class="root-line"></line>
+          </g>
+        `;
+      }).join('')}
+
+      <g>
+        <rect x="700" y="170" width="66" height="44" rx="8" class="pump"></rect>
+        <line x1="700" y1="192" x2="650" y2="192" class="pipe flow"></line>
+        <text x="733" y="197" class="pump-label">AIRE</text>
+      </g>
+    </svg>
+  `;
+}
+
+function selectPlantInDiagram(index) {
+  if (!myGrow) return;
+  const maxPlants = Math.max(1, Math.min(8, parseInt(myGrow.plants, 10) || 1));
+  myGrow.selectedPlant = Math.max(1, Math.min(maxPlants, index));
+  saveGrowState();
+  renderActiveGrow();
+}
+
+function getSelectedPlantInfo(grow, strain) {
+  const selected = grow.selectedPlant || 1;
+  const totalPlants = Math.max(1, parseInt(grow.plants, 10) || 1);
+  const totalYield = Math.round(grow.m2 * parseInt(strain.yieldIn) * 0.85);
+  const perPlant = Math.round(totalYield / totalPlants);
+  const latest = getLatestMeasurementForPlant(grow, selected);
+  return {
+    plantLabel: `P${selected} / ${totalPlants}`,
+    cultivar: strain.name,
+    estimatedPlantYield: perPlant,
+    latestPH: latest && Number.isFinite(latest.ph) ? latest.ph.toFixed(1) : '—',
+    latestEC: latest && Number.isFinite(latest.ec) ? `${latest.ec.toFixed(2)} mS/cm` : '—',
+    latestWaterTemp: latest && Number.isFinite(latest.waterTemp) ? `${latest.waterTemp.toFixed(1)}°C` : '—',
+    latestDate: latest ? `${new Date(latest.date).toLocaleDateString('es-ES')} ${new Date(latest.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}` : 'Sin registros',
+  };
+}
+
+function getPlantCount(grow) {
+  return Math.max(1, Math.min(8, parseInt(grow?.plants, 10) || 1));
+}
+
+function getMeasurementsByPlant(grow, plantId) {
+  const list = Array.isArray(grow?.measurements) ? grow.measurements : [];
+  return list.filter((m) => (m.plantId || 1) === plantId);
+}
+
+function getLatestMeasurementForPlant(grow, plantId) {
+  const list = getMeasurementsByPlant(grow, plantId);
+  return list.length ? list[0] : null;
+}
+
+function exportSystemSvg() {
+  const svgNode = document.querySelector('.system-svg-wrap .system-svg');
+  if (!svgNode) return;
+  const serializer = new XMLSerializer();
+  const svgMarkup = serializer.serializeToString(svgNode);
+  const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `hydrogrow-${(myGrow?.system||'sistema').toLowerCase()}-${new Date().toISOString().slice(0,10)}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

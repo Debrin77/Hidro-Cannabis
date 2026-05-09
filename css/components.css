@@ -164,6 +164,40 @@
 .wiz-step.done{background:var(--g500)}
 .wiz-step.active{background:var(--g300)}
 
+/* SYSTEM SVG */
+.system-svg-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius2);padding:10px;overflow:auto}
+.system-svg{width:100%;min-width:700px;height:auto;display:block}
+.svg-bg{fill:var(--surface)}
+.svg-title{fill:var(--text);font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
+.svg-sub{fill:var(--text3);font-family:'Inter',sans-serif;font-size:12px}
+.pipe{stroke:var(--border2);stroke-width:6;stroke-linecap:round}
+.pipe.flow{stroke:var(--b400)}
+.bucket{fill:rgba(52,144,220,0.18);stroke:var(--b400);stroke-width:2}
+.bucket-selected{stroke:var(--a200)!important;stroke-width:3}
+.netpot{fill:#1f4b80;stroke:#7ab8f0;stroke-width:2}
+.bucket-label{fill:#fff;font-family:'DM Mono',monospace;font-size:10px;text-anchor:middle}
+.cultivar-label{fill:var(--text2);font-family:'Inter',sans-serif;font-size:10px;text-anchor:middle}
+.reservoir{fill:rgba(76,175,48,0.15);stroke:var(--g400);stroke-width:2}
+.reservoir-label{fill:var(--g100);font-family:'DM Mono',monospace;font-size:12px;font-weight:600;text-anchor:middle}
+.reservoir-sub{fill:var(--text2);font-family:'Inter',sans-serif;font-size:11px;text-anchor:middle}
+.pump{fill:var(--surface3);stroke:var(--border2);stroke-width:2}
+.pump-label{fill:var(--a200);font-family:'DM Mono',monospace;font-size:10px;text-anchor:middle}
+.water{fill:rgba(52,144,220,0.45)}
+.root-line{stroke:rgba(232,240,228,0.55);stroke-width:2;stroke-linecap:round}
+.plant-node{cursor:pointer}
+.plant-node:hover .bucket,.plant-node:hover .netpot{filter:brightness(1.15)}
+
+/* PLANT TREND SVG */
+.plant-trend-svg{width:100%;min-width:700px;height:auto;display:block}
+.trend-bg{fill:var(--surface2)}
+.trend-axis{stroke:var(--border2);stroke-width:1.5}
+.trend-ph{stroke:var(--b400);stroke-width:2.5}
+.trend-ec{stroke:var(--g400);stroke-width:2.5}
+.trend-ph-dot{fill:var(--b200)}
+.trend-ec-dot{fill:var(--g300)}
+.trend-title{fill:var(--text2);font-family:'DM Mono',monospace;font-size:10px}
+.trend-label{fill:var(--text3);font-family:'DM Mono',monospace;font-size:9px;text-anchor:middle}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
