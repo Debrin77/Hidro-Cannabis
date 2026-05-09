@@ -12,7 +12,20 @@
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
+<body class="app-locked">
+<div class="splash-screen" id="splashScreen" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+  <div class="splash-card">
+    <img src="assets/icons/hydro-cannabis-logo.svg" alt="Logo Hydro Cannabis" class="splash-logo">
+    <p class="splash-kicker">Cultivo inteligente</p>
+    <h1 id="splashTitle">Hydro Cannabis</h1>
+    <p class="splash-sub">Controla tu sistema hidropónico, nutrición y seguimiento diario desde una sola app.</p>
+    <p class="splash-timer" id="splashTimer">Entrando automaticamente en 3s...</p>
+    <button class="btn btn-primary splash-enter-btn" onclick="enterApp()" type="button">
+      <i class="ti ti-playstation-circle"></i>
+      Entrar ahora
+    </button>
+  </div>
+</div>
 <div class="shell">
 
 <!-- SIDEBAR -->

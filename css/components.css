@@ -164,6 +164,75 @@
 .wiz-step.done{background:var(--g500)}
 .wiz-step.active{background:var(--g300)}
 
+/* SPLASH */
+.app-locked{overflow:hidden}
+.app-locked .shell{filter:blur(2px);pointer-events:none;user-select:none}
+.splash-screen{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(76,175,48,0.22), transparent 44%),
+    radial-gradient(circle at 80% 85%, rgba(52,144,220,0.18), transparent 42%),
+    linear-gradient(160deg, #070b09 0%, #0e1812 45%, #0d1a16 100%);
+  padding:20px;
+  opacity:1;
+  transition:opacity .35s ease,visibility .35s ease;
+}
+.splash-card{
+  width:min(560px,100%);
+  background:rgba(10,15,13,0.82);
+  border:1px solid var(--border2);
+  border-radius:18px;
+  padding:26px 24px 24px;
+  text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,0.45);
+  backdrop-filter:blur(8px);
+  transform:translateY(0) scale(1);
+  animation:splashIn .55s cubic-bezier(.2,.8,.2,1);
+}
+.splash-logo{
+  width:120px;height:120px;display:block;margin:0 auto 12px;
+  filter:drop-shadow(0 8px 18px rgba(76,175,48,0.22));
+}
+.splash-kicker{
+  margin:0 0 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--g300);font-family:'DM Mono',monospace;
+}
+.splash-card h1{
+  margin:0;
+  font-family:'Syne',sans-serif;
+  font-size:42px;
+  font-weight:700;
+  line-height:1.05;
+}
+.splash-sub{
+  margin:12px auto 0;
+  max-width:46ch;
+  color:var(--text2);
+  font-size:14px;
+  line-height:1.6;
+}
+.splash-timer{
+  margin:10px 0 0;
+  font-size:12px;
+  color:var(--text3);
+  font-family:'DM Mono',monospace;
+}
+.splash-enter-btn{margin-top:18px}
+.splash-screen.hidden{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+.splash-screen.hidden .splash-card{
+  transform:translateY(14px) scale(.98);
+  transition:transform .35s ease;
+}
+@keyframes splashIn{
+  from{opacity:0;transform:translateY(16px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
 /* SYSTEM SVG */
 .system-svg-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius2);padding:10px;overflow:auto}
 .system-svg{width:100%;min-width:700px;height:auto;display:block}

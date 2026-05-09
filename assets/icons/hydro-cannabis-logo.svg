@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="t d">
+  <title id="t">Hydro Cannabis logo</title>
+  <desc id="d">Logo with cannabis leaf and water drop.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172117"/>
+      <stop offset="1" stop-color="#0b1110"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9be15d"/>
+      <stop offset="1" stop-color="#2e8f45"/>
+    </linearGradient>
+    <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ec8ff"/>
+      <stop offset="1" stop-color="#2069c7"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <circle cx="128" cy="128" r="92" fill="#0f1a14" stroke="#294233" stroke-width="2"/>
+
+  <path d="M128 50c7 24 19 37 39 50-14 1-27-3-39-13 4 18 13 34 26 45-13-2-21-6-26-13v56h-8V119c-5 7-13 11-26 13 13-11 22-27 26-45-12 10-25 14-39 13 20-13 32-26 39-50h8z" fill="url(#leaf)" stroke="#1c5d34" stroke-width="3" stroke-linejoin="round"/>
+
+  <path d="M128 112c16 24 24 38 24 50 0 15-11 26-24 26s-24-11-24-26c0-12 8-26 24-50z" fill="url(#drop)" stroke="#9edcff" stroke-width="2"/>
+  <circle cx="121" cy="159" r="5" fill="#d9f2ff" opacity=".8"/>
+</svg>
