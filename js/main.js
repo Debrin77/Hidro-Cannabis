@@ -64,5 +64,6 @@ renderInicio();
 renderCultivo();
 renderMonitor();
 renderSemanas();
+renderHistorial();
 
 window.enterApp = enterApp;

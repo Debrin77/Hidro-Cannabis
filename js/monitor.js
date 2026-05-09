@@ -3,7 +3,7 @@
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
-    mc.innerHTML=`<div class="monitor-toolbar"><button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button><button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button></div><div class="alert info"><i class="ti ti-info-circle"></i><p>Activa un cultivo desde <strong>Inicio</strong> o <strong>Checklist y cultivo</strong> para usar el monitor.</p></div>`;
+    mc.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-gauge"></i></div><p>Aún no hay cultivo activo.</p><p class="empty-hint">Ve a <strong>Sistema</strong> y completa el checklist, o elige una variedad en <strong>Más → Variedades</strong>.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Abrir Sistema</button></div>`;
     return;
   }
   const s = myGrow.strain;
@@ -17,13 +17,8 @@ function renderMonitor(){
     : '';
 
   mc.innerHTML=`
-    <div class="monitor-toolbar">
-      <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
-      <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
-      <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
-    </div>
     ${climateCard}
-    <div class="grid4" style="margin-bottom:1rem">
+    <div class="grid4 monitor-metrics">
       <div class="metric"><div class="metric-label">pH actual</div><div class="metric-val c-blue">6.1</div><div class="metric-unit">5.8–6.5 objetivo</div><div class="metric-bar"><div class="metric-fill" style="width:72%;background:var(--b400)"></div></div></div>
       <div class="metric"><div class="metric-label">EC actual</div><div class="metric-val c-green">${s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill" style="width:${Math.min(100,s.ecFlower/3*100).toFixed(0)}%;background:var(--g400)"></div></div></div>
       <div class="metric"><div class="metric-label">Temp. agua</div><div class="metric-val c-purple">${s.tempWater+1}°C</div><div class="metric-unit">óptimo ${s.tempWater}–${s.tempWater+2}°C</div></div>
@@ -36,9 +31,9 @@ function renderMonitor(){
         <div class="log-list">
           ${myGrow.log.map(e=>`<div class="log-entry"><div class="log-icon ${e.type}"><i class="ti ti-${e.type==='ok'?'check':e.type==='warn'?'alert-triangle':'info-circle'}"></i></div><div><div class="log-text">${e.text}</div><div class="log-time">${new Date(e.date).toLocaleDateString('es-ES')} ${new Date(e.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('')}
         </div>
-        <div style="display:flex;gap:8px;margin-top:1rem">
-          <input id="logInput" type="text" placeholder="Añadir observación..." style="flex:1;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px">
-          <button class="btn btn-primary" onclick="addLog()" style="padding:8px 14px">Añadir</button>
+        <div class="log-add-bar">
+          <input id="logInput" class="input-grow" type="text" placeholder="Añadir observación...">
+          <button class="btn btn-primary btn--compact" onclick="addLog()" type="button">Añadir</button>
         </div>
       </div>
       <div class="card">
@@ -55,14 +50,14 @@ function renderMonitor(){
       <div class="card-header"><div class="card-title"><i class="ti ti-flask"></i>Nutriente activo: ${n.name}</div></div>
       <div class="grid2">
         <div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Dosis esta semana</div>
-          <div style="font-size:13px;color:var(--text2);line-height:1.8">
+          <div class="section-label">Dosis esta semana</div>
+          <div class="body-prose" style="line-height:1.8">
             ${weekNum<=1?n.phases.germ:weekNum<=s.vegW?n.phases.veg:weekNum>=s.vegW+s.flowerW?n.phases.flush:n.phases.flower}
           </div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Aditivos recomendados</div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px">${n.aditivos.map(a=>`<span style="font-size:11px;background:var(--surface2);color:var(--text2);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">${a}</span>`).join('')}</div>
+          <div class="section-label">Aditivos recomendados</div>
+          <div class="pill-tag-row">${n.aditivos.map(a=>`<span class="pill-tag">${a}</span>`).join('')}</div>
         </div>
       </div>
     </div>
@@ -153,7 +148,7 @@ function renderMeasurementsTable() {
     return `<div class="alert info" style="margin-top:1rem"><i class="ti ti-info-circle"></i><p>Aún no hay mediciones diarias guardadas para la planta P${plantId}.</p></div>`;
   }
   return `
-    <div style="margin-top:1rem;overflow-x:auto">
+    <div class="table-scroll" style="margin-top:1rem">
       <table class="week-table">
         <thead><tr><th>Fecha</th><th>Planta</th><th>pH</th><th>EC</th><th>Vol (L)</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>CO₂</th><th>Notas</th></tr></thead>
         <tbody>
@@ -184,8 +179,8 @@ function renderPlantTrendCard() {
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const phaseRef = getPhaseReference(strain, weekNum);
   return `
-    <div class="card-sm" style="margin-top:1rem">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">
+    <div class="card-sm trend-card">
+      <div class="section-label" style="margin-bottom:10px">
         Tendencia pH y EC · Planta P${plantId} · ${phaseRef.phase}
       </div>
       ${renderPlantTrendSvg(rows, phaseRef)}
@@ -322,3 +317,60 @@ function getPhaseReference(strain, weekNum) {
   }
   return { phase: 'Flush', ecMin: 0.1, ecMax: 0.4, phMin: 6.0, phMax: 6.5, humidityMin: 35, humidityMax: 45 };
 }
+
+function renderHistorialMeasurementsTable() {
+  const meas = Array.isArray(myGrow.measurements) ? [...myGrow.measurements] : [];
+  meas.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const rows = meas.slice(0, 40);
+  if (!rows.length) {
+    return `<div class="alert info"><i class="ti ti-info-circle"></i><p>No hay mediciones guardadas. Regístralas en <strong>Medir</strong>.</p></div>`;
+  }
+  return `
+    <div class="table-scroll" style="margin-top:0.5rem">
+      <table class="week-table">
+        <thead><tr><th>Fecha</th><th>Pl.</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Notas</th></tr></thead>
+        <tbody>
+          ${rows.map((r) => `<tr>
+            <td>${new Date(r.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+            <td class="ec-val">P${r.plantId || 1}</td>
+            <td class="ec-val">${Number.isFinite(r.ph) ? r.ph.toFixed(1) : '—'}</td>
+            <td class="ec-val">${Number.isFinite(r.ec) ? r.ec.toFixed(2) : '—'}</td>
+            <td>${Number.isFinite(r.volume) ? r.volume.toFixed(1) : '—'}</td>
+            <td>${Number.isFinite(r.waterTemp) ? r.waterTemp.toFixed(1) + '°C' : '—'}</td>
+            <td style="font-size:11px;max-width:140px">${r.note || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderHistorial() {
+  const host = document.getElementById('historialContent');
+  if (!host) return;
+  if (!myGrow) {
+    host.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay historial sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Sistema</button></div>`;
+    return;
+  }
+  const logHtml = (myGrow.log || [])
+    .slice(0, 50)
+    .map(
+      (e) => `<div class="log-entry">
+      <div class="log-icon ${e.type}"><i class="ti ti-${e.type === 'ok' ? 'check' : e.type === 'warn' ? 'alert-triangle' : 'info-circle'}"></i></div>
+      <div><div class="log-text">${e.text}</div><div class="log-time">${new Date(e.date).toLocaleString('es-ES')}</div></div>
+    </div>`,
+    )
+    .join('');
+  host.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Bitácora (${myGrow.strain.name})</div></div>
+      <div class="log-list">${logHtml || '<p class="text-muted">Sin entradas.</p>'}</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Mediciones recientes (todas las plantas)</div></div>
+      ${renderHistorialMeasurementsTable()}
+      <button type="button" class="btn btn-ghost historial-actions" onclick="navTo('monitor')"><i class="ti ti-plus"></i> Añadir medición en Medir</button>
+    </div>
+  `;
+}
+
+window.renderHistorial = renderHistorial;

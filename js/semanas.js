@@ -3,7 +3,7 @@
 function renderSemanas(){
   const sc=document.getElementById('semanasContent');
   if(!myGrow){
-    sc.innerHTML=`<div class="monitor-toolbar"><button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button><button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button></div><div class="alert info"><i class="ti ti-info-circle"></i><p>Activa un cultivo desde <strong>Inicio</strong> o <strong>Checklist y cultivo</strong> para ver el calendario semanal.</p></div>`;
+    sc.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-calendar-stats"></i></div><p>El calendario aparece cuando tengas un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Ir a Sistema</button></div>`;
     return;
   }
   const s = myGrow.strain;
@@ -58,18 +58,14 @@ function renderSemanas(){
     </tr>`);
   }
   sc.innerHTML=`
-    <div class="monitor-toolbar">
-      <button type="button" class="btn btn-ghost" onclick="goToInicio()"><i class="ti ti-home"></i> Volver a Inicio</button>
-      <button type="button" class="btn btn-ghost" onclick="goToConfigChecklist()"><i class="ti ti-list-check"></i> Checklist y cultivo</button>
-      <button type="button" class="btn btn-ghost" onclick="goToMonitor()"><i class="ti ti-dashboard"></i> Monitor</button>
-      <button type="button" class="btn btn-ghost" onclick="goToVariedades()"><i class="ti ti-seedling"></i> Variedades</button>
-    </div>
-    <div class="card" style="overflow-x:auto">
+    <div class="card card--table">
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar"></i>${s.name} — Calendario completo ${totalW} semanas · ${n.name.split(' ').slice(0,2).join(' ')}</div></div>
+      <div class="table-scroll">
       <table class="week-table">
         <thead><tr><th>Sem</th><th>Fase</th><th>EC (mS/cm)</th><th>pH</th><th>Luz</th><th>Humedad</th><th>Temp.</th><th>Acción principal</th></tr></thead>
         <tbody>${rows.join('')}</tbody>
       </table>
+      </div>
     </div>
     <div class="alert info"><i class="ti ti-info-circle"></i><p>Dosis nutriente de referencia: <strong>${n.name}</strong>. Ajustar siempre por respuesta de la planta — estas son guías, no valores absolutos. Cada fenotipo es único.</p></div>
   `;

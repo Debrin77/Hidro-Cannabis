@@ -18,7 +18,7 @@ function renderStrains(filter='all'){
         <div class="sstat"><span class="sstat-label">THC</span><span class="sstat-val hi">${s.thc}</span></div>
         <div class="sstat"><span class="sstat-label">Floración</span><span class="sstat-val">${s.flower}</span></div>
         <div class="sstat"><span class="sstat-label">Rendimiento</span><span class="sstat-val">${s.yieldIn} g/m²</span></div>
-        <div class="sstat"><span class="sstat-label">Sistema</span><span class="sstat-val" style="font-size:10px">${s.system.split('/')[0].trim()}</span></div>
+        <div class="sstat"><span class="sstat-label">Sistema</span><span class="sstat-val sstat-val--sm">${s.system.split('/')[0].trim()}</span></div>
         <div class="sstat"><span class="sstat-label">EC floración</span><span class="sstat-val hi">${s.ecFlower} mS/cm</span></div>
       </div>
     </div>
@@ -35,19 +35,19 @@ function selectStrain(id){
     <div class="card">
       <div class="detail-header">
         <div>
-          <span class="strain-type t-${s.type}" style="margin-bottom:8px;display:inline-block">${s.typeName}</span>
-          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px">${s.name}</div>
-          <div style="font-size:13px;color:var(--text3)">${s.bank} · ${s.diff}</div>
+          <span class="strain-type t-${s.type} strain-type--detail">${s.typeName}</span>
+          <h2 class="strain-detail-title">${s.name}</h2>
+          <p class="strain-detail-meta">${s.bank} · ${s.diff}</p>
         </div>
-        <button class="btn btn-primary" onclick="startGrow('${s.id}')"><i class="ti ti-plant"></i> Iniciar cultivo</button>
+        <button type="button" class="btn btn-primary" onclick="startGrow('${s.id}')"><i class="ti ti-plant" aria-hidden="true"></i> Iniciar cultivo</button>
       </div>
-      <div class="grid2" style="margin-bottom:1.25rem">
+      <div class="grid2 strain-detail-grid">
         <div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.7">${s.desc}</div>
-          <div style="font-size:11px;color:var(--a200);background:rgba(245,184,0,0.08);border:1px solid rgba(245,184,0,0.2);border-radius:8px;padding:8px 10px;line-height:1.6"><i class="ti ti-map-pin" style="font-size:12px"></i> ${s.ambNotes}</div>
+          <p class="body-prose strain-detail-desc">${s.desc}</p>
+          <div class="strain-amb-note"><i class="ti ti-map-pin" aria-hidden="true"></i><span>${s.ambNotes}</span></div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:8px">Parámetros técnicos</div>
+          <div class="section-label">Parámetros técnicos</div>
           <div class="param-row"><span class="param-key">EC vegetación</span><span class="param-val green">${s.ecVeg}–${(s.ecVeg+0.4).toFixed(1)} mS/cm</span></div>
           <div class="param-row"><span class="param-key">EC floración</span><span class="param-val green">${s.ecFlower} mS/cm</span></div>
           <div class="param-row"><span class="param-key">EC pico (semanas 5-7)</span><span class="param-val amber">${s.ecPeak} mS/cm</span></div>
@@ -60,13 +60,13 @@ function selectStrain(id){
       </div>
       <div class="grid2">
         <div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:8px">Nutrición recomendada</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.7"><strong style="color:var(--g400)">Vegetación:</strong> ${s.nutriProfile.veg}</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px"><strong style="color:var(--p400)">Floración:</strong> ${s.nutriProfile.flower}</div>
+          <div class="section-label">Nutrición recomendada</div>
+          <p class="strain-nutri-line"><strong class="c-green">Vegetación:</strong> ${s.nutriProfile.veg}</p>
+          <p class="strain-nutri-line"><strong class="c-purple">Floración:</strong> ${s.nutriProfile.flower}</p>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:8px">Tags</div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px">${s.tags.map(t=>`<span style="font-size:10px;background:rgba(76,175,48,0.12);color:var(--g300);padding:3px 10px;border-radius:20px;border:1px solid rgba(76,175,48,0.25);font-family:'DM Mono',monospace">${t}</span>`).join('')}</div>
+          <div class="section-label">Tags</div>
+          <div class="pill-tag-row">${s.tags.map(t=>`<span class="strain-tag-pill">${t}</span>`).join('')}</div>
         </div>
       </div>
     </div>

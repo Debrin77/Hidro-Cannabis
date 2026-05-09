@@ -3,8 +3,7 @@
 function startGrow(id){
   wizData.strainId = id;
   wizStep = 1;
-  const cultivoNav = document.querySelector('.nav-item[data-view="cultivo"]');
-  if (cultivoNav) nav(cultivoNav, 'cultivo');
+  navTo('cultivo');
 }
 
 function onOnboardingSystemTypeChange() {
@@ -40,7 +39,7 @@ function renderInitialOnboarding() {
   const ctlDisabled = sysActive !== 'RDWC';
   const sizingHtml = cfg.systemSizingResult
     ? renderSystemSizingHtml(cfg.systemSizingResult)
-    : `<div class="sizing-result"><p class="sizing-disclaimer" style="margin-top:0">Pulsa <strong>Calcular dimensionado</strong> para estimar bomba de aire, recirculación (RDWC) y diámetro de tubería orientativo.</p></div>`;
+    : `<div class="sizing-result"><p class="sizing-disclaimer sizing-disclaimer--flush">Pulsa <strong>Calcular dimensionado</strong> para estimar bomba de aire, recirculación (RDWC) y diámetro de tubería orientativo.</p></div>`;
 
   const errorBox = cfg.error ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${cfg.error}</p></div>` : '';
   const weatherBox = cfg.climate
@@ -50,18 +49,18 @@ function renderInitialOnboarding() {
   document.getElementById('cultivoContent').innerHTML = `
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-rocket"></i>Checklist experto · Primer inicio</div></div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:0.8rem"><strong>Hydro Cannabis</strong> centraliza sistema hidropónico, clima, nutrición (según tipo de agua) y monitorización diaria, alineado con buenas prácticas de cultivo en RDWC/DWC.</p>
-      <div class="grid3">
-        <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Checklist guiado de sistema</div></div>
-        <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Cálculo de mezcla por tipo de agua</div></div>
-        <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Alertas inteligentes por planta</div></div>
+      <p class="body-prose cultivo-intro"><strong>Hydro Cannabis</strong> centraliza sistema hidropónico, clima, nutrición (según tipo de agua) y monitorización diaria, alineado con buenas prácticas de cultivo en RDWC/DWC.</p>
+      <div class="grid3 cultivo-highlights">
+        <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Checklist guiado de sistema</p></div>
+        <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Cálculo de mezcla por tipo de agua</p></div>
+        <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Alertas inteligentes por planta</p></div>
       </div>
-      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
-        <label style="cursor:pointer;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text3);line-height:1.5">
-          <input type="checkbox" style="margin-top:3px" ${isSkipInitialWelcome()?'checked':''} onchange="toggleSkipInitialWelcome(this.checked)">
-          <span><strong style="color:var(--text2)">Modo desarrollo:</strong> saltar bienvenida y checklist e ir al asistente clásico. El registro del monitor (historial) no incluye este mensaje. Desmarca para recuperar la bienvenida.</span>
+      <div class="cultivo-divider">
+        <label class="checkbox-label">
+          <input type="checkbox" ${isSkipInitialWelcome()?'checked':''} onchange="toggleSkipInitialWelcome(this.checked)">
+          <span><strong>Modo desarrollo:</strong> saltar bienvenida y checklist e ir al asistente clásico. El registro del monitor (historial) no incluye este mensaje. Desmarca para recuperar la bienvenida.</span>
         </label>
-        <p style="font-size:11px;color:var(--text3);margin:0.6rem 0 0 1.5rem">Atajo URL: <code style="font-size:11px">?dev=1</code> o <code style="font-size:11px">?skipWelcome=1</code></p>
+        <p class="cultivo-dev-hint">Atajo URL: <code>?dev=1</code> o <code>?skipWelcome=1</code></p>
       </div>
     </div>
 
@@ -71,8 +70,8 @@ function renderInitialOnboarding() {
       <div class="grid2">
         <div class="form-group">
           <label>Sistemas disponibles (elige uno o varios)</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${['RDWC','DWC','NFT'].map(s=>`<label class="nutri-tag tag-level" style="cursor:pointer"><input type="checkbox" value="${s}" ${Array.isArray(cfg.systems)&&cfg.systems.includes(s)?'checked':''} onchange="toggleSystemType('${s}',this.checked)" style="margin-right:6px">${s}</label>`).join('')}
+          <div class="pill-tag-row">
+            ${['RDWC','DWC','NFT'].map(s=>`<label class="nutri-tag tag-level chip-check"><input type="checkbox" value="${s}" ${Array.isArray(cfg.systems)&&cfg.systems.includes(s)?'checked':''} onchange="toggleSystemType('${s}',this.checked)">${s}</label>`).join('')}
           </div>
         </div>
         <div class="form-group">
@@ -88,13 +87,13 @@ function renderInitialOnboarding() {
           <select id="onbPlacement"><option value="interior" ${(cfg.placement||'interior')==='interior'?'selected':''}>Interior</option><option value="exterior" ${cfg.placement==='exterior'?'selected':''}>Exterior</option></select>
         </div>
       </div>
-      <button class="btn btn-ghost" onclick="analyzeClimateContext()"><i class="ti ti-cloud-search"></i> Analizar clima (AEMET/Open-Meteo)</button>
+      <button type="button" class="btn btn-ghost" onclick="analyzeClimateContext()"><i class="ti ti-cloud-search"></i> Analizar clima (AEMET/Open-Meteo)</button>
       ${weatherBox}
     </div>
 
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Ingeniería del sistema · datos de montaje</div></div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:1rem">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> (regla habitual ~1 L/min por galón US por depósito en DWC) y de <strong>recirculación</strong> en RDWC (varios volúmenes/hora del circuito), además de pistas de tubería y materiales.</p>
+      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> (regla habitual ~1 L/min por galón US por depósito en DWC) y de <strong>recirculación</strong> en RDWC (varios volúmenes/hora del circuito), además de pistas de tubería y materiales.</p>
       <div class="alert warn"><i class="ti ti-alert-triangle"></i><p>Resultados <strong>orientativos</strong>: altura manométrica, codos y pérdidas reales pueden exigir una bomba mayor. Contrasta siempre con la hoja del fabricante.</p></div>
       <div class="grid2">
         <div class="form-group"><label>Número de sitios (cubos / macetas)</label><input id="onbSites" type="number" min="1" max="48" value="${sites}"></div>
@@ -121,7 +120,7 @@ function renderInitialOnboarding() {
         <div class="form-group"><label>Nutriente principal</label><select id="onbNutri">${nutrients.map(n=>`<option value="${n.rank}" ${(cfg.nutri||1)===n.rank?'selected':''}>${n.rank}. ${n.name}</option>`).join('')}</select></div>
         <div class="form-group"><label>Tipo de agua</label><select id="onbWater"><option value="RO" ${(cfg.water||'RO')==='RO'?'selected':''}>Ósmosis</option><option value="destilada" ${cfg.water==='destilada'?'selected':''}>Destilada</option><option value="red" ${cfg.water==='red'?'selected':''}>Grifo</option></select></div>
       </div>
-      <button class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
+      <button type="button" class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
     </div>
   `;
 }
@@ -244,11 +243,11 @@ function renderWizStep(){
   const errorBox = wizData.error ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${wizData.error}</p></div>` : '';
   const bodies = [
     // 0
-    `<div class="card" style="text-align:center;padding:3rem 2rem">
-      <div style="font-size:48px;margin-bottom:1rem">🌿</div>
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px">Configurar nuevo cultivo</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:2rem;max-width:360px;margin-left:auto;margin-right:auto">Sigue el asistente para obtener tu plan completo con parámetros exactos semana a semana.</div>
-      <button class="btn btn-primary" onclick="wizStep=1;renderWizStep()">Comenzar <i class="ti ti-arrow-right"></i></button>
+    `<div class="card cultivo-wizard-start">
+      <div class="cultivo-wizard-emoji" aria-hidden="true">🌿</div>
+      <div class="cultivo-wizard-title">Configurar nuevo cultivo</div>
+      <p class="cultivo-wizard-sub">Sigue el asistente para obtener tu plan completo con parámetros exactos semana a semana.</p>
+      <button type="button" class="btn btn-primary" onclick="wizStep=1;renderWizStep()">Comenzar <i class="ti ti-arrow-right"></i></button>
     </div>`,
     // 1 variedad
     `<div class="card">
@@ -264,8 +263,8 @@ function renderWizStep(){
       </div>
       ${s?`<div class="alert info"><i class="ti ti-info-circle"></i><p>Seleccionada: <strong>${s.name}</strong> — EC floración: ${s.ecFlower} mS/cm · pH: ${s.phFlower} · Duración: ${s.vegW+s.flowerW} semanas</p></div>`:''}
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="wizStep=0;renderWizStep()">Atrás</button>
-        <button class="btn btn-primary" onclick="goStep2()">Siguiente <i class="ti ti-arrow-right"></i></button>
+        <button type="button" class="btn btn-ghost" onclick="wizStep=0;renderWizStep()">Atrás</button>
+        <button type="button" class="btn btn-primary" onclick="goStep2()">Siguiente <i class="ti ti-arrow-right"></i></button>
       </div>
     </div>`,
     // 2 sistema
@@ -274,27 +273,27 @@ function renderWizStep(){
       ${errorBox}
       <div class="grid2">
         <div class="form-group"><label>Sistema hidropónico</label>
-          <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'sel':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'sel':''}>DWC</option><option value="NFT">NFT</option></select>
+          <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'selected':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${wizData.system==='NFT'?'selected':''}>NFT</option></select>
         </div>
         <div class="form-group"><label>Metros cuadrados</label>
           <input type="number" id="wM2" min="0.5" max="10" step="0.25" value="${wizData.m2||1.2}">
         </div>
         <div class="form-group"><label>Iluminación</label>
-          <select id="wLight"><option value="LED">LED Full Spectrum (recomendado)</option><option value="LEC">LEC CMH 315W</option><option value="HPS">HPS 600W</option></select>
+          <select id="wLight"><option value="LED" ${(wizData.light||'LED')==='LED'?'selected':''}>LED Full Spectrum (recomendado)</option><option value="LEC" ${wizData.light==='LEC'?'selected':''}>LEC CMH 315W</option><option value="HPS" ${wizData.light==='HPS'?'selected':''}>HPS 600W</option></select>
         </div>
         <div class="form-group"><label>Técnica de entrenamiento</label>
-          <select id="wTech"><option value="ScrOG">ScrOG</option><option value="SOG">SOG</option><option value="LST">LST + Topping</option><option value="Sin técnica">Sin técnica</option></select>
+          <select id="wTech"><option value="ScrOG" ${(wizData.technique||'ScrOG')==='ScrOG'?'selected':''}>ScrOG</option><option value="SOG" ${wizData.technique==='SOG'?'selected':''}>SOG</option><option value="LST" ${wizData.technique==='LST'?'selected':''}>LST + Topping</option><option value="Sin técnica" ${wizData.technique==='Sin técnica'?'selected':''}>Sin técnica</option></select>
         </div>
         <div class="form-group"><label>Nutriente principal</label>
-          <select id="wNutri">${nutrients.map(n=>`<option value="${n.rank}">${n.rank}. ${n.name}</option>`).join('')}</select>
+          <select id="wNutri">${nutrients.map(n=>`<option value="${n.rank}" ${wizData.nutri===n.rank?'selected':''}>${n.rank}. ${n.name}</option>`).join('')}</select>
         </div>
         <div class="form-group"><label>Tipo de agua</label>
-          <select id="wWater"><option value="RO">Ósmosis inversa (recomendado)</option><option value="red">Agua de red filtrada</option><option value="destilada">Agua destilada</option></select>
+          <select id="wWater"><option value="RO" ${wizData.water==='RO'||!wizData.water?'selected':''}>Ósmosis inversa (recomendado)</option><option value="red" ${wizData.water==='red'?'selected':''}>Agua de red filtrada</option><option value="destilada" ${wizData.water==='destilada'?'selected':''}>Agua destilada</option></select>
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="wizData.error='';wizStep=1;renderWizStep()">Atrás</button>
-        <button class="btn btn-primary" onclick="goStep3()">Siguiente <i class="ti ti-arrow-right"></i></button>
+        <button type="button" class="btn btn-ghost" onclick="wizData.error='';wizStep=1;renderWizStep()">Atrás</button>
+        <button type="button" class="btn btn-primary" onclick="goStep3()">Siguiente <i class="ti ti-arrow-right"></i></button>
       </div>
     </div>`,
     // 3 ambiente
@@ -303,22 +302,24 @@ function renderWizStep(){
       ${errorBox}
       <div class="grid2">
         <div class="form-group"><label>Temperatura ambiente habitual</label>
-          <input type="number" id="wTemp" min="15" max="35" value="${wizData.ambTemp||22}"> <span style="font-size:11px;color:var(--text3);margin-top:3px;display:block">°C</span>
+          <input type="number" id="wTemp" min="15" max="35" value="${wizData.ambTemp||22}">
+          <span class="form-hint">°C</span>
         </div>
         <div class="form-group"><label>Humedad base del espacio</label>
-          <input type="number" id="wHum" min="30" max="80" value="${wizData.ambHum||55}"> <span style="font-size:11px;color:var(--text3);margin-top:3px;display:block">%</span>
+          <input type="number" id="wHum" min="30" max="80" value="${wizData.ambHum||55}">
+          <span class="form-hint">%</span>
         </div>
         <div class="form-group"><label>Fecha inicio germinación</label>
           <input type="date" id="wDate" value="${wizData.startDate||new Date().toISOString().split('T')[0]}">
         </div>
         <div class="form-group"><label>CO₂ adicional</label>
-          <select id="wCO2"><option value="no">No (400 ppm ambiente)</option><option value="si">Sí (enriquecimiento 1000-1500 ppm)</option></select>
+          <select id="wCO2"><option value="no" ${wizData.co2!=='si'?'selected':''}>No (400 ppm ambiente)</option><option value="si" ${wizData.co2==='si'?'selected':''}>Sí (enriquecimiento 1000-1500 ppm)</option></select>
         </div>
       </div>
       <div class="alert warn"><i class="ti ti-map-pin"></i><p>Castelló de la Plana: veranos calurosos (35°C+). Si inicias en primavera, la floración caerá en verano — refrigeración de agua imprescindible. Mejor inicio en agosto para florar en octubre-noviembre.</p></div>
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="wizData.error='';wizStep=2;renderWizStep()">Atrás</button>
-        <button class="btn btn-primary" onclick="goStep4()">Siguiente <i class="ti ti-arrow-right"></i></button>
+        <button type="button" class="btn btn-ghost" onclick="wizData.error='';wizStep=2;renderWizStep()">Atrás</button>
+        <button type="button" class="btn btn-primary" onclick="goStep4()">Siguiente <i class="ti ti-arrow-right"></i></button>
       </div>
     </div>`,
     // 4 confirm
@@ -327,8 +328,8 @@ function renderWizStep(){
       ${errorBox}
       ${buildConfirmSummary()}
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="wizData.error='';wizStep=3;renderWizStep()">Atrás</button>
-        <button class="btn btn-primary" onclick="activateGrow()"><i class="ti ti-plant"></i> Activar cultivo</button>
+        <button type="button" class="btn btn-ghost" onclick="wizData.error='';wizStep=3;renderWizStep()">Atrás</button>
+        <button type="button" class="btn btn-primary" onclick="activateGrow()"><i class="ti ti-plant"></i> Activar cultivo</button>
       </div>
     </div>`
   ];
@@ -345,10 +346,10 @@ function buildConfirmSummary(){
   const startD = new Date(wizData.startDate||new Date());
   const endD = new Date(startD.getTime() + totalW*7*86400000);
   return `
-    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius2);padding:1.5rem;margin-bottom:1rem">
-      <div class="grid2" style="gap:1.5rem">
+    <div class="confirm-summary-box">
+      <div class="grid2 confirm-summary-grid">
         <div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono';margin-bottom:10px">Variedad y sistema</div>
+          <div class="section-label section-label--block">Variedad y sistema</div>
           <div class="param-row"><span class="param-key">Variedad</span><span class="param-val">${s.name}</span></div>
           <div class="param-row"><span class="param-key">Plantas</span><span class="param-val">${wizData.plants||2}</span></div>
           <div class="param-row"><span class="param-key">Sistema</span><span class="param-val">${wizData.system||'RDWC'}</span></div>
@@ -357,7 +358,7 @@ function buildConfirmSummary(){
           <div class="param-row"><span class="param-key">Iluminación</span><span class="param-val">~${watts}W ${wizData.light||'LED'}</span></div>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono';margin-bottom:10px">Parámetros y estimaciones</div>
+          <div class="section-label section-label--block">Parámetros y estimaciones</div>
           <div class="param-row"><span class="param-key">Nutriente elegido</span><span class="param-val">${n?n.name.split(' ')[0]+' '+n.name.split(' ')[1]:'—'}</span></div>
           <div class="param-row"><span class="param-key">Duración total</span><span class="param-val">${totalW} semanas</span></div>
           <div class="param-row"><span class="param-key">Inicio germinación</span><span class="param-val">${startD.toLocaleDateString('es-ES')}</span></div>
@@ -452,7 +453,7 @@ function renderActiveGrow(){
     sz && !sz.nft
       ? `<div class="card">
         <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Dimensionado del sistema (desde checklist)</div></div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.65">
+        <div class="cultivo-sizing-body">
           ${
             Number.isFinite(sz.airPumpLpmRecommended)
               ? `<p><strong>Bomba de aire (referencia):</strong> ≥ ${sz.airPumpLpmRecommended} L/min</p>`
@@ -464,7 +465,7 @@ function renderActiveGrow(){
               : `<p><strong>Recirculación:</strong> no aplica en DWC autónomo por cubos.</p>`
           }
           ${Number.isFinite(sz.totalSolutionL) ? `<p><strong>Volumen útil estimado:</strong> ~${sz.totalSolutionL} L</p>` : ''}
-          ${sz.mainPipeHint ? `<p style="font-size:12px;color:var(--text3);margin-top:6px"><strong>Tubería:</strong> ${sz.mainPipeHint}</p>` : ''}
+          ${sz.mainPipeHint ? `<p class="cultivo-pipe-hint"><strong>Tubería:</strong> ${sz.mainPipeHint}</p>` : ''}
         </div>
       </div>`
       : '';
@@ -480,19 +481,19 @@ function renderActiveGrow(){
 
   document.getElementById('cultivoContent').innerHTML=`
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
-        <div>
+      <div class="grow-summary">
+        <div class="grow-summary-main">
           <span class="strain-type t-${s.type}">${s.typeName}</span>
-          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin:4px 0">${s.name}</div>
-          <div style="font-size:12px;color:var(--text3)">Inicio: ${myGrow.startDate.toLocaleDateString('es-ES')} · Semana ${weekNum} de ${totalW}</div>
+          <div class="grow-title">${s.name}</div>
+          <p class="grow-sub">Inicio: ${myGrow.startDate.toLocaleDateString('es-ES')} · Semana ${weekNum} de ${totalW}</p>
         </div>
-        <div style="text-align:right">
+        <div class="grow-summary-aside">
           <span class="phase-pill ${phClass}">${phase}</span>
-          <div style="font-size:11px;color:var(--text3);margin-top:6px">Nutriente: ${n.name.split(' ').slice(0,2).join(' ')}</div>
+          <div class="grow-nutri-hint">Nutriente: ${n.name.split(' ').slice(0,2).join(' ')}</div>
         </div>
       </div>
       <div class="timeline-bar">${segs}</div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'DM Mono'">
+      <div class="timeline-legend">
         <span>Germ</span><span>Veg (${s.vegW}s)</span><span>Floración (${s.flowerW}s)</span><span>Flush</span>
       </div>
     </div>
@@ -502,25 +503,25 @@ function renderActiveGrow(){
     <div class="gauge-grid">
       <div class="gauge"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span></div>
       <div class="gauge"><div class="gauge-label">pH objetivo</div><div class="gauge-value c-blue">${currentPH.split('–')[0]}</div><div class="gauge-range">${currentPH}</div><span class="gauge-status status-ok">En rango</span></div>
-      <div class="gauge"><div class="gauge-label">Fotoperiodo</div><div class="gauge-value" style="font-size:18px">${lightSched}</div><div class="gauge-range">h luz/oscuridad</div></div>
+      <div class="gauge"><div class="gauge-label">Fotoperiodo</div><div class="gauge-value gauge-value--compact">${lightSched}</div><div class="gauge-range">h luz/oscuridad</div></div>
       <div class="gauge"><div class="gauge-label">Temp. agua</div><div class="gauge-value c-purple">${s.tempWater}</div><div class="gauge-range">°C objetivo</div><span class="gauge-status ${myGrow.ambTemp>28?'status-warn':'status-ok'}">${myGrow.ambTemp>28?'Vigilar':'OK'}</span></div>
-      <div class="gauge"><div class="gauge-label">Humedad (HR)</div><div class="gauge-value" style="font-size:18px">${humidity}</div></div>
-      <div class="gauge"><div class="gauge-label">Temp. aire día</div><div class="gauge-value" style="font-size:18px">${tempRange}</div></div>
-      <div class="gauge"><div class="gauge-label">CO₂</div><div class="gauge-value" style="font-size:18px">${myGrow.co2==='si'?'1200':'400'}</div><div class="gauge-range">ppm</div></div>
-      <div class="gauge"><div class="gauge-label">Rendimiento est.</div><div class="gauge-value c-amber" style="font-size:20px">${Math.round(myGrow.m2*parseInt(s.yieldIn)*0.85)}</div><div class="gauge-range">g total</div></div>
+      <div class="gauge"><div class="gauge-label">Humedad (HR)</div><div class="gauge-value gauge-value--compact">${humidity}</div></div>
+      <div class="gauge"><div class="gauge-label">Temp. aire día</div><div class="gauge-value gauge-value--compact">${tempRange}</div></div>
+      <div class="gauge"><div class="gauge-label">CO₂</div><div class="gauge-value gauge-value--compact">${myGrow.co2==='si'?'1200':'400'}</div><div class="gauge-range">ppm</div></div>
+      <div class="gauge"><div class="gauge-label">Rendimiento est.</div><div class="gauge-value c-amber gauge-value--yield">${Math.round(myGrow.m2*parseInt(s.yieldIn)*0.85)}</div><div class="gauge-range">g total</div></div>
     </div>
 
     <div class="grid2">
       <div class="card">
         <div class="card-header"><div class="card-title"><i class="ti ti-flask"></i>Dosis nutriente hoy</div></div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        <div class="body-prose">
           ${phase.includes('Germ')?n.phases.germ:phase.includes('Veg')?n.phases.veg:phase.includes('Flush')?n.phases.flush:n.phases.flower}
         </div>
-        <div style="margin-top:10px;font-size:12px;color:var(--text3)">Fuente: ${n.name}</div>
+        <p class="text-muted cultivo-card-foot">Fuente: ${n.name}</p>
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title"><i class="ti ti-bulb"></i>Acción recomendada</div></div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        <div class="body-prose">
           ${phase.includes('Germ')?'Mantener humedad >70%. Temperatura cúpula 24°C. Luz tenue 18/6.':
             phase.includes('Veg')?s.phaseDesc?s.nutriProfile.veg:'Aplicar técnica '+myGrow.technique+'. Revisar EC y pH cada 48h.':
             phase.includes('Pre')?'Cambiar a 12/12. Subir EC gradualmente. Stretch esperado: 50-100% de altura.':
@@ -570,21 +571,21 @@ function renderActiveGrow(){
     </div>
 
     <div class="card">
-      <div class="card-header">
+      <div class="card-header card-header--split">
         <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (${myGrow.system})</div>
-        <button class="btn btn-ghost" onclick="exportSystemSvg()" style="padding:7px 12px;font-size:11px"><i class="ti ti-download"></i> Exportar SVG</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="exportSystemSvg()"><i class="ti ti-download"></i> Exportar SVG</button>
       </div>
       <div class="system-svg-wrap">${systemSvg}</div>
-      <div class="grid2" style="margin-top:0.75rem">
+      <div class="grid2 svg-panel-grid">
         <div class="card-sm">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Planta seleccionada</div>
+          <div class="section-label">Planta seleccionada</div>
           <div class="param-row"><span class="param-key">ID planta</span><span class="param-val">${selectedPlantInfo.plantLabel}</span></div>
           <div class="param-row"><span class="param-key">Cultivar</span><span class="param-val">${selectedPlantInfo.cultivar}</span></div>
           <div class="param-row"><span class="param-key">Estado semanal</span><span class="param-val">${phase}</span></div>
           <div class="param-row"><span class="param-key">Rendimiento estimado/planta</span><span class="param-val c-amber">${selectedPlantInfo.estimatedPlantYield} g</span></div>
         </div>
         <div class="card-sm">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono';margin-bottom:8px">Última medición asociada</div>
+          <div class="section-label">Última medición asociada</div>
           <div class="param-row"><span class="param-key">pH</span><span class="param-val blue">${selectedPlantInfo.latestPH}</span></div>
           <div class="param-row"><span class="param-key">EC</span><span class="param-val green">${selectedPlantInfo.latestEC}</span></div>
           <div class="param-row"><span class="param-key">Temp. agua</span><span class="param-val purple">${selectedPlantInfo.latestWaterTemp}</span></div>
@@ -594,7 +595,7 @@ function renderActiveGrow(){
       <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista prototipo cenital. Se adapta al sistema elegido y al número de plantas configurado.</p></div>
     </div>
 
-    <button class="btn btn-ghost" style="margin-top:0.5rem" onclick="resetGrow()">
+    <button type="button" class="btn btn-ghost reset-grow-btn" onclick="resetGrow()">
       <i class="ti ti-trash"></i> Reiniciar cultivo
     </button>
   `;
