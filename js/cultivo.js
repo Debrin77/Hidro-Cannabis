@@ -7,6 +7,15 @@ function startGrow(id){
   if (cultivoNav) nav(cultivoNav, 'cultivo');
 }
 
+function onOnboardingSystemTypeChange() {
+  if (!appConfig) appConfig = {};
+  snapshotSystemHardwareToAppConfig();
+  const sel = document.getElementById('onbSystem');
+  if (sel) appConfig.system = sel.value;
+  saveAppConfig();
+  renderInitialOnboarding();
+}
+
 function renderCultivo(){
   if(myGrow){ renderActiveGrow(); return; }
   if(!appConfig?.completed && !isSkipInitialWelcome()){ renderInitialOnboarding(); return; }
@@ -19,6 +28,20 @@ function renderCultivo(){
 
 function renderInitialOnboarding() {
   const cfg = appConfig || {};
+  const hw = cfg.systemHardware || {};
+  const sysActive = cfg.system || 'RDWC';
+  const sites = Number.isFinite(hw.sites) ? hw.sites : 4;
+  const vps = Number.isFinite(hw.volumePerSiteL) ? hw.volumePerSiteL : 20;
+  const vctl = Number.isFinite(hw.controlReservoirL) ? hw.controlReservoirL : 40;
+  const stone = hw.airStoneType === 'fine' ? 'fine' : 'standard';
+  const lineM = Number.isFinite(hw.airLineLengthM) ? hw.airLineLengthM : 2;
+  const solT = Number.isFinite(hw.solutionTempC) ? hw.solutionTempC : '';
+  const pipeMat = hw.pipeMaterial || 'pvc';
+  const ctlDisabled = sysActive !== 'RDWC';
+  const sizingHtml = cfg.systemSizingResult
+    ? renderSystemSizingHtml(cfg.systemSizingResult)
+    : `<div class="sizing-result"><p class="sizing-disclaimer" style="margin-top:0">Pulsa <strong>Calcular dimensionado</strong> para estimar bomba de aire, recirculación (RDWC) y diámetro de tubería orientativo.</p></div>`;
+
   const errorBox = cfg.error ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${cfg.error}</p></div>` : '';
   const weatherBox = cfg.climate
     ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>Clima detectado:</strong> ${cfg.climate.summary} · ${cfg.climate.temperature}°C · HR ${cfg.climate.humidity}% · Viento ${cfg.climate.wind} km/h · Fuente: ${cfg.climate.source}</p></div>`
@@ -54,7 +77,7 @@ function renderInitialOnboarding() {
         </div>
         <div class="form-group">
           <label>Sistema activo inicial</label>
-          <select id="onbSystem"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option></select>
+          <select id="onbSystem" onchange="onOnboardingSystemTypeChange()"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option></select>
         </div>
         <div class="form-group">
           <label>Ubicación (ciudad o zona)</label>
@@ -67,6 +90,25 @@ function renderInitialOnboarding() {
       </div>
       <button class="btn btn-ghost" onclick="analyzeClimateContext()"><i class="ti ti-cloud-search"></i> Analizar clima (AEMET/Open-Meteo)</button>
       ${weatherBox}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Ingeniería del sistema · datos de montaje</div></div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:1rem">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> (regla habitual ~1 L/min por galón US por depósito en DWC) y de <strong>recirculación</strong> en RDWC (varios volúmenes/hora del circuito), además de pistas de tubería y materiales.</p>
+      <div class="alert warn"><i class="ti ti-alert-triangle"></i><p>Resultados <strong>orientativos</strong>: altura manométrica, codos y pérdidas reales pueden exigir una bomba mayor. Contrasta siempre con la hoja del fabricante.</p></div>
+      <div class="grid2">
+        <div class="form-group"><label>Número de sitios (cubos / macetas)</label><input id="onbSites" type="number" min="1" max="48" value="${sites}"></div>
+        <div class="form-group"><label>Volumen de solución por sitio (L)</label><input id="onbVolumePerSite" type="number" min="5" max="200" step="1" value="${vps}"></div>
+        <div class="form-group"><label>Volumen depósito de control (L) — solo RDWC</label><input id="onbControlVol" type="number" min="0" max="2000" step="1" value="${ctlDisabled ? 0 : vctl}" ${ctlDisabled ? 'disabled' : ''}></div>
+        <div class="form-group"><label>Tipo de difusor / piedra de aire</label><select id="onbAirStone"><option value="standard" ${stone === 'standard' ? 'selected' : ''}>Estándar / burbuja media</option><option value="fine" ${stone === 'fine' ? 'selected' : ''}>Fina (mejor transferencia de O₂)</option></select></div>
+        <div class="form-group"><label>Longitud aprox. manguera de aire (m)</label><input id="onbAirLineM" type="number" min="0" max="30" step="0.5" value="${lineM}"></div>
+        <div class="form-group"><label>Temperatura típica del líquido (°C, opcional)</label><input id="onbSolutionTemp" type="number" min="10" max="35" step="0.5" placeholder="p. ej. 20" value="${solT === '' ? '' : solT}"></div>
+        <div class="form-group"><label>Material línea de líquido</label><select id="onbPipeMaterial"><option value="pvc" ${pipeMat === 'pvc' ? 'selected' : ''}>PVC presión / rígido</option><option value="pe" ${pipeMat === 'pe' ? 'selected' : ''}>PE / polietileno</option><option value="reinforced" ${pipeMat === 'reinforced' ? 'selected' : ''}>Manguera reforzada</option></select></div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" onclick="runSystemSizingCalculation()"><i class="ti ti-calculator"></i> Calcular dimensionado</button>
+      </div>
+      <div id="systemSizingMount">${sizingHtml}</div>
     </div>
 
     <div class="card">
@@ -102,6 +144,7 @@ function toggleSystemType(systemName, enabled) {
 async function analyzeClimateContext() {
   if (!appConfig) appConfig = {};
   appConfig.error = '';
+  snapshotSystemHardwareToAppConfig();
   appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
   appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
   appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
@@ -143,7 +186,9 @@ async function analyzeClimateContext() {
 function completeInitialSetup() {
   if (!appConfig) appConfig = {};
   appConfig.error = '';
+  snapshotSystemHardwareToAppConfig();
   appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
+  appConfig.systemSizingResult = computeHydroSizing(appConfig.systemHardware, appConfig.system);
   appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
   appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
   appConfig.strainId = document.getElementById('onbStrain')?.value || 'ww';
@@ -169,9 +214,10 @@ function completeInitialSetup() {
   appConfig.completed = true;
   saveAppConfig();
 
+  const siteCount = Math.min(48, Math.max(1, parseInt(appConfig.systemHardware?.sites, 10) || 2));
   wizData = {
     strainId: appConfig.strainId,
-    plants: 2,
+    plants: siteCount,
     system: appConfig.system,
     m2: 1.2,
     light: 'LED',
@@ -187,6 +233,8 @@ function completeInitialSetup() {
     location: appConfig.location,
     placement: appConfig.placement,
     climate: appConfig.climate || null,
+    systemHardware: { ...appConfig.systemHardware },
+    systemSizing: appConfig.systemSizingResult,
   };
   activateGrow();
 }
@@ -326,6 +374,11 @@ function activateGrow(){
   const s = strains.find(x=>x.id===wizData.strainId);
   if(!s){wizData.error='Debes seleccionar una variedad válida antes de activar el cultivo.';renderWizStep();return;}
   wizData.error = '';
+  const sizing = wizData.systemSizing || null;
+  const reservoirFromSizing =
+    sizing && Number.isFinite(sizing.totalSolutionL) && sizing.totalSolutionL > 0
+      ? Math.round(sizing.totalSolutionL)
+      : Math.max(20, (wizData.plants || 2) * 20);
   myGrow = {
     strain: s,
     plants: wizData.plants||2,
@@ -345,7 +398,9 @@ function activateGrow(){
     location: wizData.location || appConfig?.location || '',
     placement: wizData.placement || appConfig?.placement || 'interior',
     climate: wizData.climate || appConfig?.climate || null,
-    reservoirL: 60,
+    systemHardware: wizData.systemHardware || null,
+    systemSizing: sizing,
+    reservoirL: reservoirFromSizing,
     sourceEC: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).baseEC,
     sourcePH: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).basePH,
     selectedPlant: 1,
@@ -355,6 +410,16 @@ function activateGrow(){
       {date:new Date().toISOString(),text:'Germinación iniciada. Solución EC 0.3 mS/cm · pH 5.5',type:'info'}
     ]
   };
+  if (sizing && !sizing.nft && Number.isFinite(sizing.airPumpLpmRecommended)) {
+    const recirc = sizing.waterPump
+      ? ` Recirculación ~${sizing.waterPump.lphTarget} L/h.`
+      : '';
+    myGrow.log.push({
+      date: new Date().toISOString(),
+      text: `Dimensionado checklist: bomba de aire ≥ ${sizing.airPumpLpmRecommended} L/min.${recirc}`,
+      type: 'info',
+    });
+  }
   saveGrowState();
   document.getElementById('sideStatus').textContent = s.name + ' · S1';
   renderActiveGrow();
@@ -382,6 +447,27 @@ function renderActiveGrow(){
   const mixPlan = calculateMixPlan(myGrow, n, phase);
   const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
   const selectedPlantInfo = getSelectedPlantInfo(myGrow, s, weekNum, phase);
+  const sz = myGrow.systemSizing;
+  const sizingRecall =
+    sz && !sz.nft
+      ? `<div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Dimensionado del sistema (desde checklist)</div></div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.65">
+          ${
+            Number.isFinite(sz.airPumpLpmRecommended)
+              ? `<p><strong>Bomba de aire (referencia):</strong> ≥ ${sz.airPumpLpmRecommended} L/min</p>`
+              : ''
+          }
+          ${
+            sz.waterPump
+              ? `<p><strong>Recirculación RDWC:</strong> ~${sz.waterPump.lphTarget} L/h (~${sz.waterPump.gphTarget} GPH)</p>`
+              : `<p><strong>Recirculación:</strong> no aplica en DWC autónomo por cubos.</p>`
+          }
+          ${Number.isFinite(sz.totalSolutionL) ? `<p><strong>Volumen útil estimado:</strong> ~${sz.totalSolutionL} L</p>` : ''}
+          ${sz.mainPipeHint ? `<p style="font-size:12px;color:var(--text3);margin-top:6px"><strong>Tubería:</strong> ${sz.mainPipeHint}</p>` : ''}
+        </div>
+      </div>`
+      : '';
 
   const segs = Array.from({length:totalW},(_,i)=>{
     let cls='tl-veg';
@@ -410,6 +496,8 @@ function renderActiveGrow(){
         <span>Germ</span><span>Veg (${s.vegW}s)</span><span>Floración (${s.flowerW}s)</span><span>Flush</span>
       </div>
     </div>
+
+    ${sizingRecall}
 
     <div class="gauge-grid">
       <div class="gauge"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span></div>

@@ -259,6 +259,15 @@ ejecutar un c/* SPLASH */
 
 .monitor-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
 
+.sizing-result{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+.sizing-block{margin-bottom:1rem}
+.sizing-block:last-of-type{margin-bottom:0.5rem}
+.sizing-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--g300);font-family:'DM Mono',monospace;margin-bottom:6px}
+.sizing-block p{font-size:13px;color:var(--text2);line-height:1.65;margin:0}
+.sizing-hint-list{margin:8px 0 0 1rem;padding:0;color:var(--text2);font-size:12px;line-height:1.55}
+.sizing-hint-list li{margin-bottom:4px}
+.sizing-disclaimer{font-size:11px;color:var(--text3);line-height:1.5;margin-top:10px;font-style:italic}
+
 /* SYSTEM SVG */
 .system-svg-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius2);padding:10px;overflow:auto}
 .system-svg{width:100%;min-width:700px;height:auto;display:block}
