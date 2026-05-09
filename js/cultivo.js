@@ -12,7 +12,7 @@ function startGrow(id){
 
 function renderCultivo(){
   if(myGrow){ renderActiveGrow(); return; }
-  if(!appConfig?.completed){ renderInitialOnboarding(); return; }
+  if(!appConfig?.completed && !isSkipInitialWelcome()){ renderInitialOnboarding(); return; }
   document.getElementById('cultivoContent').innerHTML=`
     <div class="wizard-progress">${[0,1,2,3].map(i=>`<div class="wiz-step ${i<wizStep?'done':i===wizStep?'active':''}"></div>`).join('')}</div>
     <div id="wizBody"></div>
@@ -35,6 +35,13 @@ function renderInitialOnboarding() {
         <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Checklist guiado de sistema</div></div>
         <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Cálculo de mezcla por tipo de agua</div></div>
         <div class="card-sm"><div class="metric-label">Ventaja</div><div style="font-size:12px;color:var(--text2)">Alertas inteligentes por planta</div></div>
+      </div>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <label style="cursor:pointer;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text3);line-height:1.5">
+          <input type="checkbox" style="margin-top:3px" ${isSkipInitialWelcome()?'checked':''} onchange="toggleSkipInitialWelcome(this.checked)">
+          <span><strong style="color:var(--text2)">Modo desarrollo:</strong> saltar bienvenida y checklist e ir al asistente clásico. El registro del monitor (historial) no incluye este mensaje. Desmarca para recuperar la bienvenida.</span>
+        </label>
+        <p style="font-size:11px;color:var(--text3);margin:0.6rem 0 0 1.5rem">Atajo URL: <code style="font-size:11px">?dev=1</code> o <code style="font-size:11px">?skipWelcome=1</code></p>
       </div>
     </div>
 
@@ -78,6 +85,11 @@ function renderInitialOnboarding() {
       <button class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
     </div>
   `;
+}
+
+function toggleSkipInitialWelcome(checked) {
+  setSkipInitialWelcome(!!checked);
+  renderCultivo();
 }
 
 function toggleSystemType(systemName, enabled) {

@@ -9,6 +9,25 @@ let appConfig = null;
 const STORAGE_KEY = 'hydrogrow-pro.v1.myGrow';
 const APP_CONFIG_KEY = 'hydrogrow-pro.v1.appConfig';
 const THEME_KEY = 'hydrogrow-pro.v1.theme';
+/** Si es true, se salta la bienvenida/checklist inicial y se usa el asistente clásico (útil al programar). */
+const SKIP_INITIAL_WELCOME_KEY = 'hydrogrow-pro.v1.skipInitialWelcome';
+
+function isSkipInitialWelcome() {
+  try {
+    return localStorage.getItem(SKIP_INITIAL_WELCOME_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setSkipInitialWelcome(on) {
+  try {
+    if (on) localStorage.setItem(SKIP_INITIAL_WELCOME_KEY, '1');
+    else localStorage.removeItem(SKIP_INITIAL_WELCOME_KEY);
+  } catch (error) {
+    console.warn('No se pudo guardar preferencia de bienvenida.', error);
+  }
+}
 
 function serializeGrow(grow) {
   if (!grow) return null;
