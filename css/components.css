@@ -751,6 +751,8 @@
 .sizing-hint-list li{margin-bottom:4px}
 .sizing-disclaimer{font-size:11px;color:var(--text3);line-height:1.5;margin-top:10px;font-style:italic}
 .sizing-disclaimer--flush{margin-top:0}
+.sizing-block--geometry{margin-top:0.5rem}
+.sizing-geom-note{font-size:12px;color:var(--text3);line-height:1.55;margin:8px 0 0}
 
 /* Cultivo — onboarding, asistente y cultivo activo */
 .cultivo-intro{margin-bottom:0.85rem}
@@ -853,6 +855,29 @@
 .system-svg .plant-marker-cannabis-accent{stroke:#a5d6a7;stroke-width:0.9;stroke-linecap:round}
 .system-svg .plant-site-marker--young .plant-marker-cannabis{fill:#9ccc65}
 .system-svg .aero-lid{fill:var(--surface3);stroke:var(--border2);stroke-width:1.5}
+.system-svg--dwc-lids .dwc-lid-ring{
+  fill:rgba(52,144,220,0.14);stroke:var(--b400);stroke-width:2.5;
+}
+.system-svg--dwc-lids .dwc-lid-ring--selected{
+  stroke:var(--a200)!important;stroke-width:3.5;
+  filter:drop-shadow(0 0 6px rgba(52,211,153,0.35));
+}
+.system-svg--dwc-lids .dwc-lid-hole{
+  fill:rgba(15,28,48,0.92);stroke:#5a7a9a;stroke-width:1.6;
+}
+.system-svg--float .float-tank-shell{
+  fill:rgba(76,175,48,0.08);stroke:var(--g400);stroke-width:2.5;
+}
+.system-svg--float .float-water{fill:rgba(52,144,220,0.42)}
+.system-svg--float .float-raft{
+  fill:#c4a574;stroke:#8d6e48;stroke-width:1.4;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,0.12));
+}
+.system-svg--float .float-raft-hole{
+  fill:rgba(26,58,95,0.88);stroke:#4a6a88;stroke-width:1.3;
+}
+.svg-geom-caption{fill:var(--text3);font-family:'Inter',sans-serif;font-size:11px}
+[data-theme='light'] .system-svg--float .float-raft{fill:#d2b48c;stroke:#a08050}
 .reservoir-sample-hint{fill:var(--b200);font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-anchor:middle}
 .reservoir-sample-note{fill:var(--text3);font-family:'Inter',sans-serif;font-size:8px;text-anchor:middle}
 

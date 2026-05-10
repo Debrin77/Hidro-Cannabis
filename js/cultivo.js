@@ -1,5 +1,20 @@
 // Cultivo wizard and active grow
 
+/** Máximo de sitios de cultivo (cubos) alineado con el checklist `onbSites`. */
+const MAX_HYDRO_SITE_COUNT = 48;
+
+/**
+ * Cubos / sitios configurados: prioriza `systemHardware.sites` en RDWC, si no `plants`.
+ */
+function getConfiguredSiteCount(grow) {
+  if (!grow) return 1;
+  const hw = parseInt(grow.systemHardware?.sites, 10);
+  const p = parseInt(grow.plants, 10);
+  const useHw = grow.system === 'RDWC' && Number.isFinite(hw) && hw >= 1;
+  const raw = useHw ? hw : Number.isFinite(p) && p >= 1 ? p : 1;
+  return Math.min(MAX_HYDRO_SITE_COUNT, Math.max(1, raw));
+}
+
 function escapeHtmlAttr(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -90,6 +105,15 @@ function renderInitialOnboarding() {
   const buildType = hw.buildType === 'commercial' ? 'commercial' : 'diy';
   const userAir = Number.isFinite(hw.userAirLpm) ? hw.userAirLpm : '';
   const userWat = Number.isFinite(hw.userWaterLph) ? hw.userWaterLph : '';
+  const rdwcDiagram = hw.rdwcDiagramStyle === 'rear_kit' ? 'rear_kit' : 'side';
+  const dwcBucketTopCm = Number.isFinite(hw.dwcBucketTopDiameterCm) ? hw.dwcBucketTopDiameterCm : 35;
+  const dwcLidHoleCm = Number.isFinite(hw.dwcLidHoleDiameterCm) ? hw.dwcLidHoleDiameterCm : 20;
+  const floatTankL = Number.isFinite(hw.floatTankLengthCm) ? hw.floatTankLengthCm : 120;
+  const floatTankW = Number.isFinite(hw.floatTankWidthCm) ? hw.floatTankWidthCm : 80;
+  const floatRaftHoleCm = Number.isFinite(hw.floatRaftHoleDiameterCm) ? hw.floatRaftHoleDiameterCm : 20;
+  const floatRaftMm = Number.isFinite(hw.floatRaftThicknessMm) ? hw.floatRaftThicknessMm : 30;
+  const floatNetPotCm = Number.isFinite(hw.floatNetPotBelowRaftCm) ? hw.floatNetPotBelowRaftCm : 8;
+  const floatSubCm = Number.isFinite(hw.floatSubstrateColumnCm) ? hw.floatSubstrateColumnCm : 5;
   const ctlDisabled = sysActive !== 'RDWC';
   const sizingHtml = cfg.systemSizingResult
     ? renderSystemSizingHtml(cfg.systemSizingResult)
@@ -157,9 +181,9 @@ function renderInitialOnboarding() {
       ${weatherBox}
     </div>
 
-    <div class="card">
+    <div class="card" id="onbEngineeringCard">
       <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Ingeniería del sistema · datos de montaje</div></div>
-      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> y <strong>recirculación</strong> alineados con criterios habituales en hidroponía (DWC ~1 L/min de aire por galón US de solución; RDWC varios vuelcos del volumen/hora). Si es <strong>montaje propio</strong>, indica el <strong>L/min</strong> y <strong>L/h</strong> de tus bombas: si quedan cortos respecto al cálculo, verás <strong>avisos y un rango recomendado</strong> (y botón para rellenar el valor orientativo). En <strong>kit comercial</strong>, el fabricante suele dimensionar bien; puedes contrastar igualmente con la placa del equipo.</p>
+      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> y <strong>recirculación</strong> y valida <strong>geometría</strong> (tapas DWC, balsa, depósito NFT) cuando corresponda. <strong>Al cambiar cualquier dato</strong> de este bloque se <strong>vuelve a calcular</strong> automáticamente (debounce corto). En DWC ~1 L/min de aire por galón US; en RDWC, varios vuelcos del volumen/hora. Montaje <strong>DIY</strong>: introduce L/min y L/h; <strong>kit comercial</strong>: puedes contrastar con la placa.</p>
       ${(() => {
         const pr = typeof getSystemProfile === 'function' ? getSystemProfile(sysActive) : null;
         if (!pr) return '';
@@ -174,6 +198,14 @@ function renderInitialOnboarding() {
         <div class="form-group"><label>Longitud aprox. manguera de aire (m)</label><input id="onbAirLineM" type="number" min="0" max="30" step="0.5" value="${lineM}"></div>
         <div class="form-group"><label>Temperatura típica del líquido (°C, opcional)</label><input id="onbSolutionTemp" type="number" min="10" max="35" step="0.5" placeholder="p. ej. 20" value="${solT === '' ? '' : solT}"></div>
         <div class="form-group"><label>Material línea de líquido</label><select id="onbPipeMaterial"><option value="pvc" ${pipeMat === 'pvc' ? 'selected' : ''}>PVC presión / rígido</option><option value="pe" ${pipeMat === 'pe' ? 'selected' : ''}>PE / polietileno</option><option value="reinforced" ${pipeMat === 'reinforced' ? 'selected' : ''}>Manguera reforzada</option></select></div>
+        <div class="form-group">
+          <label>Esquema RDWC en la app (referencia visual)</label>
+          <select id="onbRdwcDiagram" ${ctlDisabled ? 'disabled' : ''}>
+            <option value="side" ${rdwcDiagram === 'side' ? 'selected' : ''}>Depósito al costado · genérico</option>
+            <option value="rear_kit" ${rdwcDiagram === 'rear_kit' ? 'selected' : ''}>Kit comercial · depósito trasero y perímetro (p. ej. Growrilla)</option>
+          </select>
+          <span class="form-hint">Solo cambia el dibujo cenital; el cálculo de caudales sigue igual. Útil si tu kit lleva el depósito de control integrado al fondo del circuito.</span>
+        </div>
         <div class="form-group">
           <label>Origen del sistema</label>
           <select id="onbBuildType" onchange="onOnboardingBuildTypeChange()">
@@ -192,9 +224,58 @@ function renderInitialOnboarding() {
           <input id="onbUserWaterLph" type="number" min="0" max="20000" step="1" placeholder="Ej: 800" value="${userWat === '' ? '' : userWat}" ${ctlDisabled ? 'disabled' : ''}>
           <span class="form-hint">Vacío en DWC, NFT, balsa o aeroponía.</span>
         </div>
+        ${
+          sysActive === 'DWC'
+            ? `<div class="grid2 onboarding-dwc-lid">
+          <div class="form-group">
+            <label>DWC · Diámetro tapa cenital (cm)</label>
+            <input id="onbDwcBucketTopCm" type="number" min="15" max="120" step="0.5" value="${dwcBucketTopCm}">
+            <span class="form-hint">Vista cenital del cubo: borde útil de la tapa.</span>
+          </div>
+          <div class="form-group">
+            <label>DWC · Diámetro hueco para cesta (cm)</label>
+            <input id="onbDwcLidHoleCm" type="number" min="5" max="50" step="0.5" value="${dwcLidHoleCm}">
+            <span class="form-hint">Broca / aro donde apoya el collarín de la redonda.</span>
+          </div>
+        </div>`
+            : ''
+        }
+        ${
+          sysActive === 'FLOAT'
+            ? `<div class="grid2 onboarding-float-geom">
+          <div class="form-group">
+            <label>Balsa · Largo recipiente interior (cm)</label>
+            <input id="onbFloatTankL" type="number" min="40" max="500" step="1" value="${floatTankL}">
+          </div>
+          <div class="form-group">
+            <label>Balsa · Ancho recipiente interior (cm)</label>
+            <input id="onbFloatTankW" type="number" min="40" max="500" step="1" value="${floatTankW}">
+          </div>
+          <div class="form-group">
+            <label>Balsa · Diámetro agujeros en corcho/XPS (cm)</label>
+            <input id="onbFloatRaftHoleCm" type="number" min="5" max="40" step="0.5" value="${floatRaftHoleCm}">
+            <span class="form-hint">Coincide con nº de sitios del checklist; huecos en planta.</span>
+          </div>
+          <div class="form-group">
+            <label>Balsa · Espesor losa flotante (mm)</label>
+            <input id="onbFloatRaftMm" type="number" min="10" max="120" step="1" value="${floatRaftMm}">
+          </div>
+          <div class="form-group">
+            <label>Profundidad cesta bajo la balsa (cm)</label>
+            <input id="onbFloatNetPotDepth" type="number" min="3" max="40" step="0.5" value="${floatNetPotCm}">
+            <span class="form-hint">Desde cara inferior de la balsa al fondo de la cesta.</span>
+          </div>
+          <div class="form-group">
+            <label>Columna de sustrato en cesta (cm)</label>
+            <input id="onbFloatSubstrateH" type="number" min="2" max="35" step="0.5" value="${floatSubCm}">
+            <span class="form-hint">Base del sustrato ≈ fondo cesta si rellenas desde abajo; la app estima separación respecto a la lámina.</span>
+          </div>
+        </div>`
+            : ''
+        }
       </div>
       <div class="btn-row">
-        <button type="button" class="btn btn-primary" onclick="runSystemSizingCalculation()"><i class="ti ti-calculator"></i> Calcular dimensionado</button>
+        <button type="button" class="btn btn-primary" onclick="runSystemSizingCalculation()"><i class="ti ti-calculator"></i> Calcular / refrescar dimensionado</button>
       </div>
       <div id="systemSizingMount">${sizingHtml}</div>
     </div>
@@ -240,7 +321,25 @@ function renderInitialOnboarding() {
     if (typeof toggleOnbHeaterSetpoint === 'function') {
       toggleOnbHeaterSetpoint(!!document.getElementById('onbCompHeater')?.checked);
     }
+    const eng = document.getElementById('onbEngineeringCard');
+    if (eng && !eng._hydroSizingAutoBound) {
+      eng._hydroSizingAutoBound = true;
+      const runAuto = () => {
+        if (typeof scheduleOnboardingSizingRecalc === 'function') scheduleOnboardingSizingRecalc();
+      };
+      eng.addEventListener('input', runAuto);
+      eng.addEventListener('change', runAuto);
+    }
+    if (typeof scheduleOnboardingSizingRecalc === 'function') scheduleOnboardingSizingRecalc();
   });
+}
+
+let hydroOnboardingSizingTimer = null;
+function scheduleOnboardingSizingRecalc() {
+  clearTimeout(hydroOnboardingSizingTimer);
+  hydroOnboardingSizingTimer = setTimeout(() => {
+    if (typeof runSystemSizingCalculation === 'function') runSystemSizingCalculation();
+  }, 420);
 }
 
 function toggleSkipInitialWelcome(checked) {
@@ -334,6 +433,9 @@ function completeInitialSetup() {
   appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
   const sz = computeHydroSizing(appConfig.systemHardware, appConfig.system);
   sz.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, sz);
+  if (typeof attachGeometryToSizingResult === 'function') {
+    attachGeometryToSizingResult(sz, appConfig.systemHardware, appConfig.system);
+  }
   appConfig.systemSizingResult = sz;
   appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
   appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
@@ -739,6 +841,23 @@ function renderActiveGrow(){
             <label>pH agua base</label>
             <input id="cfgSourcePH" type="number" min="4.5" max="9" step="0.1" value="${myGrow.sourcePH||6.1}" onchange="updateMixConfig()">
           </div>
+          ${
+            myGrow.system === 'RDWC'
+              ? `<div class="form-group">
+            <label>Número de cubos de cultivo (sin el depósito de control)</label>
+            <input type="number" id="cfgGrowSites" min="1" max="${MAX_HYDRO_SITE_COUNT}" step="1" value="${getConfiguredSiteCount(myGrow)}" onchange="saveGrowSiteCountFromUi()">
+            <span class="form-hint">Mismo rango que el checklist (1–${MAX_HYDRO_SITE_COUNT}). Actualiza el esquema y los sitios P1…Pn.</span>
+          </div>
+          <div class="form-group">
+            <label>Esquema RDWC (vista cenital)</label>
+            <select id="cfgRdwcDiagram" onchange="saveRdwcDiagramStyleFromUi()">
+              <option value="side" ${myGrow.systemHardware?.rdwcDiagramStyle === 'rear_kit' ? '' : 'selected'}>Depósito al costado · genérico</option>
+              <option value="rear_kit" ${myGrow.systemHardware?.rdwcDiagramStyle === 'rear_kit' ? 'selected' : ''}>Kit comercial · depósito trasero (Growrilla y similares)</option>
+            </select>
+            <span class="form-hint">Solo cambia el dibujo; caudales y volumen no se alteran.</span>
+          </div>`
+              : ''
+          }
         </div>
         <div class="section-label section-label--block complements-section-label">Complementos e instrumentación</div>
         <p class="text-muted complements-section-hint">Igual que en el checklist: define qué equipos tienes; en <strong>Medir</strong> se filtran los tipos de gráfico.</p>
@@ -981,6 +1100,29 @@ function saveGrowHardwareComplements() {
   if (typeof renderMonitor === 'function') renderMonitor();
 }
 
+function saveRdwcDiagramStyleFromUi() {
+  if (!myGrow || myGrow.system !== 'RDWC') return;
+  if (!myGrow.systemHardware || typeof myGrow.systemHardware !== 'object') myGrow.systemHardware = {};
+  myGrow.systemHardware.rdwcDiagramStyle =
+    document.getElementById('cfgRdwcDiagram')?.value === 'rear_kit' ? 'rear_kit' : 'side';
+  saveGrowState();
+  renderActiveGrow();
+}
+
+function saveGrowSiteCountFromUi() {
+  if (!myGrow || myGrow.system !== 'RDWC') return;
+  const raw = parseInt(document.getElementById('cfgGrowSites')?.value, 10);
+  const n = Math.min(MAX_HYDRO_SITE_COUNT, Math.max(1, Number.isFinite(raw) ? raw : 1));
+  myGrow.plants = n;
+  if (!myGrow.systemHardware || typeof myGrow.systemHardware !== 'object') myGrow.systemHardware = {};
+  myGrow.systemHardware.sites = n;
+  if (Number.isFinite(myGrow.selectedPlant) && myGrow.selectedPlant > n) myGrow.selectedPlant = n;
+  saveGrowState();
+  renderActiveGrow();
+  if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderInicio === 'function') renderInicio();
+}
+
 function renderVolumeDiagramPanel(grow) {
   const vol = Number.isFinite(grow.reservoirL) ? grow.reservoirL : 60;
   const plantId = isRdwcSharedSolution(grow) ? 0 : grow.selectedPlant || 1;
@@ -1035,7 +1177,7 @@ function renderVolumeMiniSvg(rows, baselineL) {
 }
 
 function renderSystemSvg(grow, strain, weekNum, phaseName) {
-  const plantCount = Math.max(1, Math.min(8, parseInt(grow.plants, 10) || 1));
+  const plantCount = getConfiguredSiteCount(grow);
   if (grow.system === 'RDWC') return renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName);
   if (grow.system === 'FLOAT') return renderFloatSvg(grow, strain, plantCount, weekNum, phaseName);
   if (grow.system === 'NFT') return renderNftSvg(grow, strain, plantCount, weekNum, phaseName);
@@ -1043,20 +1185,147 @@ function renderSystemSvg(grow, strain, weekNum, phaseName) {
   return renderDwcSvg(grow, strain, plantCount, weekNum, phaseName);
 }
 
-function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
+/** Rejilla de centros (cenital) para agujeros en balsa / tapa. */
+function layoutHoleCentersInRect(n, left, top, w, h, pad) {
+  if (n <= 0) return [];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const iw = Math.max(1, w - 2 * pad);
+  const ih = Math.max(1, h - 2 * pad);
+  const out = [];
+  let k = 0;
+  for (let r = 0; r < rows && k < n; r++) {
+    for (let c = 0; c < cols && k < n; c++, k++) {
+      out.push({
+        x: left + pad + (c + 0.5) * (iw / cols),
+        y: top + pad + (r + 0.5) * (ih / rows),
+      });
+    }
+  }
+  return out;
+}
+
+/** RDWC patrón tipo kit comercial: cuadrícula de cubos + depósito de control al fondo (vista cenital) y tubo perimetral. */
+function renderRdwcSvgRearKit(grow, strain, plantCount, weekNum, phaseName) {
   const perRow = Math.ceil(plantCount / 2);
-  const nodeSpacing = 85;
-  const startX = 80;
+  const bottomCount = plantCount - perRow;
+  const maxCols = Math.max(perRow, bottomCount, 1);
+  const nodeSpacing =
+    maxCols <= 1 ? 80 : Math.min(88, Math.max(26, Math.floor(600 / (maxCols - 1))));
+  const gridW = (maxCols - 1) * nodeSpacing;
+  const startX = 95 + Math.max(0, (620 - gridW) / 2);
+  const southOffset = perRow > bottomCount ? ((perRow - bottomCount) * nodeSpacing) / 2 : 0;
+  const northY = 178;
+  const southY = 272;
+  const nodes = [];
+  for (let i = 0; i < plantCount; i++) {
+    const row = i < perRow ? 0 : 1;
+    const col = row === 0 ? i : i - perRow;
+    const x = row === 0 ? startX + col * nodeSpacing : startX + southOffset + col * nodeSpacing;
+    const y = row === 0 ? northY : southY;
+    nodes.push({ x, y, label: `P${i + 1}`, index: i + 1 });
+  }
+  const leftN = startX;
+  const rightN = startX + (perRow - 1) * nodeSpacing;
+  const midX = (leftN + rightN) / 2;
+  const leftS = startX + southOffset;
+  const rightS = startX + southOffset + Math.max(0, bottomCount - 1) * nodeSpacing;
+  const midS = bottomCount > 0 ? (leftS + rightS) / 2 : midX;
+  const resW = 108;
+  const resH = 74;
+  const resX = midX - resW / 2;
+  const resY = 62;
+  const resBottom = resY + resH;
+  const pipes = [];
+  if (perRow > 1) {
+    pipes.push(`<line x1="${leftN - 22}" y1="${northY}" x2="${rightN + 22}" y2="${northY}" class="pipe" />`);
+  }
+  if (bottomCount > 1) {
+    pipes.push(`<line x1="${leftS - 22}" y1="${southY}" x2="${rightS + 22}" y2="${southY}" class="pipe" />`);
+  }
+  const leftRail = Math.min(leftN, bottomCount > 0 ? leftS : leftN) - 28;
+  const rightRail = Math.max(rightN, bottomCount > 0 ? rightS : rightN) + 28;
+  if (bottomCount > 0) {
+    pipes.push(`<line x1="${leftRail}" y1="${northY + 18}" x2="${leftRail}" y2="${southY - 18}" class="pipe" />`);
+    pipes.push(`<line x1="${rightRail}" y1="${northY + 18}" x2="${rightRail}" y2="${southY - 18}" class="pipe" />`);
+  }
+  pipes.push(
+    `<line x1="${midX}" y1="${resBottom}" x2="${midX}" y2="${northY - 26}" class="pipe flow" marker-end="url(#arrowBlue)"></line>`,
+  );
+  const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  const frontInline =
+    bottomCount > 0
+      ? `<g>
+        <rect x="${midS - 26}" y="${southY + 26}" width="52" height="20" rx="5" class="pump"></rect>
+        <text x="${midS}" y="${southY + 40}" class="pump-label" text-anchor="middle">BOMBA / VÁLV.</text>
+      </g>`
+      : '';
+  return `
+    <svg viewBox="0 0 860 360" class="system-svg system-svg--rdwc-kit" role="img" aria-label="Diagrama cenital RDWC tipo kit comercial">
+      <defs>
+        <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3490dc"></path>
+        </marker>
+      </defs>
+      <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
+      <text x="28" y="38" class="svg-title">RDWC · Patrón kit (depósito trasero)</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · ${plantCount} cubo(s) · Referencia tipo circuito cerrado con control al fondo</text>
+
+      ${pipes.join('')}
+
+      <g>
+        <rect x="${resX}" y="${resY}" width="${resW}" height="${resH}" rx="11" class="reservoir"></rect>
+        <text x="${midX}" y="${resY + 42}" class="reservoir-label" text-anchor="middle">DEPÓSITO</text>
+        <text x="${midX}" y="${resY + 60}" class="reservoir-sub" text-anchor="middle">${grow.reservoirL || 60} L</text>
+      </g>
+
+      ${nodes
+        .map((node) => {
+          const slotLabel = getCultivarShortLabelForSlot(grow, node.index);
+          return `
+        <g class="plant-node" data-plant="${node.index}">
+          <g class="plant-node-hit" onclick="selectPlantInDiagram(${node.index})">
+            <rect x="${node.x - 24}" y="${node.y - 24}" width="48" height="48" rx="8" class="bucket ${grow.selectedPlant === node.index ? 'bucket-selected' : ''}"></rect>
+            <circle cx="${node.x}" cy="${node.y}" r="11" class="netpot"></circle>
+            <text x="${node.x}" y="${node.y + 4}" class="bucket-label">${node.label}</text>
+            <text x="${node.x}" y="${node.y + 35}" class="cultivar-label">${slotLabel}</text>
+          </g>
+          ${renderPlantSiteMarker(node, grow, weekNum, -38)}
+        </g>`;
+        })
+        .join('')}
+
+      ${frontInline}
+    </svg>
+  `;
+}
+
+function renderRdwcSvgSide(grow, strain, plantCount, weekNum, phaseName) {
+  const perRow = Math.ceil(plantCount / 2);
+  const bottomCount = plantCount - perRow;
+  const maxCols = Math.max(perRow, bottomCount, 1);
+  const nodeSpacing =
+    maxCols <= 1 ? 80 : Math.min(86, Math.max(26, Math.floor(600 / (maxCols - 1))));
+  const gridW = (maxCols - 1) * nodeSpacing;
+  const startX = 56 + Math.max(0, (620 - gridW) / 2);
+  const southOffset = perRow > bottomCount ? ((perRow - bottomCount) * nodeSpacing) / 2 : 0;
   const topY = 95;
   const bottomY = 235;
   const nodes = [];
   for (let i = 0; i < plantCount; i++) {
     const row = i < perRow ? 0 : 1;
     const col = row === 0 ? i : i - perRow;
-    const x = startX + col * nodeSpacing;
+    const x = row === 0 ? startX + col * nodeSpacing : startX + southOffset + col * nodeSpacing;
     const y = row === 0 ? topY : bottomY;
     nodes.push({ x, y, label: `P${i + 1}`, index: i + 1 });
   }
+
+  const leftT = startX;
+  const rightT = startX + (perRow - 1) * nodeSpacing;
+  const leftB = startX + southOffset;
+  const rightB = startX + southOffset + Math.max(0, bottomCount - 1) * nodeSpacing;
+  const leftRail = Math.min(leftT, bottomCount > 0 ? leftB : leftT) - 28;
+  const rightRail = Math.max(rightT, bottomCount > 0 ? rightB : rightT) + 28;
 
   const pipes = [];
   for (let i = 0; i < perRow - 1; i++) {
@@ -1064,19 +1333,17 @@ function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
     const x2 = startX + (i + 1) * nodeSpacing - 24;
     pipes.push(`<line x1="${x1}" y1="${topY}" x2="${x2}" y2="${topY}" class="pipe" />`);
   }
-  const bottomCount = plantCount - perRow;
   for (let i = 0; i < Math.max(0, bottomCount - 1); i++) {
-    const x1 = startX + i * nodeSpacing + 24;
-    const x2 = startX + (i + 1) * nodeSpacing - 24;
+    const x1 = startX + southOffset + i * nodeSpacing + 24;
+    const x2 = startX + southOffset + (i + 1) * nodeSpacing - 24;
     pipes.push(`<line x1="${x1}" y1="${bottomY}" x2="${x2}" y2="${bottomY}" class="pipe" />`);
   }
   if (bottomCount > 0) {
-    pipes.push(`<line x1="${startX + 8}" y1="${topY + 24}" x2="${startX + 8}" y2="${bottomY - 24}" class="pipe" />`);
-    const rightX = startX + (Math.max(perRow, bottomCount) - 1) * nodeSpacing + 8;
-    pipes.push(`<line x1="${rightX}" y1="${topY + 24}" x2="${rightX}" y2="${bottomY - 24}" class="pipe" />`);
+    pipes.push(`<line x1="${leftRail}" y1="${topY + 24}" x2="${leftRail}" y2="${bottomY - 24}" class="pipe" />`);
+    pipes.push(`<line x1="${rightRail}" y1="${topY + 24}" x2="${rightRail}" y2="${bottomY - 24}" class="pipe" />`);
   }
 
-  const reservoirX = startX + Math.max(perRow, bottomCount, 1) * nodeSpacing + 30;
+  const reservoirX = rightRail + 32;
   const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
   return `
     <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama cenital RDWC">
@@ -1087,7 +1354,7 @@ function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
       </defs>
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">RDWC · Circuito recirculante cenital</text>
-      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · Cultivar ${cultivar}</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · Cultivar ${cultivar} · ${plantCount} cubo(s)</text>
 
       ${pipes.join('')}
       <line x1="${reservoirX - 15}" y1="${topY}" x2="${reservoirX - 15}" y2="${bottomY}" class="pipe flow" marker-end="url(#arrowBlue)" />
@@ -1120,45 +1387,72 @@ function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
   `;
 }
 
+function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
+  if (grow.systemHardware?.rdwcDiagramStyle === 'rear_kit') {
+    return renderRdwcSvgRearKit(grow, strain, plantCount, weekNum, phaseName);
+  }
+  return renderRdwcSvgSide(grow, strain, plantCount, weekNum, phaseName);
+}
+
 function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
   const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
-  const maxVisible = Math.min(plantCount, 5);
-  const spacing = 130;
-  const startX = 150;
-  const y = 120;
-  const waterY = 178;
+  const hw = grow.systemHardware || {};
+  const bucketCm = Math.min(120, Math.max(15, parseFloat(hw.dwcBucketTopDiameterCm) || 35));
+  const holeCm = Math.min(50, Math.max(5, parseFloat(hw.dwcLidHoleDiameterCm) || 20));
+  const ratio = holeCm / Math.max(1, bucketCm);
+  const dout = Math.min(58, Math.max(26, bucketCm * 0.82 + 10));
+  const rout = dout / 2;
+  const rhole = Math.min(rout - 3, Math.max(6, (dout * Math.min(0.98, ratio)) / 2));
+  const perRow = Math.ceil(plantCount / 2);
+  const bottomCount = plantCount - perRow;
+  const maxCols = Math.max(perRow, bottomCount, 1);
+  const nodeSpacing =
+    maxCols <= 1 ? 92 : Math.min(98, Math.max(rout * 2 + 14, Math.floor(640 / (maxCols - 1))));
+  const gridW = (maxCols - 1) * nodeSpacing;
+  const startX = 72 + Math.max(0, (716 - gridW) / 2);
+  const southOffset = perRow > bottomCount ? ((perRow - bottomCount) * nodeSpacing) / 2 : 0;
+  const northY = 176;
+  const southY = 268;
+  const nodes = [];
+  for (let i = 0; i < plantCount; i++) {
+    const row = i < perRow ? 0 : 1;
+    const col = row === 0 ? i : i - perRow;
+    const x = row === 0 ? startX + col * nodeSpacing : startX + southOffset + col * nodeSpacing;
+    const y = row === 0 ? northY : southY;
+    nodes.push({ x, y, label: `P${i + 1}`, index: i + 1 });
+  }
+  const markerOff = -Math.round(rout + 22);
   return `
-    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama cenital DWC">
+    <svg viewBox="0 0 860 360" class="system-svg system-svg--dwc-lids" role="img" aria-label="Diagrama DWC · tapas cenitales con huecos para cesta">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
-      <text x="28" y="38" class="svg-title">DWC · Depósito único cenital</text>
-      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · Cultivar ${cultivar}</text>
+      <text x="28" y="38" class="svg-title">DWC · Tapas cenitales (cestas / aireador)</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · Tapa Ø ~${bucketCm} cm · hueco Ø ~${holeCm} cm · ${plantCount} sitio(s)</text>
 
-      <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
-      <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
-      <text x="370" y="305" class="reservoir-sub">${grow.reservoirL || 60} L</text>
+      <text x="28" y="78" class="svg-geom-caption">Vista superior: anillo = tapa; centro = perforación para redonda. Depósito total orientativo: ${grow.reservoirL || 60} L.</text>
 
-      ${Array.from({length:maxVisible}, (_,i)=>{
-        const x = startX + i * spacing;
-        const idx = i + 1;
-        const node = { x, y, index: idx };
-        const slotLabel = getCultivarShortLabelForSlot(grow, idx);
-        return `
-          <g class="plant-node" data-plant="${idx}">
-            <g class="plant-node-hit" onclick="selectPlantInDiagram(${idx})">
-              <circle cx="${x}" cy="${y}" r="22" class="netpot ${grow.selectedPlant===idx?'bucket-selected':''}"></circle>
-              <text x="${x}" y="${y+5}" class="bucket-label">P${i+1}</text>
-              <text x="${x}" y="${y+42}" class="cultivar-label">${slotLabel}</text>
-              <line x1="${x}" y1="${y+24}" x2="${x}" y2="${waterY+18}" class="root-line"></line>
-            </g>
-            ${renderPlantSiteMarker(node, grow, weekNum, -40)}
+      ${nodes
+        .map((node) => {
+          const idx = node.index;
+          const slotLabel = getCultivarShortLabelForSlot(grow, idx);
+          const sel = grow.selectedPlant === idx ? ' dwc-lid-ring--selected' : '';
+          return `
+        <g class="plant-node" data-plant="${idx}">
+          <g class="plant-node-hit" onclick="selectPlantInDiagram(${idx})">
+            <circle cx="${node.x}" cy="${node.y}" r="${rout + 10}" fill="transparent"></circle>
+            <circle cx="${node.x}" cy="${node.y}" r="${rout}" class="dwc-lid-ring${sel}"></circle>
+            <circle cx="${node.x}" cy="${node.y}" r="${rhole}" class="dwc-lid-hole"></circle>
+            <text x="${node.x}" y="${node.y + 4}" class="bucket-label">${node.label}</text>
+            <text x="${node.x}" y="${node.y + rout + 14}" class="cultivar-label">${slotLabel}</text>
           </g>
-        `;
-      }).join('')}
+          ${renderPlantSiteMarker(node, grow, weekNum, markerOff)}
+        </g>`;
+        })
+        .join('')}
 
       <g>
-        <rect x="700" y="170" width="66" height="44" rx="8" class="pump"></rect>
-        <line x1="700" y1="192" x2="650" y2="192" class="pipe flow"></line>
-        <text x="733" y="197" class="pump-label">AIRE</text>
+        <rect x="698" y="248" width="66" height="44" rx="8" class="pump"></rect>
+        <line x1="698" y1="270" x2="${Math.min(650, nodes[0] ? nodes[0].x + rout + 8 : 650)}" y2="270" class="pipe flow"></line>
+        <text x="731" y="275" class="pump-label">AIRE</text>
       </g>
     </svg>
   `;
@@ -1166,42 +1460,87 @@ function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
 
 function renderFloatSvg(grow, strain, plantCount, weekNum, phaseName) {
   const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
-  const maxVisible = Math.min(plantCount, 5);
-  const spacing = 130;
-  const startX = 150;
-  const y = 120;
-  const waterY = 178;
+  const hw = grow.systemHardware || {};
+  const L = Math.min(500, Math.max(40, parseFloat(hw.floatTankLengthCm) || 120));
+  const W = Math.min(500, Math.max(40, parseFloat(hw.floatTankWidthCm) || 80));
+  const dHoleCm = Math.min(40, Math.max(5, parseFloat(hw.floatRaftHoleDiameterCm) || 20));
+  const raftMm = Math.min(120, Math.max(10, parseFloat(hw.floatRaftThicknessMm) || 30));
+  const raftCm = raftMm / 10;
+  const fs = grow.systemSizing?.floatGeometrySummary;
+  const basketD = parseFloat(hw.floatNetPotBelowRaftCm) || 8;
+  const subst = parseFloat(hw.floatSubstrateColumnCm) || 5;
+  const subBelow =
+    fs && Number.isFinite(fs.substrateBelowRaftCm)
+      ? fs.substrateBelowRaftCm
+      : Math.round(Math.max(0, basketD - subst) * 10) / 10;
+  const raftThCmDisp = fs && Number.isFinite(fs.raftThicknessCm) ? fs.raftThicknessCm : Math.round(raftCm * 10) / 10;
+
+  const maxTW = 600;
+  const maxTH = 210;
+  const scale = Math.min(maxTW / L, maxTH / W);
+  const tankW = L * scale;
+  const tankH = W * scale;
+  const cx = 400;
+  const cy = 200;
+  const tx = cx - tankW / 2;
+  const ty = cy - tankH / 2;
+  const inset = 16;
+  const ix = tx + inset;
+  const iy = ty + inset;
+  const innerW = tankW - 2 * inset;
+  const innerH = tankH - 2 * inset;
+  const airTop = 0.07;
+  const waterTopY = iy + innerH * airTop;
+  const waterH = innerH * (1 - airTop - 0.05);
+  const raftDrawH = Math.max(12, Math.min(28, raftCm * scale * 0.95));
+  const waterSurfaceY = waterTopY + waterH * 0.04;
+  const raftY = waterSurfaceY - raftDrawH;
+  const padHole = Math.max(8, (dHoleCm / 2) * scale * 0.85);
+  const holeR = Math.max(4.5, (dHoleCm / 2) * scale);
+  const centers = layoutHoleCentersInRect(plantCount, ix, raftY, innerW, raftDrawH, padHole);
+
+  const holeEls = centers
+    .map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="${holeR}" class="float-raft-hole"></circle>`)
+    .join('');
+  const plantEls = centers
+    .map((p, i) => {
+      const idx = i + 1;
+      const node = { x: p.x, y: p.y, index: idx };
+      const slotLabel = getCultivarShortLabelForSlot(grow, idx);
+      const hitR = Math.max(holeR + 6, 14);
+      return `
+        <g class="plant-node" data-plant="${idx}">
+          <g class="plant-node-hit" onclick="selectPlantInDiagram(${idx})">
+            <circle cx="${p.x}" cy="${p.y}" r="${hitR}" fill="transparent"></circle>
+            <text x="${p.x}" y="${p.y + 4}" class="bucket-label">P${idx}</text>
+            <text x="${p.x}" y="${p.y - holeR - 8}" class="cultivar-label">${slotLabel}</text>
+          </g>
+          ${renderPlantSiteMarker(node, grow, weekNum, -Math.round(holeR + 28))}
+        </g>`;
+    })
+    .join('');
+
   return `
-    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama mesa flotante">
+    <svg viewBox="0 0 860 360" class="system-svg system-svg--float" role="img" aria-label="Diagrama mesa flotante · recipiente y balsa">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
-      <text x="28" y="38" class="svg-title">Mesa flotante · DWC en balsa</text>
-      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · Solución común, macetas flotando</text>
+      <text x="28" y="38" class="svg-title">Mesa flotante · recipiente y losa</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · ~${L}×${W} cm útil · Ø hueco ~${dHoleCm} cm · ${plantCount} sitio(s)</text>
 
-      <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
-      <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
-      <text x="370" y="305" class="reservoir-sub">${grow.reservoirL || 60} L</text>
+      <text x="28" y="78" class="svg-geom-caption">Lámina de agua al ras de la cara inferior de la balsa (modelo simplificado). Base del sustrato ~${subBelow} cm por debajo de esa cara · espesor losa ~${raftThCmDisp} cm.</text>
 
-      ${Array.from({ length: maxVisible }, (_, i) => {
-        const x = startX + i * spacing;
-        const idx = i + 1;
-        const node = { x, y, index: idx };
-        const slotLabel = getCultivarShortLabelForSlot(grow, idx);
-        return `
-          <g class="plant-node" data-plant="${idx}">
-            <g class="plant-node-hit" onclick="selectPlantInDiagram(${idx})">
-              <rect x="${x - 20}" y="${y - 18}" width="40" height="28" rx="6" class="netpot ${grow.selectedPlant === idx ? 'bucket-selected' : ''}"></rect>
-              <text x="${x}" y="${y + 2}" class="bucket-label">P${i + 1}</text>
-              <text x="${x}" y="${y + 42}" class="cultivar-label">${slotLabel}</text>
-              <line x1="${x}" y1="${y + 14}" x2="${x}" y2="${waterY + 18}" class="root-line"></line>
-            </g>
-            ${renderPlantSiteMarker(node, grow, weekNum, -36)}
-          </g>`;
-      }).join('')}
+      <g class="float-tank-group">
+        <rect x="${tx}" y="${ty}" width="${tankW}" height="${tankH}" rx="12" class="float-tank-shell"></rect>
+        <rect x="${ix}" y="${waterTopY}" width="${innerW}" height="${waterH}" rx="8" class="float-water"></rect>
+        <rect x="${ix}" y="${raftY}" width="${innerW}" height="${raftDrawH}" rx="4" class="float-raft"></rect>
+        ${holeEls}
+      </g>
+
+      ${plantEls}
 
       <g>
-        <rect x="700" y="170" width="66" height="44" rx="8" class="pump"></rect>
-        <line x1="700" y1="192" x2="650" y2="192" class="pipe flow"></line>
-        <text x="733" y="197" class="pump-label">AIRE</text>
+        <rect x="698" y="248" width="66" height="44" rx="8" class="pump"></rect>
+        <line x1="698" y1="270" x2="${ix + innerW - 8}" y2="${iy + innerH * 0.5}" class="pipe flow"></line>
+        <text x="731" y="275" class="pump-label">AIRE</text>
       </g>
     </svg>
   `;
@@ -1290,7 +1629,7 @@ function renderAeroSvg(grow, strain, plantCount, weekNum, phaseName) {
 
 function selectPlantInDiagram(index) {
   if (!myGrow) return;
-  const maxPlants = Math.max(1, Math.min(8, parseInt(myGrow.plants, 10) || 1));
+  const maxPlants = getConfiguredSiteCount(myGrow);
   myGrow.selectedPlant = Math.max(1, Math.min(maxPlants, index));
   saveGrowState();
   renderActiveGrow();
@@ -1298,7 +1637,7 @@ function selectPlantInDiagram(index) {
 
 function getSelectedPlantInfo(grow, strain) {
   const selected = grow.selectedPlant || 1;
-  const totalPlants = Math.max(1, parseInt(grow.plants, 10) || 1);
+  const totalPlants = getConfiguredSiteCount(grow);
   const totalYield = Math.round(grow.m2 * parseInt(strain.yieldIn) * 0.85);
   const perPlant = Math.round(totalYield / totalPlants);
   const slotStrain = getStrainForPlantSlot(grow, selected);
@@ -1315,7 +1654,7 @@ function getSelectedPlantInfo(grow, strain) {
 }
 
 function getPlantCount(grow) {
-  return Math.max(1, Math.min(8, parseInt(grow?.plants, 10) || 1));
+  return getConfiguredSiteCount(grow);
 }
 
 function isRdwcSharedSolution(grow) {

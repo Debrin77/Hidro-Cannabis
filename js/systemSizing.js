@@ -148,7 +148,131 @@ function computeHydroSizing(hw, systemType) {
     hints,
     disclaimer:
       'Valores orientativos para autoconsumo. Ajusta según altura manométrica, pérdidas de carga, número de válvulas y calidad real de las piedras.',
+    geometryIssues: [],
+    floatGeometrySummary: null,
   };
+}
+
+/**
+ * Validación de geometría (tapas DWC, balsa, NFT depósito) + resumen flotante.
+ * @param {object} hw
+ * @param {string} systemType
+ * @param {ReturnType<typeof computeHydroSizing>|null} sizingResult
+ */
+function validateHydroGeometry(hw, systemType, sizingResult) {
+  const issues = [];
+  const sites = sizingResult?.sites ?? Math.min(48, Math.max(1, parseInt(hw?.sites, 10) || 1));
+
+  if (systemType === 'DWC') {
+    const bucket = Math.min(120, Math.max(15, parseFloat(hw.dwcBucketTopDiameterCm) || 30));
+    const hole = Math.min(50, Math.max(5, parseFloat(hw.dwcLidHoleDiameterCm) || 20));
+    const margin = (bucket - hole) / 2;
+    if (hole >= bucket) {
+      issues.push({
+        level: 'danger',
+        title: 'Boca de cesta mayor que la tapa',
+        text: `El agujero (${hole} cm) no puede ser ≥ diámetro útil de la tapa (${bucket} cm).`,
+      });
+    } else if (margin < 2) {
+      issues.push({
+        level: 'danger',
+        title: 'Cantos de tapa muy finos (DWC)',
+        text: `Con boca ${hole} cm y tapa ${bucket} cm queda ~${margin.toFixed(1)} cm de canto: riesgo de fisuras; usa tapa más ancha o broca menor (collar de cesta).`,
+      });
+    } else if (margin < 3.5) {
+      issues.push({
+        level: 'warn',
+        title: 'Cantos de tapa ajustados',
+        text: `~${margin.toFixed(1)} cm de canto: refuerza el perímetro o valora cubo de boca superior.`,
+      });
+    }
+  }
+
+  if (systemType === 'FLOAT') {
+    const L = parseFloat(hw.floatTankLengthCm) || 0;
+    const W = parseFloat(hw.floatTankWidthCm) || 0;
+    const dHole = Math.min(40, Math.max(5, parseFloat(hw.floatRaftHoleDiameterCm) || 20));
+    const cols = Math.ceil(Math.sqrt(sites));
+    const rows = Math.ceil(sites / cols);
+    const cell = dHole + 5;
+    const needL = cols * cell + 8;
+    const needW = rows * cell + 8;
+    if (L > 0 && W > 0 && (needL > L || needW > W)) {
+      issues.push({
+        level: 'warn',
+        title: 'Retícula de agujeros vs. recipiente',
+        text: `Para ~${sites} huecos de Ø${dHole} cm (rejilla ~${cols}×${rows} y márgenes orientativos) se pide ~${needL.toFixed(0)}×${needW.toFixed(0)} cm en la balsa; tu recipiente útil es ${L}×${W} cm: menos sitios, recipiente mayor o redistribución más compacta (vigila cantos entre perforaciones).`,
+      });
+    }
+    const basketD = parseFloat(hw.floatNetPotBelowRaftCm) || 8;
+    const subst = parseFloat(hw.floatSubstrateColumnCm) || 5;
+    const baseBelowRaft = Math.max(0, basketD - subst);
+    if (baseBelowRaft > 14) {
+      issues.push({
+        level: 'info',
+        title: 'Profundidad bajo la balsa',
+        text: `La base del sustrato queda ~${baseBelowRaft.toFixed(1)} cm bajo la cara inferior de la balsa: comprueba que el nivel de solución mantenga capilaridad hasta el taco (suele bastar que la lámina llegue al borde inferior de la cesta).`,
+      });
+    }
+  }
+
+  if (systemType === 'NFT') {
+    const vDep = parseFloat(hw.volumePerSiteL) || 20;
+    if (vDep < 12) {
+      issues.push({
+        level: 'warn',
+        title: 'Depósito de mezcla NFT pequeño',
+        text: 'Volúmenes por debajo de ~12 L oscilan mucho en pH/EC con el calor; valora más capacidad o revisiones más frecuentes.',
+      });
+    }
+  }
+
+  const floatSummary =
+    systemType === 'FLOAT'
+      ? (() => {
+          const basketD = parseFloat(hw.floatNetPotBelowRaftCm) || 8;
+          const subst = parseFloat(hw.floatSubstrateColumnCm) || 5;
+          const raftCm = (parseFloat(hw.floatRaftThicknessMm) || 30) / 10;
+          const baseBelowRaft = Math.max(0, basketD - subst);
+          return {
+            substrateBelowRaftCm: Math.round(baseBelowRaft * 10) / 10,
+            raftThicknessCm: Math.round(raftCm * 10) / 10,
+            note:
+              'Modelo simplificado: lámina de agua al ras de la cara inferior de la balsa. La base del sustrato queda a la profundidad indicada bajo esa cara; el agua debe alcanzar al menos el borde inferior de la cesta para capilaridad con coco/lana de roca.',
+          };
+        })()
+      : null;
+
+  return { issues, floatSummary };
+}
+
+function attachGeometryToSizingResult(result, hw, systemType) {
+  if (!result) return null;
+  const g = validateHydroGeometry(hw, systemType, result);
+  result.geometryIssues = g.issues;
+  result.floatGeometrySummary = g.floatSummary;
+  return result;
+}
+
+function renderGeometrySizingHtml(result) {
+  if (!result) return '';
+  const issues = Array.isArray(result.geometryIssues) ? result.geometryIssues : [];
+  const issueHtml = issues
+    .map((i) => {
+      const cls = i.level === 'danger' ? 'danger' : i.level === 'warn' ? 'warn' : 'info';
+      return `<div class="alert ${cls} sizing-geom-issue"><i class="ti ti-ruler"></i><div><strong>${i.title}</strong><p>${i.text}</p></div></div>`;
+    })
+    .join('');
+  const fs = result.floatGeometrySummary;
+  const floatHtml = fs
+    ? `<div class="sizing-block">
+        <div class="sizing-label">Mesa flotante · lámina de agua y sustrato</div>
+        <p>Profundidad orientativa <strong>base del sustrato</strong> bajo la cara inferior de la balsa: <strong>~${fs.substrateBelowRaftCm} cm</strong>. Espesor balsa (corcho / XPS): <strong>~${fs.raftThicknessCm} cm</strong>.</p>
+        <p class="sizing-geom-note">${fs.note}</p>
+      </div>`
+    : '';
+  if (!issueHtml && !floatHtml) return '';
+  return `<div class="sizing-block sizing-block--geometry"><div class="sizing-label">Geometría y componentes</div>${issueHtml}${floatHtml}</div>`;
 }
 
 /**
@@ -270,6 +394,18 @@ function readSystemHardwareFromOnboardingForm() {
     buildType: document.getElementById('onbBuildType')?.value === 'commercial' ? 'commercial' : 'diy',
     userAirLpm: Number.isFinite(userAirLpm) ? userAirLpm : undefined,
     userWaterLph: Number.isFinite(userWaterLph) ? userWaterLph : undefined,
+    rdwcDiagramStyle:
+      sys === 'RDWC' && document.getElementById('onbRdwcDiagram')?.value === 'rear_kit'
+        ? 'rear_kit'
+        : 'side',
+    dwcBucketTopDiameterCm: parseFloat(document.getElementById('onbDwcBucketTopCm')?.value) || 35,
+    dwcLidHoleDiameterCm: parseFloat(document.getElementById('onbDwcLidHoleCm')?.value) || 20,
+    floatTankLengthCm: parseFloat(document.getElementById('onbFloatTankL')?.value) || 120,
+    floatTankWidthCm: parseFloat(document.getElementById('onbFloatTankW')?.value) || 80,
+    floatRaftHoleDiameterCm: parseFloat(document.getElementById('onbFloatRaftHoleCm')?.value) || 20,
+    floatRaftThicknessMm: parseFloat(document.getElementById('onbFloatRaftMm')?.value) || 30,
+    floatNetPotBelowRaftCm: parseFloat(document.getElementById('onbFloatNetPotDepth')?.value) || 8,
+    floatSubstrateColumnCm: parseFloat(document.getElementById('onbFloatSubstrateH')?.value) || 5,
   };
 }
 
@@ -285,9 +421,15 @@ function runSystemSizingCalculation() {
   const sys = appConfig.system;
   const result = computeHydroSizing(appConfig.systemHardware, sys);
   result.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, result);
+  attachGeometryToSizingResult(result, appConfig.systemHardware, sys);
   appConfig.systemSizingResult = result;
   saveAppConfig();
-  renderInitialOnboarding();
+  const mount = document.getElementById('systemSizingMount');
+  if (mount && document.getElementById('onbEngineeringCard')) {
+    mount.innerHTML = renderSystemSizingHtml(result);
+  } else {
+    renderInitialOnboarding();
+  }
 }
 
 function renderUserPumpValidationHtml(validation, sizingResult) {
@@ -339,9 +481,11 @@ function renderSystemSizingHtml(result) {
         ? validateUserDeclaredPumps(appConfig.systemHardware, result)
         : result?.userPumpValidation;
     const pumpExtra = uv ? renderUserPumpValidationHtml(uv, result) : '';
+    const geomExtra = result ? renderGeometrySizingHtml(result) : '';
     return `
       <div class="sizing-result">
         <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>${label}</strong><p>${result ? result.disclaimer : 'Selecciona sistema y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
+        ${geomExtra}
         ${pumpExtra ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Equipo declarado</div>${pumpExtra}</div>` : ''}
       </div>`;
   }
@@ -360,6 +504,7 @@ function renderSystemSizingHtml(result) {
       ? validateUserDeclaredPumps(appConfig.systemHardware, result)
       : null);
   const pumpValHtml = renderUserPumpValidationHtml(uvMerged, result);
+  const geomHtml = renderGeometrySizingHtml(result);
 
   return `
     <div class="sizing-result">
@@ -368,6 +513,7 @@ function renderSystemSizingHtml(result) {
         <p>Bomba de aire recomendada: <strong>≥ ${result.airPumpLpmRecommended} L/min</strong> (mínimo prudente ~${result.airPumpLpmMinimum} L/min) para ${result.sites} depósito(s) de ${result.volumePerSiteL} L.</p>
       </div>
       ${waterBlock}
+      ${geomHtml}
       ${pumpValHtml ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Contraste con tu equipo (DIY / kit)</div>${pumpValHtml}</div>` : ''}
       <div class="sizing-block">
         <div class="sizing-label">Tubería principal (orientativo)</div>
@@ -390,3 +536,5 @@ window.runSystemSizingCalculation = runSystemSizingCalculation;
 window.snapshotSystemHardwareToAppConfig = snapshotSystemHardwareToAppConfig;
 window.validateUserDeclaredPumps = validateUserDeclaredPumps;
 window.applyOnboardingPumpSuggestion = applyOnboardingPumpSuggestion;
+window.attachGeometryToSizingResult = attachGeometryToSizingResult;
+window.validateHydroGeometry = validateHydroGeometry;
