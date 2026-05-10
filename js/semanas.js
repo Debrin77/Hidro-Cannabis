@@ -229,14 +229,14 @@ function renderSemanas() {
     }
     const ecPct = Math.min(100, Math.round(((parseFloat(ec) || 0) / 3) * 100));
     rows.push(`<tr>
-      <td class="td-week-num">${w}</td>
-      <td><span class="phase-pill ${phClass}">${phase}</span></td>
-      <td><div class="ec-bar"><div class="ec-fill" style="--fill-pct:${ecPct}%"></div><span class="ec-val">${ec}</span></div></td>
-      <td class="td-ph">${ph}</td>
-      <td class="td-light">${light}</td>
-      <td class="td-hum">${hum}</td>
-      <td class="td-temp">${temp}</td>
-      <td class="td-week-action">${accion}</td>
+      <td data-label="Sem" class="td-week-num">${w}</td>
+      <td data-label="Fase"><span class="phase-pill ${phClass}">${phase}</span></td>
+      <td data-label="EC (mS/cm)"><div class="ec-bar"><div class="ec-fill" style="--fill-pct:${ecPct}%"></div><span class="ec-val">${ec}</span></div></td>
+      <td data-label="pH" class="td-ph">${ph}</td>
+      <td data-label="Luz" class="td-light">${light}</td>
+      <td data-label="Humedad" class="td-hum">${hum}</td>
+      <td data-label="Temp." class="td-temp">${temp}</td>
+      <td data-label="Acción" class="td-week-action">${accion}</td>
     </tr>`);
   }
   const sysProf = typeof getSystemProfile === 'function' ? getSystemProfile(myGrow.system) : null;
@@ -250,7 +250,7 @@ function renderSemanas() {
           : ''
       }
       <div class="table-scroll">
-      <table class="week-table">
+      <table class="week-table week-table--stack">
         <thead><tr><th>Sem</th><th>Fase</th><th>EC (mS/cm)</th><th>pH</th><th>Luz</th><th>Humedad</th><th>Temp.</th><th>Acción principal</th></tr></thead>
         <tbody>${rows.join('')}</tbody>
       </table>

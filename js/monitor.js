@@ -538,23 +538,23 @@ function renderMeasurementsTable() {
   }
   return `
     <div class="table-scroll table-scroll--mt">
-      <table class="week-table">
+      <table class="week-table week-table--stack">
         <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Planta'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>VPD</th><th>CO₂</th><th>PPFD</th><th>h luz</th><th>Notas</th></tr></thead>
         <tbody>
           ${rows.map(r=>`<tr>
-            <td>${new Date(r.date).toLocaleDateString('es-ES')} ${new Date(r.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td>
-            <td class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
-            <td class="ec-val">${Number.isFinite(r.ph)?r.ph.toFixed(1):'—'}</td>
-            <td class="ec-val">${Number.isFinite(r.ec)?r.ec.toFixed(2):'—'}</td>
-            <td>${Number.isFinite(r.volume)?r.volume.toFixed(1):'—'}</td>
-            <td>${Number.isFinite(r.waterTemp)?r.waterTemp.toFixed(1)+'°C':'—'}</td>
-            <td>${Number.isFinite(r.airTemp)?r.airTemp.toFixed(1)+'°C':'—'}</td>
-            <td>${Number.isFinite(r.humidity)?r.humidity.toFixed(0)+'%':'—'}</td>
-            <td class="ec-val">${formatMeasurementVpd(r)}</td>
-            <td>${Number.isFinite(r.co2)?r.co2.toFixed(0)+' ppm':'—'}</td>
-            <td>${Number.isFinite(r.ppfd)?r.ppfd.toFixed(0):'—'}</td>
-            <td>${Number.isFinite(r.lightHours)?r.lightHours.toFixed(1):'—'}</td>
-            <td>${r.note || '—'}</td>
+            <td data-label="Fecha">${new Date(r.date).toLocaleDateString('es-ES')} ${new Date(r.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td>
+            <td data-label="${rdwc ? 'Sitio' : 'Planta'}" class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
+            <td data-label="pH" class="ec-val">${Number.isFinite(r.ph)?r.ph.toFixed(1):'—'}</td>
+            <td data-label="EC" class="ec-val">${Number.isFinite(r.ec)?r.ec.toFixed(2):'—'}</td>
+            <td data-label="Vol">${Number.isFinite(r.volume)?r.volume.toFixed(1):'—'}</td>
+            <td data-label="Tª agua">${Number.isFinite(r.waterTemp)?r.waterTemp.toFixed(1)+'°C':'—'}</td>
+            <td data-label="Tª aire">${Number.isFinite(r.airTemp)?r.airTemp.toFixed(1)+'°C':'—'}</td>
+            <td data-label="HR">${Number.isFinite(r.humidity)?r.humidity.toFixed(0)+'%':'—'}</td>
+            <td data-label="VPD" class="ec-val">${formatMeasurementVpd(r)}</td>
+            <td data-label="CO₂">${Number.isFinite(r.co2)?r.co2.toFixed(0)+' ppm':'—'}</td>
+            <td data-label="PPFD">${Number.isFinite(r.ppfd)?r.ppfd.toFixed(0):'—'}</td>
+            <td data-label="h luz">${Number.isFinite(r.lightHours)?r.lightHours.toFixed(1):'—'}</td>
+            <td data-label="Notas">${r.note || '—'}</td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -859,34 +859,48 @@ function renderHistorialMeasurementsTable() {
   const rdwc = isMonitorRdwc(myGrow);
   return `
     <div class="table-scroll table-scroll--mt-sm">
-      <table class="week-table">
+      <table class="week-table week-table--stack">
         <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Pl.'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>VPD</th><th>CO₂</th><th>PPFD</th><th>h</th><th>Notas</th></tr></thead>
         <tbody>
           ${rows.map((r) => `<tr>
-            <td>${new Date(r.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-            <td class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
-            <td class="ec-val">${Number.isFinite(r.ph) ? r.ph.toFixed(1) : '—'}</td>
-            <td class="ec-val">${Number.isFinite(r.ec) ? r.ec.toFixed(2) : '—'}</td>
-            <td>${Number.isFinite(r.volume) ? r.volume.toFixed(1) : '—'}</td>
-            <td>${Number.isFinite(r.waterTemp) ? r.waterTemp.toFixed(1) + '°C' : '—'}</td>
-            <td>${Number.isFinite(r.airTemp) ? r.airTemp.toFixed(1) + '°C' : '—'}</td>
-            <td>${Number.isFinite(r.humidity) ? r.humidity.toFixed(0) + '%' : '—'}</td>
-            <td class="ec-val">${formatMeasurementVpd(r)}</td>
-            <td>${Number.isFinite(r.co2) ? r.co2.toFixed(0) + ' ppm' : '—'}</td>
-            <td>${Number.isFinite(r.ppfd) ? r.ppfd.toFixed(0) : '—'}</td>
-            <td>${Number.isFinite(r.lightHours) ? r.lightHours.toFixed(1) : '—'}</td>
-            <td class="table-cell-note">${r.note || '—'}</td>
+            <td data-label="Fecha">${new Date(r.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+            <td data-label="${rdwc ? 'Sitio' : 'Pl.'}" class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
+            <td data-label="pH" class="ec-val">${Number.isFinite(r.ph) ? r.ph.toFixed(1) : '—'}</td>
+            <td data-label="EC" class="ec-val">${Number.isFinite(r.ec) ? r.ec.toFixed(2) : '—'}</td>
+            <td data-label="Vol">${Number.isFinite(r.volume) ? r.volume.toFixed(1) : '—'}</td>
+            <td data-label="Tª agua">${Number.isFinite(r.waterTemp) ? r.waterTemp.toFixed(1) + '°C' : '—'}</td>
+            <td data-label="Tª aire">${Number.isFinite(r.airTemp) ? r.airTemp.toFixed(1) + '°C' : '—'}</td>
+            <td data-label="HR">${Number.isFinite(r.humidity) ? r.humidity.toFixed(0) + '%' : '—'}</td>
+            <td data-label="VPD" class="ec-val">${formatMeasurementVpd(r)}</td>
+            <td data-label="CO₂">${Number.isFinite(r.co2) ? r.co2.toFixed(0) + ' ppm' : '—'}</td>
+            <td data-label="PPFD">${Number.isFinite(r.ppfd) ? r.ppfd.toFixed(0) : '—'}</td>
+            <td data-label="h">${Number.isFinite(r.lightHours) ? r.lightHours.toFixed(1) : '—'}</td>
+            <td data-label="Notas" class="table-cell-note">${r.note || '—'}</td>
           </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 }
 
+function renderHistorialQuickRefCard() {
+  return `<div class="card historial-quick-ref">
+      <div class="card-header"><div class="card-title"><i class="ti ti-book-2"></i> Referencia rápida</div></div>
+      <p class="historial-quick-ref__hint">Consejos, catálogo de cepas y líneas de nutrientes (antes en Inicio).</p>
+      <div class="dash-secondary historial-quick-ref__links">
+        <button type="button" class="dash-link-btn" onclick="navTo('consejos')"><i class="ti ti-bulb" aria-hidden="true"></i> Consejos de uso</button>
+        <button type="button" class="dash-link-btn" onclick="navTo('variedades')"><i class="ti ti-seedling" aria-hidden="true"></i> Variedades</button>
+        <button type="button" class="dash-link-btn" onclick="navTo('nutrientes')"><i class="ti ti-flask" aria-hidden="true"></i> Nutrientes</button>
+      </div>
+    </div>`;
+}
+
 function renderHistorial() {
   const host = document.getElementById('historialContent');
   if (!host) return;
+  const quickRef = renderHistorialQuickRefCard();
   if (!myGrow) {
-    host.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay historial sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Sistema</button></div>`;
+    host.innerHTML = `${quickRef}
+    <div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay bitácora ni mediciones sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Sistema</button></div>`;
     return;
   }
   const logHtml = (myGrow.log || [])
@@ -898,7 +912,7 @@ function renderHistorial() {
     </div>`,
     )
     .join('');
-  host.innerHTML = `
+  host.innerHTML = `${quickRef}
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Bitácora (${myGrow.strain.name})</div></div>
       <div class="log-list">${logHtml || '<p class="text-muted">Sin entradas.</p>'}</div>

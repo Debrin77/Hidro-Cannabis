@@ -198,13 +198,13 @@ function renderStrainSpecsTableHtml() {
         .filter(Boolean)
         .join(' · ');
       return `<tr>
-        <td><strong>${s.name}</strong><br><span class="text-muted">${s.typeName}</span></td>
-        <td class="ec-val">${s.ecVeg}–${(s.ecVeg + 0.4).toFixed(1)}</td>
-        <td class="ec-val">${s.ecFlower}–${s.ecPeak}</td>
-        <td>${pV.min.toFixed(1)}–${pV.max.toFixed(1)} / ${pF.min.toFixed(1)}–${pF.max.toFixed(1)}</td>
-        <td>${s.tempWater}–${s.tempWater + 2}°C</td>
-        <td>${s.system}</td>
-        <td class="table-cell-note">${extras || s.ambNotes.slice(0, 90)}${s.ambNotes.length > 90 ? '…' : ''}</td>
+        <td data-label="Variedad"><strong>${s.name}</strong><br><span class="text-muted">${s.typeName}</span></td>
+        <td data-label="EC veg (ref.)" class="ec-val">${s.ecVeg}–${(s.ecVeg + 0.4).toFixed(1)}</td>
+        <td data-label="EC flor / pico" class="ec-val">${s.ecFlower}–${s.ecPeak}</td>
+        <td data-label="pH veg / flor">${pV.min.toFixed(1)}–${pV.max.toFixed(1)} / ${pF.min.toFixed(1)}–${pF.max.toFixed(1)}</td>
+        <td data-label="Tª agua">${s.tempWater}–${s.tempWater + 2}°C</td>
+        <td data-label="Sistema ideal">${s.system}</td>
+        <td data-label="Notas" class="table-cell-note">${extras || s.ambNotes.slice(0, 90)}${s.ambNotes.length > 90 ? '…' : ''}</td>
       </tr>`;
     })
     .join('');
@@ -213,7 +213,7 @@ function renderStrainSpecsTableHtml() {
       <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Condiciones objetivo por variedad (validación en Medir)</div></div>
       <p class="body-prose">La app cruza tu última medición con estos rangos y la fase actual. Las correcciones sugeridas son <strong>orientativas</strong>: vuelve a medir tras cada ajuste pequeño.</p>
       <div class="table-scroll">
-        <table class="week-table">
+        <table class="week-table week-table--stack">
           <thead>
             <tr>
               <th>Variedad</th>

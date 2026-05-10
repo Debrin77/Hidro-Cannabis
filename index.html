@@ -3,9 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f766e">
+<meta name="description" content="Checklist y monitor de cultivo hidropónico: DWC, RDWC, nutrición, pH/EC, clima y calendario. Herramienta orientativa para autoconsumo responsable.">
 <title>Hydro Cannabis — Hidrocultivo</title>
 <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="css/base.css">
@@ -13,6 +17,7 @@
 <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="app-locked">
+<a href="#mainContent" class="skip-link">Saltar al contenido principal</a>
 <div class="splash-screen" id="splashScreen" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
   <div class="splash-card">
     <img src="assets/icons/hydro-cannabis-logo.svg" alt="Logo Hydro Cannabis" class="splash-logo">
@@ -30,6 +35,7 @@
 
 <header class="app-topbar">
   <div class="topbar-brand">
+    <button type="button" class="topbar-back" id="topbarBackBtn" onclick="history.back()" hidden aria-hidden="true" aria-label="Volver a la pantalla anterior"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
     <img src="assets/icons/hydro-cannabis-logo.svg" alt="" class="topbar-logo" width="36" height="36">
     <div class="topbar-titles">
       <span class="topbar-name">Hydro Cannabis</span>
@@ -38,14 +44,14 @@
   </div>
   <div class="topbar-actions">
     <span class="topbar-status" id="sideStatus">Sin cultivo</span>
-    <button class="topbar-theme" id="themeToggleBtn" onclick="toggleTheme()" type="button">
-      <i class="ti ti-sun-moon"></i>
+    <button class="topbar-theme" id="themeToggleBtn" onclick="toggleTheme()" type="button" aria-label="Cambiar tema claro u oscuro">
+      <i class="ti ti-sun-moon" aria-hidden="true"></i>
       <span id="themeToggleText">Tema</span>
     </button>
   </div>
 </header>
 
-<main class="main">
+<main class="main" id="mainContent" tabindex="-1">
 
 <!-- ══════════════ INICIO ══════════════ -->
 <div class="view active" id="view-inicio">
@@ -270,15 +276,15 @@
   <div class="card card--table">
     <div class="card-header"><div class="card-title"><i class="ti ti-sun"></i>Iluminación por tipo de sistema</div></div>
     <div class="table-scroll">
-    <table class="week-table">
+    <table class="week-table week-table--stack">
       <thead>
         <tr><th>Tipo de luz</th><th>Potencia/m²</th><th>Ventajas</th><th>PPFD máx</th><th>Calor generado</th><th>Recomendado para</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong class="light-name light-name--led">LED Full Spectrum</strong></td><td class="ec-val">300–500W</td><td class="light-desc">Eficiencia, bajo calor, espectro completo</td><td class="ec-val">1000–1500 µmol</td><td class="heat heat--low">Bajo</td><td class="rec rec--ok">★ Recomendado</td></tr>
-        <tr><td><strong class="light-name light-name--lec">LEC CMH 315W</strong></td><td class="ec-val">250–315W</td><td class="light-desc">Espectro UV, más terpenos y resina</td><td class="ec-val">600–800 µmol</td><td class="heat heat--med">Medio</td><td class="rec rec--med">Calidad premium</td></tr>
-        <tr><td><strong class="light-name light-name--hps">HPS 600W</strong></td><td class="ec-val">400W/m²</td><td class="light-desc">Penetración, coste bajo, probado</td><td class="ec-val">800–1000 µmol</td><td class="heat heat--hi">Alto</td><td class="rec rec--muted">Setup ya existente</td></tr>
-        <tr><td><strong class="light-name light-name--mh">HM (Metal Halide)</strong></td><td class="ec-val">250–400W</td><td class="light-desc">Espectro azul, ideal vegetación</td><td class="ec-val">500–700 µmol</td><td class="heat heat--hi">Alto</td><td class="rec rec--muted">Solo vegetación</td></tr>
+        <tr><td data-label="Tipo de luz"><strong class="light-name light-name--led">LED Full Spectrum</strong></td><td data-label="Potencia/m²" class="ec-val">300–500W</td><td data-label="Ventajas" class="light-desc">Eficiencia, bajo calor, espectro completo</td><td data-label="PPFD máx" class="ec-val">1000–1500 µmol</td><td data-label="Calor" class="heat heat--low">Bajo</td><td data-label="Recomendado" class="rec rec--ok">★ Recomendado</td></tr>
+        <tr><td data-label="Tipo de luz"><strong class="light-name light-name--lec">LEC CMH 315W</strong></td><td data-label="Potencia/m²" class="ec-val">250–315W</td><td data-label="Ventajas" class="light-desc">Espectro UV, más terpenos y resina</td><td data-label="PPFD máx" class="ec-val">600–800 µmol</td><td data-label="Calor" class="heat heat--med">Medio</td><td data-label="Recomendado" class="rec rec--med">Calidad premium</td></tr>
+        <tr><td data-label="Tipo de luz"><strong class="light-name light-name--hps">HPS 600W</strong></td><td data-label="Potencia/m²" class="ec-val">400W/m²</td><td data-label="Ventajas" class="light-desc">Penetración, coste bajo, probado</td><td data-label="PPFD máx" class="ec-val">800–1000 µmol</td><td data-label="Calor" class="heat heat--hi">Alto</td><td data-label="Recomendado" class="rec rec--muted">Setup ya existente</td></tr>
+        <tr><td data-label="Tipo de luz"><strong class="light-name light-name--mh">HM (Metal Halide)</strong></td><td data-label="Potencia/m²" class="ec-val">250–400W</td><td data-label="Ventajas" class="light-desc">Espectro azul, ideal vegetación</td><td data-label="PPFD máx" class="ec-val">500–700 µmol</td><td data-label="Calor" class="heat heat--hi">Alto</td><td data-label="Recomendado" class="rec rec--muted">Solo vegetación</td></tr>
       </tbody>
     </table>
     </div>

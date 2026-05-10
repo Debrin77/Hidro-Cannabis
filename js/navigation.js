@@ -1,4 +1,4 @@
-// Navegación — barra inferior tipo app
+// Navegación — barra inferior tipo app + hash (botón atrás del sistema)
 
 const MORE_VIEWS = ['consejos', 'variedades', 'nutrientes', 'ambiental', 'legal'];
 
@@ -36,7 +36,16 @@ function scrollBottomNavToActive(view) {
   });
 }
 
-function navTo(view) {
+function updateTopbarBackVisibility() {
+  const btn = document.getElementById('topbarBackBtn');
+  if (!btn) return;
+  const raw = location.hash.slice(1);
+  const show = raw !== '' && raw !== 'inicio';
+  btn.hidden = !show;
+  btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
+
+function applyNavView(view) {
   closeMoreMenu();
   document.querySelectorAll('[data-nav-view]').forEach((n) => {
     const nv = n.getAttribute('data-nav-view');
@@ -51,14 +60,14 @@ function navTo(view) {
 
   scrollBottomNavToActive(view);
 
-  if (view === 'inicio') renderInicio();
-  if (view === 'cultivo') renderCultivo();
-  if (view === 'monitor') renderMonitor();
-  if (view === 'semanas') renderSemanas();
-  if (view === 'nutrientes') renderNutrientes();
-  if (view === 'historial') renderHistorial();
+  if (view === 'inicio' && typeof renderInicio === 'function') renderInicio();
+  if (view === 'cultivo' && typeof renderCultivo === 'function') renderCultivo();
+  if (view === 'monitor' && typeof renderMonitor === 'function') renderMonitor();
+  if (view === 'semanas' && typeof renderSemanas === 'function') renderSemanas();
+  if (view === 'nutrientes' && typeof renderNutrientes === 'function') renderNutrientes();
+  if (view === 'historial' && typeof renderHistorial === 'function') renderHistorial();
   if (view === 'climatologia') {
-    renderClimatologia();
+    if (typeof renderClimatologia === 'function') renderClimatologia();
     window.requestAnimationFrame(() => {
       if (typeof refreshClimatologiaOnTabFocus === 'function') refreshClimatologiaOnTabFocus();
     });
@@ -66,11 +75,42 @@ function navTo(view) {
   if (view === 'consejos' && typeof renderConsejosPage === 'function') renderConsejosPage();
 }
 
+function navTo(view) {
+  if (!document.getElementById('view-' + view)) view = 'inicio';
+  if ((location.hash.slice(1) || 'inicio') === view) {
+    applyNavView(view);
+    updateTopbarBackVisibility();
+    return;
+  }
+  location.hash = view;
+}
+
 function nav(el, view) {
   navTo(view);
 }
+
+function initNavigationFromHash() {
+  let v = location.hash.slice(1);
+  if (!v) {
+    updateTopbarBackVisibility();
+    return;
+  }
+  if (!document.getElementById('view-' + v)) v = 'inicio';
+  applyNavView(v);
+  updateTopbarBackVisibility();
+}
+
+window.addEventListener('hashchange', () => {
+  let v = location.hash.slice(1);
+  if (!v) v = 'inicio';
+  if (!document.getElementById('view-' + v)) v = 'inicio';
+  applyNavView(v);
+  updateTopbarBackVisibility();
+});
 
 window.navTo = navTo;
 window.nav = nav;
 window.toggleMoreMenu = toggleMoreMenu;
 window.closeMoreMenu = closeMoreMenu;
+window.initNavigationFromHash = initNavigationFromHash;
+window.applyNavView = applyNavView;

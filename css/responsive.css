@@ -2,8 +2,6 @@
 @media(max-width:900px){
   .gauge-grid{grid-template-columns:repeat(2,1fr)}
   .env-grid{grid-template-columns:repeat(3,1fr)}
-  .system-svg{min-width:560px}
-  .plant-trend-svg{min-width:560px}
   .page-header h1{font-size:clamp(1.35rem,4vw,1.6rem)}
 }
 

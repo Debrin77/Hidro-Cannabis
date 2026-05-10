@@ -134,7 +134,7 @@ function renderInicio() {
   let statusDetail = 'Pulsa Sistema y completa el checklist con datos reales de bomba, aire y depósitos.';
   if (hasGrow) {
     statusLabel = myGrow.strain.name;
-    statusDetail = `Semana activa en curso · Medir (pH, EC, microclima, luz) · Climatología del emplazamiento · Historial.`;
+    statusDetail = `Semana activa en curso · Barra inferior: Medir, Sistema, Calendario, Historial, Clima.`;
   } else if (appDone || skipWelcome) {
     statusLabel = 'Listo para arrancar';
     statusDetail =
@@ -186,45 +186,26 @@ function renderInicio() {
         <span class="dash-tile-title">Sistema</span>
         <span class="dash-tile-sub">Checklist e ingeniería</span>
       </button>
-      <button type="button" class="dash-tile" onclick="navTo('monitor')" ${hasGrow ? '' : 'disabled'}>
-        <i class="ti ti-gauge"></i>
-        <span class="dash-tile-title">Medir</span>
-        <span class="dash-tile-sub">${hasGrow ? 'Solución · VPD · luz' : 'Tras activar cultivo'}</span>
-      </button>
-      <button type="button" class="dash-tile" onclick="navTo('climatologia')">
-        <i class="ti ti-cloud-storm"></i>
-        <span class="dash-tile-title">Clima</span>
-        <span class="dash-tile-sub">Pronóstico del sistema</span>
-      </button>
-      <button type="button" class="dash-tile" onclick="navTo('semanas')" ${hasGrow ? '' : 'disabled'}>
-        <i class="ti ti-calendar-stats"></i>
-        <span class="dash-tile-title">Calendario</span>
-        <span class="dash-tile-sub">${hasGrow ? 'Plan semanal' : 'Con cultivo activo'}</span>
-      </button>
-      <button type="button" class="dash-tile" onclick="navTo('historial')" ${hasGrow ? '' : 'disabled'}>
-        <i class="ti ti-history"></i>
-        <span class="dash-tile-title">Historial</span>
-        <span class="dash-tile-sub">${hasGrow ? 'Bitácora' : 'Con cultivo activo'}</span>
-      </button>
     </section>
 
-    <section class="dash-secondary">
-      <button type="button" class="dash-link-btn" onclick="navTo('consejos')"><i class="ti ti-bulb"></i> Consejos de uso</button>
-      <button type="button" class="dash-link-btn" onclick="navTo('variedades')"><i class="ti ti-seedling"></i> Variedades</button>
-      <button type="button" class="dash-link-btn" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes</button>
-    </section>
-
-    <section class="dash-check-section">
-      <div class="dash-check-head">
-        <div>
-          <h2 class="dash-section-title">Buenas prácticas</h2>
-          <p class="dash-section-sub">Referencia rápida · ${done}/${total} revisados</p>
+    <details class="dash-check-section" open>
+      <summary class="dash-check-summary">
+        <div class="dash-check-summary__grow">
+          <div class="dash-check-summary__topline">
+            <div>
+              <h2 class="dash-section-title">Buenas prácticas</h2>
+              <p class="dash-section-sub">Referencia rápida · ${done}/${total} revisados</p>
+            </div>
+            <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
+          </div>
+          <div class="dash-mini-bar dash-mini-bar--in-summary" style="--dash-pct:${pct}%"><span></span></div>
         </div>
-        <div class="dash-mini-bar" style="--dash-pct:${pct}%"><span></span></div>
+      </summary>
+      <div class="dash-check-section__toolbar">
         <button type="button" class="btn btn-ghost btn--tiny" onclick="resetExpertChecklist()">Reiniciar</button>
       </div>
-      <div class="expert-checklist expert-checklist--inset">${checklistRows}</div>
-    </section>
+      <div class="dash-check-section__body expert-checklist expert-checklist--inset">${checklistRows}</div>
+    </details>
   `;
 }
 

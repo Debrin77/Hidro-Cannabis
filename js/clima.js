@@ -171,13 +171,13 @@ function renderDailyForecastIconStrip(snap) {
       const uv = snap.daily.uv_index_max?.[i];
       const d = new Date(day);
       const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-      const uvCell = hasUvDaily ? `<td>${Number.isFinite(uv) ? uv.toFixed(1) : '—'}</td>` : '';
+      const uvCell = hasUvDaily ? `<td data-label="UV máx">${Number.isFinite(uv) ? uv.toFixed(1) : '—'}</td>` : '';
       return `<tr>
-        <td>${dayStr}</td>
-        <td class="ec-val">${Number.isFinite(tmin) && Number.isFinite(tmax) ? `${tmin.toFixed(0)} / ${tmax.toFixed(0)}°C` : '—'}</td>
-        <td>${Number.isFinite(rain) ? rain.toFixed(1) + ' mm' : '—'}</td>
-        <td>${Number.isFinite(prob) ? prob + '%' : '—'}</td>
-        <td>${Number.isFinite(wmax) ? wmax.toFixed(0) + ' km/h' : '—'}</td>
+        <td data-label="Día">${dayStr}</td>
+        <td data-label="Tª mín / máx" class="ec-val">${Number.isFinite(tmin) && Number.isFinite(tmax) ? `${tmin.toFixed(0)} / ${tmax.toFixed(0)}°C` : '—'}</td>
+        <td data-label="Lluvia">${Number.isFinite(rain) ? rain.toFixed(1) + ' mm' : '—'}</td>
+        <td data-label="Prob.">${Number.isFinite(prob) ? prob + '%' : '—'}</td>
+        <td data-label="Viento máx">${Number.isFinite(wmax) ? wmax.toFixed(0) + ' km/h' : '—'}</td>
         ${uvCell}
       </tr>`;
     })
@@ -191,7 +191,7 @@ function renderDailyForecastIconStrip(snap) {
 
   const detailTable = `<details class="clima-forecast-details">
     <summary class="clima-forecast-details__summary">Ver tabla numérica detallada</summary>
-    <div class="table-scroll"><table class="week-table"><thead><tr><th>Día</th><th>Tª mín / máx</th><th>Lluvia</th><th>Prob.</th><th>Viento máx</th>${thUv}</tr></thead><tbody>${dailyRows}</tbody></table></div>
+    <div class="table-scroll"><table class="week-table week-table--stack"><thead><tr><th>Día</th><th>Tª mín / máx</th><th>Lluvia</th><th>Prob.</th><th>Viento máx</th>${thUv}</tr></thead><tbody>${dailyRows}</tbody></table></div>
   </details>`;
 
   return { strip, detailTable };

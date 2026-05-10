@@ -18,7 +18,7 @@ function _trendLayout() {
 
 function _svgShell(innerSvg, aria) {
   return `<div class="plant-trend-scroll">
-    <svg viewBox="0 0 820 268" class="plant-trend-svg" role="img" aria-label="${aria}">${innerSvg}</svg>
+    <svg viewBox="0 0 820 268" preserveAspectRatio="xMidYMid meet" class="plant-trend-svg" role="img" aria-label="${aria}">${innerSvg}</svg>
   </div>`;
 }
 

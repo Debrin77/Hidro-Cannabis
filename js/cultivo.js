@@ -154,8 +154,22 @@ function renderInitialOnboarding() {
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-list-check"></i>Paso 1–2 · Sistema, ubicación y clima</div></div>
+    <nav class="onboarding-progress" aria-label="Pasos del checklist">
+      <ol class="onboarding-progress__track">
+        <li><a href="#onbStepSystem" class="onboarding-progress__link">1 · Sistema</a></li>
+        <li><a href="#onbEngineeringCard" class="onboarding-progress__link">2 · Ingeniería</a></li>
+        <li><a href="#onbStepComplements" class="onboarding-progress__link">3 · Instrumentos</a></li>
+        <li><a href="#onbStepVariety" class="onboarding-progress__link">4 · Cultivo</a></li>
+      </ol>
+    </nav>
+
+    <details class="card onboarding-acc" id="onbStepSystem" open>
+      <summary class="onboarding-acc__summary">
+        <span class="onboarding-acc__step-num" aria-hidden="true">1</span>
+        <span class="onboarding-acc__summary-title"><i class="ti ti-list-check"></i> Paso 1–2 · Sistema, ubicación y clima</span>
+        <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="onboarding-acc__body">
       ${errorBox}
       <div class="grid2">
         <div class="form-group">
@@ -170,7 +184,7 @@ function renderInitialOnboarding() {
         </div>
         <div class="form-group">
           <label>Ubicación (ciudad o zona)</label>
-          <input id="onbLocation" type="text" value="${cfg.location||''}" placeholder="Ej: Castelló de la Plana">
+          <input id="onbLocation" type="text" value="${cfg.location||''}" placeholder="Ej: Castelló de la Plana" autocomplete="address-level2">
         </div>
         <div class="form-group">
           <label>Tipo de instalación</label>
@@ -179,10 +193,16 @@ function renderInitialOnboarding() {
       </div>
       <button type="button" class="btn btn-ghost" onclick="analyzeClimateContext()"><i class="ti ti-cloud-search"></i> Analizar clima (AEMET/Open-Meteo)</button>
       ${weatherBox}
-    </div>
+      </div>
+    </details>
 
-    <div class="card" id="onbEngineeringCard">
-      <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Ingeniería del sistema · datos de montaje</div></div>
+    <details class="card onboarding-acc" id="onbEngineeringCard" open>
+      <summary class="onboarding-acc__summary">
+        <span class="onboarding-acc__step-num" aria-hidden="true">2</span>
+        <span class="onboarding-acc__summary-title"><i class="ti ti-tool"></i> Ingeniería del sistema · datos de montaje</span>
+        <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="onboarding-acc__body">
       <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> y <strong>recirculación</strong> y valida <strong>geometría</strong> (tapas DWC, balsa, depósito NFT) cuando corresponda. <strong>Al cambiar cualquier dato</strong> de este bloque se <strong>vuelve a calcular</strong> automáticamente (debounce corto). En DWC ~1 L/min de aire por galón US; en RDWC, varios vuelcos del volumen/hora. Montaje <strong>DIY</strong>: introduce L/min y L/h; <strong>kit comercial</strong>: puedes contrastar con la placa.</p>
       ${(() => {
         const pr = typeof getSystemProfile === 'function' ? getSystemProfile(sysActive) : null;
@@ -191,12 +211,12 @@ function renderInitialOnboarding() {
       })()}
       <div class="alert warn"><i class="ti ti-alert-triangle"></i><p>Resultados <strong>orientativos</strong>: altura manométrica, codos y pérdidas reales pueden exigir una bomba mayor. Contrasta siempre con la hoja del fabricante.</p></div>
       <div class="grid2">
-        <div class="form-group"><label>Número de sitios (cubos / macetas)</label><input id="onbSites" type="number" min="1" max="48" value="${sites}"></div>
-        <div class="form-group"><label>Volumen de solución por sitio (L)</label><input id="onbVolumePerSite" type="number" min="5" max="200" step="1" value="${vps}"></div>
-        <div class="form-group"><label>Volumen depósito de control (L) — solo RDWC</label><input id="onbControlVol" type="number" min="0" max="2000" step="1" value="${ctlDisabled ? 0 : vctl}" ${ctlDisabled ? 'disabled' : ''}></div>
+        <div class="form-group"><label>Número de sitios (cubos / macetas)</label><input id="onbSites" type="number" min="1" max="48" inputmode="numeric" value="${sites}"></div>
+        <div class="form-group"><label>Volumen de solución por sitio (L)</label><input id="onbVolumePerSite" type="number" min="5" max="200" step="1" inputmode="numeric" value="${vps}"></div>
+        <div class="form-group"><label>Volumen depósito de control (L) — solo RDWC</label><input id="onbControlVol" type="number" min="0" max="2000" step="1" inputmode="numeric" value="${ctlDisabled ? 0 : vctl}" ${ctlDisabled ? 'disabled' : ''}></div>
         <div class="form-group"><label>Tipo de difusor / piedra de aire</label><select id="onbAirStone"><option value="standard" ${stone === 'standard' ? 'selected' : ''}>Estándar / burbuja media</option><option value="fine" ${stone === 'fine' ? 'selected' : ''}>Fina (mejor transferencia de O₂)</option></select></div>
-        <div class="form-group"><label>Longitud aprox. manguera de aire (m)</label><input id="onbAirLineM" type="number" min="0" max="30" step="0.5" value="${lineM}"></div>
-        <div class="form-group"><label>Temperatura típica del líquido (°C, opcional)</label><input id="onbSolutionTemp" type="number" min="10" max="35" step="0.5" placeholder="p. ej. 20" value="${solT === '' ? '' : solT}"></div>
+        <div class="form-group"><label>Longitud aprox. manguera de aire (m)</label><input id="onbAirLineM" type="number" min="0" max="30" step="0.5" inputmode="decimal" value="${lineM}"></div>
+        <div class="form-group"><label>Temperatura típica del líquido (°C, opcional)</label><input id="onbSolutionTemp" type="number" min="10" max="35" step="0.5" inputmode="decimal" placeholder="p. ej. 20" value="${solT === '' ? '' : solT}"></div>
         <div class="form-group"><label>Material línea de líquido</label><select id="onbPipeMaterial"><option value="pvc" ${pipeMat === 'pvc' ? 'selected' : ''}>PVC presión / rígido</option><option value="pe" ${pipeMat === 'pe' ? 'selected' : ''}>PE / polietileno</option><option value="reinforced" ${pipeMat === 'reinforced' ? 'selected' : ''}>Manguera reforzada</option></select></div>
         <div class="form-group">
           <label>Esquema RDWC en la app (referencia visual)</label>
@@ -216,12 +236,12 @@ function renderInitialOnboarding() {
         </div>
         <div class="form-group">
           <label>Bomba de aire — caudal nominal (L/min)</label>
-          <input id="onbUserAirLpm" type="number" min="0" max="500" step="0.1" placeholder="Ej: 12" value="${userAir === '' ? '' : userAir}">
+          <input id="onbUserAirLpm" type="number" min="0" max="500" step="0.1" inputmode="decimal" placeholder="Ej: 12" value="${userAir === '' ? '' : userAir}">
           <span class="form-hint">Dato de la placa; el caudal útil baja con contrapresión y manguera larga.</span>
         </div>
         <div class="form-group">
           <label>Bomba recirculación — caudal nominal (L/h), solo RDWC</label>
-          <input id="onbUserWaterLph" type="number" min="0" max="20000" step="1" placeholder="Ej: 800" value="${userWat === '' ? '' : userWat}" ${ctlDisabled ? 'disabled' : ''}>
+          <input id="onbUserWaterLph" type="number" min="0" max="20000" step="1" inputmode="numeric" placeholder="Ej: 800" value="${userWat === '' ? '' : userWat}" ${ctlDisabled ? 'disabled' : ''}>
           <span class="form-hint">Vacío en DWC, NFT, balsa o aeroponía.</span>
         </div>
         ${
@@ -229,12 +249,12 @@ function renderInitialOnboarding() {
             ? `<div class="grid2 onboarding-dwc-lid">
           <div class="form-group">
             <label>DWC · Diámetro tapa cenital (cm)</label>
-            <input id="onbDwcBucketTopCm" type="number" min="15" max="120" step="0.5" value="${dwcBucketTopCm}">
+            <input id="onbDwcBucketTopCm" type="number" min="15" max="120" step="0.5" inputmode="decimal" value="${dwcBucketTopCm}">
             <span class="form-hint">Vista cenital del cubo: borde útil de la tapa.</span>
           </div>
           <div class="form-group">
             <label>DWC · Diámetro hueco para cesta (cm)</label>
-            <input id="onbDwcLidHoleCm" type="number" min="5" max="50" step="0.5" value="${dwcLidHoleCm}">
+            <input id="onbDwcLidHoleCm" type="number" min="5" max="50" step="0.5" inputmode="decimal" value="${dwcLidHoleCm}">
             <span class="form-hint">Broca / aro donde apoya el collarín de la redonda.</span>
           </div>
         </div>`
@@ -245,29 +265,29 @@ function renderInitialOnboarding() {
             ? `<div class="grid2 onboarding-float-geom">
           <div class="form-group">
             <label>Balsa · Largo recipiente interior (cm)</label>
-            <input id="onbFloatTankL" type="number" min="40" max="500" step="1" value="${floatTankL}">
+            <input id="onbFloatTankL" type="number" min="40" max="500" step="1" inputmode="numeric" value="${floatTankL}">
           </div>
           <div class="form-group">
             <label>Balsa · Ancho recipiente interior (cm)</label>
-            <input id="onbFloatTankW" type="number" min="40" max="500" step="1" value="${floatTankW}">
+            <input id="onbFloatTankW" type="number" min="40" max="500" step="1" inputmode="numeric" value="${floatTankW}">
           </div>
           <div class="form-group">
             <label>Balsa · Diámetro agujeros en corcho/XPS (cm)</label>
-            <input id="onbFloatRaftHoleCm" type="number" min="5" max="40" step="0.5" value="${floatRaftHoleCm}">
+            <input id="onbFloatRaftHoleCm" type="number" min="5" max="40" step="0.5" inputmode="decimal" value="${floatRaftHoleCm}">
             <span class="form-hint">Coincide con nº de sitios del checklist; huecos en planta.</span>
           </div>
           <div class="form-group">
             <label>Balsa · Espesor losa flotante (mm)</label>
-            <input id="onbFloatRaftMm" type="number" min="10" max="120" step="1" value="${floatRaftMm}">
+            <input id="onbFloatRaftMm" type="number" min="10" max="120" step="1" inputmode="numeric" value="${floatRaftMm}">
           </div>
           <div class="form-group">
             <label>Profundidad cesta bajo la balsa (cm)</label>
-            <input id="onbFloatNetPotDepth" type="number" min="3" max="40" step="0.5" value="${floatNetPotCm}">
+            <input id="onbFloatNetPotDepth" type="number" min="3" max="40" step="0.5" inputmode="decimal" value="${floatNetPotCm}">
             <span class="form-hint">Desde cara inferior de la balsa al fondo de la cesta.</span>
           </div>
           <div class="form-group">
             <label>Columna de sustrato en cesta (cm)</label>
-            <input id="onbFloatSubstrateH" type="number" min="2" max="35" step="0.5" value="${floatSubCm}">
+            <input id="onbFloatSubstrateH" type="number" min="2" max="35" step="0.5" inputmode="decimal" value="${floatSubCm}">
             <span class="form-hint">Base del sustrato ≈ fondo cesta si rellenas desde abajo; la app estima separación respecto a la lámina.</span>
           </div>
         </div>`
@@ -278,10 +298,16 @@ function renderInitialOnboarding() {
         <button type="button" class="btn btn-primary" onclick="runSystemSizingCalculation()"><i class="ti ti-calculator"></i> Calcular / refrescar dimensionado</button>
       </div>
       <div id="systemSizingMount">${sizingHtml}</div>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-tools"></i>Complementos e instrumentación</div></div>
+    <details class="card onboarding-acc" id="onbStepComplements" open>
+      <summary class="onboarding-acc__summary">
+        <span class="onboarding-acc__step-num" aria-hidden="true">3</span>
+        <span class="onboarding-acc__summary-title"><i class="ti ti-tools"></i> Complementos e instrumentación</span>
+        <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="onboarding-acc__body">
       <p class="body-prose mb-text-block">Marca lo que tienes. En <strong>Medir</strong> solo se ofrecerán <strong>gráficos de tendencia</strong> acordes (sin pH/EC no verás el gráfico pH/EC, etc.). En hidro de cannabis suele ser imprescindible: <strong>pH y EC</strong>, <strong>Tª del líquido</strong> y <strong>Tª + HR</strong> en copa o sala (VPD); el calentador con termostato ayuda si el líquido queda frío.</p>
       <div class="grid2 onboarding-complements">
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompPhEc" ${comp.meterPhEc ? 'checked' : ''}><span>Medidor <strong>pH</strong> y <strong>EC</strong> (pen o continuo)</span></label>
@@ -293,17 +319,23 @@ function renderInitialOnboarding() {
       </div>
       <div class="form-group onboarding-heater-setpoint" id="onbHeaterSetpointWrap" style="${comp.reservoirHeater ? '' : 'opacity:0.55'}">
         <label>Temperatura del termostato del calentador (°C)</label>
-        <input type="number" id="onbCompHeaterSetC" min="15" max="32" step="0.5" value="${Number.isFinite(comp.heaterThermostatC) ? comp.heaterThermostatC : 22}" ${comp.reservoirHeater ? '' : 'disabled'}>
+        <input type="number" id="onbCompHeaterSetC" min="15" max="32" step="0.5" inputmode="decimal" value="${Number.isFinite(comp.heaterThermostatC) ? comp.heaterThermostatC : 22}" ${comp.reservoirHeater ? '' : 'disabled'}>
         <span class="form-hint">Activa el calentador arriba para editar. Contrasta siempre con la sonda en el líquido.</span>
       </div>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Paso 3 · Variedad, trasplante, nutriente y dosificación</div></div>
+    <details class="card onboarding-acc" id="onbStepVariety" open>
+      <summary class="onboarding-acc__summary">
+        <span class="onboarding-acc__step-num" aria-hidden="true">4</span>
+        <span class="onboarding-acc__summary-title"><i class="ti ti-seedling"></i> Paso 3 · Variedad, trasplante, nutriente y dosificación</span>
+        <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="onboarding-acc__body">
       <p class="body-prose mb-text-block">El <strong>nutriente principal</strong> define la base de la mezcla en toda la app (Germ / Veg / Flor / Flush). Los <strong>aditivos</strong> mostrados son los que suele combinar esa línea: úsalos según tabla del fabricante y tus mediciones de pH/EC.</p>
       <div class="grid2">
         <div class="form-group"><label>Variedad</label><select id="onbStrain">${strains.map(s=>`<option value="${s.id}" ${(cfg.strainId||'ww')===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
-        <div class="form-group"><label>Edad (días)</label><input id="onbAge" type="number" min="0" max="120" value="${Number.isFinite(cfg.ageDays)?cfg.ageDays:0}"></div>
+        <div class="form-group"><label>Edad (días)</label><input id="onbAge" type="number" min="0" max="120" inputmode="numeric" value="${Number.isFinite(cfg.ageDays)?cfg.ageDays:0}"></div>
         <div class="form-group"><label>Origen (semilla/esqueje/proveedor)</label><input id="onbOrigin" type="text" value="${cfg.origin||''}" placeholder="Ej: Esqueje propio"></div>
         <div class="form-group"><label>Fecha trasplante al sistema</label><input id="onbTransplantDate" type="date" value="${cfg.transplantDate||new Date().toISOString().split('T')[0]}"></div>
         <div class="form-group">
@@ -314,7 +346,8 @@ function renderInitialOnboarding() {
       </div>
       <div id="onbNutriHint" class="onboarding-nutri-hint-host"></div>
       <button type="button" class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
-    </div>
+      </div>
+    </details>
   `;
   requestAnimationFrame(() => {
     updateOnboardingNutrientHint();
@@ -331,6 +364,27 @@ function renderInitialOnboarding() {
       eng.addEventListener('change', runAuto);
     }
     if (typeof scheduleOnboardingSizingRecalc === 'function') scheduleOnboardingSizingRecalc();
+    initOnboardingAccordionNarrow();
+  });
+}
+
+function setupOnboardingProgressAnchors() {
+  document.querySelectorAll('.onboarding-progress__link').forEach((a) => {
+    a.addEventListener('click', () => {
+      const id = a.getAttribute('href')?.slice(1);
+      const d = id && document.getElementById(id);
+      if (d && d.tagName === 'DETAILS') d.open = true;
+    });
+  });
+}
+
+function initOnboardingAccordionNarrow() {
+  const acc = document.querySelectorAll('.onboarding-acc');
+  if (!acc.length) return;
+  setupOnboardingProgressAnchors();
+  const narrow = window.matchMedia('(max-width: 640px)').matches;
+  acc.forEach((el, i) => {
+    el.open = narrow ? i === 0 : true;
   });
 }
 
@@ -1162,7 +1216,7 @@ function renderVolumeMiniSvg(rows, baselineL) {
   const toY = (v) => padT + (1 - (Math.max(minV, Math.min(maxV, v)) - minV) / span) * innerH;
   const pts = rows.map((r, i) => `${toX(i)},${toY(r.volume)}`).join(' ');
   const yRef = toY(baselineL);
-  return `<svg viewBox="0 0 ${w} ${h}" class="volume-mini-svg" role="img" aria-label="Tendencia volumen depósito">
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" class="volume-mini-svg" role="img" aria-label="Tendencia volumen depósito">
     <rect x="0" y="0" width="${w}" height="${h}" rx="8" class="volume-mini-bg"></rect>
     <text x="${padL}" y="14" class="volume-mini-title">Volumen (L)</text>
     <line x1="${padL}" x2="${w - padR}" y1="${yRef}" y2="${yRef}" class="volume-mini-ref"></line>
@@ -1261,7 +1315,7 @@ function renderRdwcSvgRearKit(grow, strain, plantCount, weekNum, phaseName) {
       </g>`
       : '';
   return `
-    <svg viewBox="0 0 860 360" class="system-svg system-svg--rdwc-kit" role="img" aria-label="Diagrama cenital RDWC tipo kit comercial">
+    <svg viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" class="system-svg system-svg--rdwc-kit" role="img" aria-label="Diagrama cenital RDWC tipo kit comercial">
       <defs>
         <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="#3490dc"></path>
@@ -1346,7 +1400,7 @@ function renderRdwcSvgSide(grow, strain, plantCount, weekNum, phaseName) {
   const reservoirX = rightRail + 32;
   const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
   return `
-    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama cenital RDWC">
+    <svg viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" class="system-svg" role="img" aria-label="Diagrama cenital RDWC">
       <defs>
         <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="#3490dc"></path>
@@ -1423,7 +1477,7 @@ function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
   }
   const markerOff = -Math.round(rout + 22);
   return `
-    <svg viewBox="0 0 860 360" class="system-svg system-svg--dwc-lids" role="img" aria-label="Diagrama DWC · tapas cenitales con huecos para cesta">
+    <svg viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" class="system-svg system-svg--dwc-lids" role="img" aria-label="Diagrama DWC · tapas cenitales con huecos para cesta">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">DWC · Tapas cenitales (cestas / aireador)</text>
       <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · Tapa Ø ~${bucketCm} cm · hueco Ø ~${holeCm} cm · ${plantCount} sitio(s)</text>
@@ -1521,7 +1575,7 @@ function renderFloatSvg(grow, strain, plantCount, weekNum, phaseName) {
     .join('');
 
   return `
-    <svg viewBox="0 0 860 360" class="system-svg system-svg--float" role="img" aria-label="Diagrama mesa flotante · recipiente y balsa">
+    <svg viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" class="system-svg system-svg--float" role="img" aria-label="Diagrama mesa flotante · recipiente y balsa">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">Mesa flotante · recipiente y losa</text>
       <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · ~${L}×${W} cm útil · Ø hueco ~${dHoleCm} cm · ${plantCount} sitio(s)</text>
@@ -1560,7 +1614,7 @@ function renderNftSvg(grow, strain, plantCount, weekNum, phaseName) {
     sites.push({ x, y: basketY, index: i + 1 });
   }
   return `
-    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama NFT">
+    <svg viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" class="system-svg" role="img" aria-label="Diagrama NFT">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">NFT · Película de nutriente</text>
       <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar}</text>
@@ -1601,7 +1655,7 @@ function renderAeroSvg(grow, strain, plantCount, weekNum, phaseName) {
     sites.push({ x, y: lidY, index: i + 1 });
   }
   return `
-    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama aeroponía">
+    <svg viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" class="system-svg" role="img" aria-label="Diagrama aeroponía">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">Aeroponía · Raíces en cámara</text>
       <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar}</text>
