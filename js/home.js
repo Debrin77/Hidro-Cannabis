@@ -164,11 +164,6 @@ function renderInicio() {
         <p class="dash-eyebrow">Cannabis · Hidrocultivo</p>
         <h1 class="dash-headline">Hydro Cannabis</h1>
         <p class="dash-tagline">Planifica el sistema, mide con método y conserva el historial en un solo lugar.</p>
-        <div class="dash-pill-row">
-          <span class="dash-pill"><i class="ti ti-droplet"></i> RDWC · DWC · NFT…</span>
-          <span class="dash-pill"><i class="ti ti-cloud"></i> Climatología</span>
-          <span class="dash-pill"><i class="ti ti-flask"></i> Nutrición</span>
-        </div>
       </div>
     </section>
 

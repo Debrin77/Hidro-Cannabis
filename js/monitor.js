@@ -882,6 +882,190 @@ function renderHistorialMeasurementsTable() {
     </div>`;
 }
 
+const HISTORY_CHECKLIST_DEFAULT = [
+  { id: 'measure-ph-ec', label: 'Medición pH y EC registrada' },
+  { id: 'measure-temp', label: 'Temperatura de agua revisada' },
+  { id: 'inspect-roots', label: 'Inspección visual de raíces / cubos' },
+  { id: 'inspect-lines', label: 'Revisión de mangueras y conexiones' },
+  { id: 'clean-tools', label: 'Limpieza / calibración de instrumentos' },
+  { id: 'topup-change', label: 'Reposición o cambio de solución planificado' },
+];
+
+let historyDiaryPendingPhotos = [];
+
+function ensureHistoryData(grow) {
+  if (!grow || typeof grow !== 'object') return;
+  if (!Array.isArray(grow.historyChecklist)) {
+    grow.historyChecklist = HISTORY_CHECKLIST_DEFAULT.map((i) => ({ ...i, done: false, updatedAt: null }));
+  }
+  if (!Array.isArray(grow.diaryEntries)) grow.diaryEntries = [];
+}
+
+function toggleHistoryChecklistItem(itemId) {
+  if (!myGrow) return;
+  ensureHistoryData(myGrow);
+  const row = myGrow.historyChecklist.find((x) => x.id === itemId);
+  if (!row) return;
+  row.done = !row.done;
+  row.updatedAt = new Date().toISOString();
+  saveGrowState();
+  renderHistorial();
+}
+
+function removeHistoryDiaryPendingPhoto(idx) {
+  historyDiaryPendingPhotos = historyDiaryPendingPhotos.filter((_, i) => i !== idx);
+  renderHistorial();
+}
+
+function downscaleImageFileToDataUrl(file, maxEdge = 1200, quality = 0.82) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(String(reader.result || ''));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(String(reader.result || ''));
+      img.src = String(reader.result || '');
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
+async function onHistoryDiaryPhotosChange(ev) {
+  const files = Array.from(ev?.target?.files || []);
+  if (!files.length) return;
+  const allowed = files.filter((f) => /^image\//i.test(f.type)).slice(0, 6);
+  const dataUrls = [];
+  for (const file of allowed) {
+    const url = await downscaleImageFileToDataUrl(file);
+    if (url) dataUrls.push(url);
+  }
+  historyDiaryPendingPhotos = [...historyDiaryPendingPhotos, ...dataUrls].slice(0, 6);
+  renderHistorial();
+}
+
+function saveHistoryDiaryEntry() {
+  if (!myGrow) return;
+  ensureHistoryData(myGrow);
+  const title = String(document.getElementById('histDiaryTitle')?.value || '').trim();
+  const note = String(document.getElementById('histDiaryNote')?.value || '').trim();
+  const kind = String(document.getElementById('histDiaryKind')?.value || 'seguimiento');
+  if (!title && !note && !historyDiaryPendingPhotos.length) return;
+  const entry = {
+    id: `d${Date.now()}`,
+    date: new Date().toISOString(),
+    kind,
+    title: title || 'Entrada de diario',
+    note,
+    photos: [...historyDiaryPendingPhotos],
+  };
+  myGrow.diaryEntries.unshift(entry);
+  myGrow.diaryEntries = myGrow.diaryEntries.slice(0, 60);
+  myGrow.log.unshift({
+    date: new Date().toISOString(),
+    type: 'info',
+    text: `Diario: ${entry.title}${entry.photos.length ? ` · ${entry.photos.length} foto(s)` : ''}`,
+  });
+  historyDiaryPendingPhotos = [];
+  saveGrowState();
+  renderHistorial();
+}
+
+function renderHistoryChecklistSection(grow) {
+  ensureHistoryData(grow);
+  const rows = grow.historyChecklist || [];
+  const done = rows.filter((x) => x.done).length;
+  const pct = rows.length ? Math.round((done / rows.length) * 100) : 0;
+  return `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-checklist"></i> Checklist operativo</div></div>
+      <p class="historial-quick-ref__hint">Control rápido de mantenimiento y revisión del sistema.</p>
+      <div class="dash-mini-bar historial-check-bar" style="--dash-pct:${pct}%"><span></span></div>
+      <p class="form-hint">Completado: ${done}/${rows.length}</p>
+      <div class="expert-checklist">
+        ${rows
+          .map(
+            (r) => `<label class="expert-item expert-item--compact">
+            <input type="checkbox" ${r.done ? 'checked' : ''} onchange="toggleHistoryChecklistItem('${r.id}')">
+            <span><span class="expert-item-title">${escapeMonitorHtml(r.label)}</span></span>
+          </label>`,
+          )
+          .join('')}
+      </div>
+    </div>`;
+}
+
+function renderHistoryDiarySection(grow) {
+  ensureHistoryData(grow);
+  const entries = Array.isArray(grow.diaryEntries) ? grow.diaryEntries : [];
+  const pending = historyDiaryPendingPhotos
+    .map(
+      (src, i) => `<div class="hist-diary-photo-chip">
+      <img src="${src}" alt="Foto pendiente ${i + 1}">
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="removeHistoryDiaryPendingPhoto(${i})">Quitar</button>
+    </div>`,
+    )
+    .join('');
+  const feed = entries.length
+    ? entries
+        .map(
+          (e) => `<article class="hist-diary-entry">
+          <header>
+            <strong>${escapeMonitorHtml(e.title || 'Entrada')}</strong>
+            <span>${new Date(e.date).toLocaleString('es-ES')}</span>
+          </header>
+          <p class="hist-diary-kind">${escapeMonitorHtml(e.kind || 'seguimiento')}</p>
+          ${e.note ? `<p class="historial-quick-ref__hint">${escapeMonitorHtml(e.note)}</p>` : ''}
+          ${
+            Array.isArray(e.photos) && e.photos.length
+              ? `<div class="hist-diary-photo-grid">${e.photos
+                  .map((p, idx) => `<img src="${p}" alt="Foto de diario ${idx + 1}">`)
+                  .join('')}</div>`
+              : ''
+          }
+        </article>`,
+        )
+        .join('')
+    : `<div class="alert info"><i class="ti ti-info-circle"></i><p>Aún no hay entradas de diario. Añade notas y fotos de evolución.</p></div>`;
+
+  return `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-notebook"></i> Diario y evolución (con fotos)</div></div>
+      <div class="grid2">
+        <div class="form-group"><label>Título</label><input id="histDiaryTitle" class="input-grow" type="text" placeholder="Ej: Semana 4, ajuste de bomba"></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="histDiaryKind">
+            <option value="seguimiento">Seguimiento</option>
+            <option value="sistema">Sistema</option>
+            <option value="planta">Planta</option>
+            <option value="recuerdo">Recuerdo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Nota</label><textarea id="histDiaryNote" class="input-grow" rows="3" placeholder="Qué cambió hoy, observaciones, decisiones, etc."></textarea></div>
+      <div class="form-group">
+        <label>Fotos (máx 6)</label>
+        <input id="histDiaryPhotos" type="file" accept="image/*" multiple onchange="onHistoryDiaryPhotosChange(event)">
+        <span class="form-hint">Sirve para guardar imágenes del sistema y de cada planta para comparar evolución.</span>
+      </div>
+      ${pending ? `<div class="hist-diary-photo-grid hist-diary-photo-grid--pending">${pending}</div>` : ''}
+      <button type="button" class="btn btn-primary" onclick="saveHistoryDiaryEntry()"><i class="ti ti-device-floppy"></i> Guardar entrada de diario</button>
+      <div class="hist-diary-feed">${feed}</div>
+    </div>`;
+}
+
 function renderHistorialQuickRefCard() {
   return `<div class="card historial-quick-ref">
       <div class="card-header"><div class="card-title"><i class="ti ti-book-2"></i> Referencia rápida</div></div>
@@ -912,6 +1096,8 @@ function renderHistorial() {
     </div>`,
     )
     .join('');
+  const checklistCard = renderHistoryChecklistSection(myGrow);
+  const diaryCard = renderHistoryDiarySection(myGrow);
   host.innerHTML = `${quickRef}
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Bitácora (${myGrow.strain.name})</div></div>
@@ -922,7 +1108,13 @@ function renderHistorial() {
       ${renderHistorialMeasurementsTable()}
       <button type="button" class="btn btn-ghost historial-actions" onclick="navTo('monitor')"><i class="ti ti-plus"></i> Añadir medición en Medir</button>
     </div>
+    ${checklistCard}
+    ${diaryCard}
   `;
 }
 
+window.toggleHistoryChecklistItem = toggleHistoryChecklistItem;
+window.onHistoryDiaryPhotosChange = onHistoryDiaryPhotosChange;
+window.removeHistoryDiaryPendingPhoto = removeHistoryDiaryPendingPhoto;
+window.saveHistoryDiaryEntry = saveHistoryDiaryEntry;
 window.renderHistorial = renderHistorial;
