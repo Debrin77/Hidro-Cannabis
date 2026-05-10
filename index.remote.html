@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydro Cannabis — Hidrocultivo</title>
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="app-locked">
+<div class="splash-screen" id="splashScreen" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+  <div class="splash-card">
+    <img src="assets/icons/hydro-cannabis-logo.svg" alt="Logo Hydro Cannabis" class="splash-logo">
+    <p class="splash-kicker">Cultivo inteligente</p>
+    <h1 id="splashTitle">Hydro Cannabis</h1>
+    <p class="splash-sub">Controla tu sistema hidropónico, nutrición y seguimiento diario desde una sola app.</p>
+    <p class="splash-timer" id="splashTimer">Entrando automaticamente en 3s...</p>
+    <button class="btn btn-primary splash-enter-btn" onclick="enterApp()" type="button">
+      <i class="ti ti-playstation-circle"></i>
+      Entrar ahora
+    </button>
+  </div>
+</div>
+<div class="app-frame">
+
+<header class="app-topbar">
+  <div class="topbar-brand">
+    <img src="assets/icons/hydro-cannabis-logo.svg" alt="" class="topbar-logo" width="36" height="36">
+    <div class="topbar-titles">
+      <span class="topbar-name">Hydro Cannabis</span>
+      <span class="topbar-tag">Hidrocultivo</span>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span class="topbar-status" id="sideStatus">Sin cultivo</span>
+    <button class="topbar-theme" id="themeToggleBtn" onclick="toggleTheme()" type="button">
+      <i class="ti ti-sun-moon"></i>
+      <span id="themeToggleText">Tema</span>
+    </button>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- ══════════════ INICIO ══════════════ -->
+<div class="view active" id="view-inicio">
+  <div id="inicioContent"></div>
+</div>
+
+<!-- ══════════════ VARIEDADES ══════════════ -->
+<div class="view" id="view-variedades">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Variedades</div>
+    <h1>Variedades para hidropónico</h1>
+    <p>8 cepas seleccionadas por rendimiento, adaptación al sistema RDWC/DWC y facilidad de cultivo en autoconsumo.</p>
+  </div>
+
+  <div class="tabs" id="strainTabs">
+    <div class="tab active" onclick="filterStrains('all',this)">Todas</div>
+    <div class="tab" onclick="filterStrains('indica',this)">Índica</div>
+    <div class="tab" onclick="filterStrains('sativa',this)">Sativa</div>
+    <div class="tab" onclick="filterStrains('hybrid',this)">Híbrida</div>
+    <div class="tab" onclick="filterStrains('auto',this)">Autoflo.</div>
+  </div>
+
+  <div class="strain-grid" id="strainGrid"></div>
+  <div id="strainDetail" style="margin-top:1.5rem"></div>
+</div>
+
+<!-- ══════════════ NUTRIENTES ══════════════ -->
+<div class="view" id="view-nutrientes">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Nutrientes</div>
+    <h1>Top 10 Nutrientes Hidropónico</h1>
+    <p>Clasificados por eficacia contrastada en cultivos de cannabis en DWC/RDWC. Haz clic en cada uno para ver dosis y detalles completos.</p>
+  </div>
+
+  <div class="nutri-rank" id="nutriList"></div>
+</div>
+
+<!-- ══════════════ CULTIVO ══════════════ -->
+<div class="view" id="view-cultivo">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Checklist y cultivo</div>
+    <h1>Configuración guiada</h1>
+    <p>Checklist experto al primer inicio (sistema, clima, variedad, agua y nutriente). Si ya lo completaste, aquí verás tu cultivo activo o el asistente clásico.</p>
+  </div>
+
+  <div id="cultivoContent"></div>
+</div>
+
+<!-- ══════════════ MONITOR ══════════════ -->
+<div class="view" id="view-monitor">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Monitor</div>
+    <h1>Monitor de cultivo</h1>
+    <p>Estado en tiempo real y registro de eventos de tu cultivo activo.</p>
+  </div>
+  <div id="monitorContent"></div>
+</div>
+
+<!-- ══════════════ SEMANAS ══════════════ -->
+<div class="view" id="view-semanas">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Calendario</div>
+    <h1>Calendario semanal</h1>
+    <p>Tabla completa semana a semana con EC, pH, nutrientes y acciones para cada fase.</p>
+  </div>
+  <div id="semanasContent"></div>
+</div>
+
+<!-- ══════════════ HISTORIAL ══════════════ -->
+<div class="view" id="view-historial">
+  <div class="page-header page-header--compact">
+    <h1>Historial</h1>
+    <p>Bitácora y mediciones guardadas.</p>
+  </div>
+  <div id="historialContent"></div>
+</div>
+
+<!-- ══════════════ CONSEJOS ══════════════ -->
+<div class="view" id="view-consejos">
+  <div class="page-header page-header--compact">
+    <h1>Cómo usar la app</h1>
+    <p>Flujo recomendado en pocos pasos.</p>
+  </div>
+  <div class="consejos-stack">
+    <div class="consejo-card">
+      <span class="consejo-num">1</span>
+      <div>
+        <strong>Sistema</strong>
+        <p>Configura RDWC/DWC, clima, variedad y dimensionado. Activa el cultivo al finalizar.</p>
+      </div>
+    </div>
+    <div class="consejo-card">
+      <span class="consejo-num">2</span>
+      <div>
+        <strong>Medir</strong>
+        <p>Registra pH, EC y volumen cada día o cuando cambies la solución. Las alertas usan la última lectura.</p>
+      </div>
+    </div>
+    <div class="consejo-card">
+      <span class="consejo-num">3</span>
+      <div>
+        <strong>Calendario e Historial</strong>
+        <p>Consulta la tabla semanal y revisa la bitácora si algo falló.</p>
+      </div>
+    </div>
+    <div class="consejo-card">
+      <span class="consejo-num">4</span>
+      <div>
+        <strong>Más</strong>
+        <p>Variedades, nutrientes top 10, parámetros ambientales y marco legal (orientativo).</p>
+      </div>
+    </div>
+    <div class="alert info"><i class="ti ti-info-circle"></i><p>Los cálculos y tablas son <strong>guías</strong>. Ajusta siempre según tus mediciones y el fabricante de nutrientes.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════ AMBIENTAL ══════════════ -->
+<div class="view" id="view-ambiental">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Parámetros Ambientales</div>
+    <h1>Parámetros completos</h1>
+    <p>Todas las variables que debes controlar en cada fase: temperatura, humedad, VPD, CO₂, luz, agua y aire.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-table"></i>Tabla maestra de parámetros por fase</div></div>
+    <div class="env-grid">
+      <div class="env-col-header">Fase</div>
+      <div class="env-col-header">Temp. día/noche</div>
+      <div class="env-col-header">Humedad (HR)</div>
+      <div class="env-col-header">VPD objetivo</div>
+      <div class="env-col-header">CO₂ ppm</div>
+      <div class="env-col-header">Luz (PPFD)</div>
+
+      <div class="env-row">
+        <div class="env-cell env-phase">🌱 Germinación</div>
+        <div class="env-cell"><span class="env-val ok">22–26 / 20–22°C</span></div>
+        <div class="env-cell"><span class="env-val ok">70–90%</span></div>
+        <div class="env-cell"><span class="env-val">0.4–0.8 kPa</span></div>
+        <div class="env-cell"><span class="env-val">400–600</span></div>
+        <div class="env-cell"><span class="env-val">200–400 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">🌿 Vegetación</div>
+        <div class="env-cell"><span class="env-val ok">24–28 / 18–22°C</span></div>
+        <div class="env-cell"><span class="env-val ok">55–70%</span></div>
+        <div class="env-cell"><span class="env-val ok">0.8–1.2 kPa</span></div>
+        <div class="env-cell"><span class="env-val">800–1200</span></div>
+        <div class="env-cell"><span class="env-val ok">400–700 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">🌸 Prefloración</div>
+        <div class="env-cell"><span class="env-val ok">22–26 / 18–20°C</span></div>
+        <div class="env-cell"><span class="env-val ok">50–60%</span></div>
+        <div class="env-cell"><span class="env-val ok">1.0–1.4 kPa</span></div>
+        <div class="env-cell"><span class="env-val">1000–1200</span></div>
+        <div class="env-cell"><span class="env-val ok">600–900 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">💜 Floración plena</div>
+        <div class="env-cell"><span class="env-val ok">20–26 / 16–20°C</span></div>
+        <div class="env-cell"><span class="env-val warn">40–55%</span></div>
+        <div class="env-cell"><span class="env-val ok">1.2–1.6 kPa</span></div>
+        <div class="env-cell"><span class="env-val">1000–1500</span></div>
+        <div class="env-cell"><span class="env-val ok">700–1000 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">🔴 Engorde/Maduración</div>
+        <div class="env-cell"><span class="env-val ok">18–24 / 14–18°C</span></div>
+        <div class="env-cell"><span class="env-val warn">35–50%</span></div>
+        <div class="env-cell"><span class="env-val ok">1.4–1.8 kPa</span></div>
+        <div class="env-cell"><span class="env-val">1000–1200</span></div>
+        <div class="env-cell"><span class="env-val">800–1000 µmol</span></div>
+      </div>
+      <div class="env-row">
+        <div class="env-cell env-phase">💧 Flush / Cosecha</div>
+        <div class="env-cell"><span class="env-val">18–22 / 14–18°C</span></div>
+        <div class="env-cell"><span class="env-val warn">35–45%</span></div>
+        <div class="env-cell"><span class="env-val">1.4–2.0 kPa</span></div>
+        <div class="env-cell"><span class="env-val">800–1000</span></div>
+        <div class="env-cell"><span class="env-val">600–800 µmol</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-droplet"></i>Parámetros de agua (solución)</div></div>
+      <div class="param-row"><span class="param-key">pH germinación</span><span class="param-val green">5.5–5.8</span></div>
+      <div class="param-row"><span class="param-key">pH vegetación</span><span class="param-val green">5.6–6.0</span></div>
+      <div class="param-row"><span class="param-key">pH floración</span><span class="param-val green">6.0–6.5</span></div>
+      <div class="param-row"><span class="param-key">Temp. agua óptima</span><span class="param-val blue">18–20°C</span></div>
+      <div class="param-row"><span class="param-key">Temp. agua máxima</span><span class="param-val amber">23°C</span></div>
+      <div class="param-row"><span class="param-key">DO (oxígeno disuelto)</span><span class="param-val green">&gt;6 mg/L</span></div>
+      <div class="param-row"><span class="param-key">Renovar solución</span><span class="param-val">Cada 10–14 días</span></div>
+      <div class="param-row"><span class="param-key">Agua recomendada</span><span class="param-val blue">Ósmosis RO</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-wind"></i>Ventilación y CO₂</div></div>
+      <div class="param-row"><span class="param-key">Renovación aire</span><span class="param-val green">1 vez/min</span></div>
+      <div class="param-row"><span class="param-key">CO₂ ambiente normal</span><span class="param-val">400 ppm</span></div>
+      <div class="param-row"><span class="param-key">CO₂ con enriquecimiento</span><span class="param-val green">1000–1500 ppm</span></div>
+      <div class="param-row"><span class="param-key">Velocidad aire (m/s)</span><span class="param-val">0.3–1.0</span></div>
+      <div class="param-row"><span class="param-key">Extractor (m³/h por m²)</span><span class="param-val green">60–100</span></div>
+      <div class="param-row"><span class="param-key">Filtro carbón activo</span><span class="param-val green">Obligatorio</span></div>
+      <div class="param-row"><span class="param-key">Diferencia día/noche T°</span><span class="param-val">Max 10°C</span></div>
+      <div class="param-row"><span class="param-key">VPD crítico floración</span><span class="param-val amber">1.0–1.6 kPa</span></div>
+    </div>
+  </div>
+
+  <div class="card card--table">
+    <div class="card-header"><div class="card-title"><i class="ti ti-sun"></i>Iluminación por tipo de sistema</div></div>
+    <div class="table-scroll">
+    <table class="week-table">
+      <thead>
+        <tr><th>Tipo de luz</th><th>Potencia/m²</th><th>Ventajas</th><th>PPFD máx</th><th>Calor generado</th><th>Recomendado para</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong style="color:var(--g300)">LED Full Spectrum</strong></td><td class="ec-val">300–500W</td><td style="color:var(--text2)">Eficiencia, bajo calor, espectro completo</td><td class="ec-val">1000–1500 µmol</td><td style="color:var(--g400)">Bajo</td><td style="color:var(--g400)">★ Recomendado</td></tr>
+        <tr><td><strong style="color:var(--a200)">LEC CMH 315W</strong></td><td class="ec-val">250–315W</td><td style="color:var(--text2)">Espectro UV, más terpenos y resina</td><td class="ec-val">600–800 µmol</td><td style="color:var(--a200)">Medio</td><td style="color:var(--a200)">Calidad premium</td></tr>
+        <tr><td><strong style="color:var(--text2)">HPS 600W</strong></td><td class="ec-val">400W/m²</td><td style="color:var(--text2)">Penetración, coste bajo, probado</td><td class="ec-val">800–1000 µmol</td><td style="color:var(--r400)">Alto</td><td style="color:var(--text3)">Setup ya existente</td></tr>
+        <tr><td><strong style="color:var(--text3)">HM (Metal Halide)</strong></td><td class="ec-val">250–400W</td><td style="color:var(--text2)">Espectro azul, ideal vegetación</td><td class="ec-val">500–700 µmol</td><td style="color:var(--r400)">Alto</td><td style="color:var(--text3)">Solo vegetación</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="alert warn"><i class="ti ti-thermometer"></i><div>En <strong>Castelló de la Plana</strong> los veranos superan habitualmente 35°C. La temperatura de la solución nutritiva debe monitorizarse especialmente en julio–agosto. Por encima de 24°C el DO cae por debajo de los 6 mg/L necesarios, causando raíces anóxicas. Se recomienda un chiller o congelar botellas de agua RO para la solución en meses de calor.</div></div>
+</div>
+
+<!-- ══════════════ LEGAL ══════════════ -->
+<div class="view" id="view-legal">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Legal España</div>
+    <h1>Marco legal en España</h1>
+    <p>Situación legal del autocultivo de cannabis a mayo de 2025. Esta información es orientativa — consulta siempre un abogado especialista.</p>
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-title"><i class="ti ti-balance"></i>Situación jurídica actual</div>
+    <ul class="legal-list">
+      <li>El cultivo en espacio privado para autoconsumo <strong>no es delito</strong> según el artículo 368 CP, pero tampoco está expresamente permitido — zona de alegalidad</li>
+      <li>La jurisprudencia española tolera entre <strong>2 y 4 plantas adultas</strong> por adulto consumidor en interior privado</li>
+      <li>No existe un límite numérico oficial de plantas — cada caso lo valora el juez según contexto</li>
+      <li>La <strong>compraventa siempre es delito</strong> — solo autoconsumo exclusivo propio</li>
+      <li>Posesión hasta ~100g sin presumirse tráfico; más de 200g ya genera riesgo de imputación por tráfico</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-title"><i class="ti ti-alert-triangle"></i>Infracciones administrativas graves (Ley Mordaza art. 36.18)</div>
+    <ul class="legal-list">
+      <li>Cultivo <strong>visible desde espacio público</strong>: ventanas, balcones, terrazas — multa de <strong>601 a 30.000€</strong> + incautación</li>
+      <li>Consumo en vía pública — multa de hasta 1.000€</li>
+      <li>Portación en público — multa de hasta 10.400€ según cantidad</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-title"><i class="ti ti-shield-x"></i>Indicadores de presunta intención de tráfico (evitar siempre)</div>
+    <ul class="legal-list">
+      <li>Básculas de precisión junto al cultivo</li>
+      <li>Bolsitas herméticas pequeñas o material de empaquetado</li>
+      <li>Grandes cantidades de efectivo en el domicilio</li>
+      <li>Listas o registros de ventas / clientes</li>
+      <li>Merodeo constante de personas en el domicilio</li>
+    </ul>
+  </div>
+
+  <div class="grid2">
+    <div class="legal-section" style="margin-bottom:0">
+      <div class="legal-title"><i class="ti ti-map-pin"></i>Comunidad Valenciana (tu zona)</div>
+      <ul class="legal-list">
+        <li>Legislación estatal general aplicable sin restricciones adicionales autonómicas</li>
+        <li>Práctica policial generalmente tolerante con cultivos pequeños bien ocultados</li>
+        <li>Filtro de carbón activo esencial — calor veraniego intensifica aromas</li>
+      </ul>
+    </div>
+    <div class="legal-section" style="margin-bottom:0">
+      <div class="legal-title"><i class="ti ti-shield-check"></i>Precauciones esenciales</div>
+      <ul class="legal-list">
+        <li>Armario o habitación opaca, sin luz exterior visible</li>
+        <li>Filtro de carbón + extractor silencioso</li>
+        <li>No comentar el cultivo con terceros no convivientes</li>
+        <li>Ante cualquier problema: abogado especialista en cannabis</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert info" style="margin-top:1rem"><i class="ti ti-info-circle"></i><p>Información actualizada a mayo 2026. La ley española es ambigua y evolutiva. Cada juez puede interpretarla diferente. Esta app no constituye asesoría jurídica.</p></div>
+</div>
+
+</main>
+
+<div class="bottom-nav-shell">
+<nav class="bottom-nav" aria-label="Principal">
+  <button type="button" class="bottom-nav-item active" data-nav-view="inicio" onclick="navTo('inicio')">
+    <i class="ti ti-home" aria-hidden="true"></i><span>Inicio</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="monitor" onclick="navTo('monitor')">
+    <i class="ti ti-droplet-half-2" aria-hidden="true"></i><span>Medir</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="cultivo" onclick="navTo('cultivo')">
+    <i class="ti ti-bucket" aria-hidden="true"></i><span>Sistema</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="semanas" onclick="navTo('semanas')">
+    <i class="ti ti-calendar-event" aria-hidden="true"></i><span>Calendario</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="historial" onclick="navTo('historial')">
+    <i class="ti ti-chart-line" aria-hidden="true"></i><span>Historial</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="more" onclick="toggleMoreMenu()" aria-expanded="false" id="moreNavBtn">
+    <i class="ti ti-layout-grid" aria-hidden="true"></i><span>Más</span>
+  </button>
+</nav>
+</div>
+
+<div class="more-menu" id="moreMenu" aria-hidden="true">
+  <div class="more-menu-scrim" onclick="closeMoreMenu()"></div>
+  <div class="more-menu-panel">
+    <div class="more-menu-title">Más opciones</div>
+    <button type="button" class="more-menu-row" onclick="navTo('consejos')"><i class="ti ti-bulb"></i> Consejos de uso</button>
+    <button type="button" class="more-menu-row" onclick="navTo('variedades')"><i class="ti ti-seedling"></i> Variedades</button>
+    <button type="button" class="more-menu-row" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes top 10</button>
+    <button type="button" class="more-menu-row" onclick="navTo('ambiental')"><i class="ti ti-temperature"></i> Parámetros ambientales</button>
+    <button type="button" class="more-menu-row" onclick="navTo('legal')"><i class="ti ti-shield-check"></i> Legal España</button>
+  </div>
+</div>
+
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/state.js"></script>
+<script src="js/navigation.js"></script>
+<script src="js/systemSizing.js"></script>
+<script src="js/strains.js"></script>
+<script src="js/nutrients.js"></script>
+<script src="js/cultivo.js"></script>
+<script src="js/monitor.js"></script>
+<script src="js/semanas.js"></script>
+<script src="js/home.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
