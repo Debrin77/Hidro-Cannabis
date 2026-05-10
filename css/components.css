@@ -21,6 +21,23 @@
 .section-label--block{margin-bottom:10px}
 .mb-text-block{margin-bottom:1rem}
 .svg-panel-grid{margin-top:0.75rem}
+.volume-diagram-panel .volume-diagram-hint{font-size:12px;line-height:1.45;margin:0 0 0.65rem;color:var(--text2)}
+.volume-mono-display{margin-top:0.35rem}
+.volume-mono-row{display:flex;align-items:baseline;gap:6px}
+.volume-mono-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:700;color:var(--hydro-teal)}
+.volume-mono-unit{font-size:1rem;color:var(--text3)}
+.volume-mono-note{margin:0.5rem 0 0;font-size:12px}
+.volume-mini-svg{display:block;width:100%;max-width:280px;margin-top:0.35rem}
+.volume-mini-bg{fill:var(--surface2);stroke:var(--border2);stroke-width:1}
+.volume-mini-title{font-size:10px;fill:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase}
+.volume-mini-ref{stroke:var(--hydro-teal);stroke-dasharray:4 3;stroke-opacity:0.55;stroke-width:1}
+.volume-mini-line{stroke:var(--b400, #60a5fa);stroke-width:2;fill:none}
+.volume-mini-dot{fill:var(--b400, #60a5fa)}
+.complements-section-label{margin-top:1rem}
+.complements-section-hint{font-size:12px;margin:0 0 0.65rem}
+.chip-check-line{align-items:flex-start;margin-bottom:0.65rem}
+.chip-check-line input{margin-top:4px}
+.onboarding-complements{margin-bottom:0.25rem}
 
 /* Espaciado y hosts */
 .strain-detail-host{margin-top:1.5rem}
@@ -874,6 +891,11 @@
 .monitor-live-alert__text{margin:0;font-size:0.875rem;line-height:1.5;color:var(--text2)}
 .monitor-live-ok p{margin:0;font-size:0.875rem;line-height:1.5}
 .metric-val--compact{font-size:0.9em;line-height:1.25}
+.clima-manual-loc{margin-bottom:1.1rem}
+.clima-manual-loc-hint{margin:0 0 0.65rem;font-size:0.85rem;line-height:1.45;color:var(--text2)}
+.clima-manual-loc-row{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:stretch}
+.clima-manual-loc-row input{flex:1;min-width:12rem;width:auto}
+.clima-manual-loc-btn{flex-shrink:0;align-self:stretch}
 .clima-current-extended{margin-top:0.35rem}
 .clima-section-spaced{margin-top:1rem}
 .clima-geo-note{margin:0.25rem 0 0;font-size:0.875rem}

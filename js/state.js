@@ -66,6 +66,10 @@ function restoreGrow(payload) {
     reservoirL: Number.isFinite(payload.reservoirL) ? payload.reservoirL : 60,
     sourceEC: Number.isFinite(payload.sourceEC) ? payload.sourceEC : 0.1,
     sourcePH: Number.isFinite(payload.sourcePH) ? payload.sourcePH : 6.1,
+    hardwareComplements:
+      typeof normalizeHardwareComplements === 'function'
+        ? normalizeHardwareComplements(payload.hardwareComplements)
+        : payload.hardwareComplements || undefined,
   };
 }
 

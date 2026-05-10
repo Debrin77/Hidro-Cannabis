@@ -82,5 +82,54 @@ function getSystemProfile(system) {
   return HYDRO_SYSTEM_PROFILES[system] || HYDRO_SYSTEM_PROFILES.DWC;
 }
 
+/** Instrumentación y complementos (checklist / Sistema). Legacy: null = todo disponible. */
+function normalizeHardwareComplements(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      reservoirHeater: false,
+      heaterThermostatC: null,
+      meterPhEc: true,
+      meterWaterTemp: true,
+      meterThermoHygro: true,
+      meterCo2: false,
+      meterPpfd: false,
+    };
+  }
+  const heater = !!raw.reservoirHeater;
+  const setC = parseFloat(raw.heaterThermostatC);
+  return {
+    reservoirHeater: heater,
+    heaterThermostatC: heater && Number.isFinite(setC) ? Math.min(35, Math.max(15, setC)) : null,
+    meterPhEc: raw.meterPhEc !== false,
+    meterWaterTemp: raw.meterWaterTemp !== false,
+    meterThermoHygro: raw.meterThermoHygro !== false,
+    meterCo2: !!raw.meterCo2,
+    meterPpfd: !!raw.meterPpfd,
+  };
+}
+
+/** Modos de gráfico en Medir según instrumentos declarados. */
+function getFilteredChartModes(grow) {
+  const prof = getSystemProfile(grow?.system);
+  const modes = prof.chartModes || [];
+  const c = normalizeHardwareComplements(grow?.hardwareComplements);
+  const out = [];
+  if (c.meterPhEc) {
+    const m = modes.find((x) => x.id === 'solution');
+    if (m) out.push(m);
+  }
+  if (c.meterWaterTemp) {
+    const m = modes.find((x) => x.id === 'thermal');
+    if (m) out.push(m);
+  }
+  if (c.meterThermoHygro) {
+    const m = modes.find((x) => x.id === 'climate');
+    if (m) out.push(m);
+  }
+  return out.length ? out : modes;
+}
+
 window.HYDRO_SYSTEM_PROFILES = HYDRO_SYSTEM_PROFILES;
 window.getSystemProfile = getSystemProfile;
+window.normalizeHardwareComplements = normalizeHardwareComplements;
+window.getFilteredChartModes = getFilteredChartModes;

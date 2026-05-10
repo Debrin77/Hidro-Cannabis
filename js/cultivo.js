@@ -96,6 +96,18 @@ function renderInitialOnboarding() {
     : `<div class="sizing-result"><p class="sizing-disclaimer sizing-disclaimer--flush">Pulsa <strong>Calcular dimensionado</strong> para estimar bomba de aire, recirculación (RDWC) y diámetro de tubería orientativo.</p></div>`;
 
   const errorBox = cfg.error ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${cfg.error}</p></div>` : '';
+  const comp =
+    typeof normalizeHardwareComplements === 'function'
+      ? normalizeHardwareComplements(cfg.hardwareComplements)
+      : {
+          reservoirHeater: false,
+          heaterThermostatC: null,
+          meterPhEc: true,
+          meterWaterTemp: true,
+          meterThermoHygro: true,
+          meterCo2: false,
+          meterPpfd: false,
+        };
   const weatherBox = cfg.climate
     ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>Clima detectado:</strong> ${cfg.climate.summary} · ${cfg.climate.temperature}°C · HR ${cfg.climate.humidity}% · Viento ${cfg.climate.wind} km/h · Fuente: ${cfg.climate.source}</p></div>`
     : `<div class="alert info"><i class="ti ti-info-circle"></i><p>Aún sin análisis climático. Pulsa "Analizar clima" tras indicar ubicación.</p></div>`;
@@ -188,6 +200,24 @@ function renderInitialOnboarding() {
     </div>
 
     <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-tools"></i>Complementos e instrumentación</div></div>
+      <p class="body-prose mb-text-block">Marca lo que tienes. En <strong>Medir</strong> solo se ofrecerán <strong>gráficos de tendencia</strong> acordes (sin pH/EC no verás el gráfico pH/EC, etc.). En hidro de cannabis suele ser imprescindible: <strong>pH y EC</strong>, <strong>Tª del líquido</strong> y <strong>Tª + HR</strong> en copa o sala (VPD); el calentador con termostato ayuda si el líquido queda frío.</p>
+      <div class="grid2 onboarding-complements">
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompPhEc" ${comp.meterPhEc ? 'checked' : ''}><span>Medidor <strong>pH</strong> y <strong>EC</strong> (pen o continuo)</span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompWaterTemp" ${comp.meterWaterTemp ? 'checked' : ''}><span>Sonda / termómetro <strong>temperatura del líquido</strong></span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompThermoHygro" ${comp.meterThermoHygro ? 'checked' : ''}><span><strong>Termohigrómetro</strong> (Tª aire + HR) copa / sala</span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompCo2" ${comp.meterCo2 ? 'checked' : ''}><span>Medidor <strong>CO₂</strong> (interior)</span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompPpfd" ${comp.meterPpfd ? 'checked' : ''}><span>Medidor de <strong>luz</strong> (lux o PAR/PPFD)</span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompHeater" ${comp.reservoirHeater ? 'checked' : ''} onchange="toggleOnbHeaterSetpoint(this.checked)"><span><strong>Calentador</strong> en depósito (sumergible o similar) con termostato</span></label>
+      </div>
+      <div class="form-group onboarding-heater-setpoint" id="onbHeaterSetpointWrap" style="${comp.reservoirHeater ? '' : 'opacity:0.55'}">
+        <label>Temperatura del termostato del calentador (°C)</label>
+        <input type="number" id="onbCompHeaterSetC" min="15" max="32" step="0.5" value="${Number.isFinite(comp.heaterThermostatC) ? comp.heaterThermostatC : 22}" ${comp.reservoirHeater ? '' : 'disabled'}>
+        <span class="form-hint">Activa el calentador arriba para editar. Contrasta siempre con la sonda en el líquido.</span>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Paso 3 · Variedad, trasplante, nutriente y dosificación</div></div>
       <p class="body-prose mb-text-block">El <strong>nutriente principal</strong> define la base de la mezcla en toda la app (Germ / Veg / Flor / Flush). Los <strong>aditivos</strong> mostrados son los que suele combinar esa línea: úsalos según tabla del fabricante y tus mediciones de pH/EC.</p>
       <div class="grid2">
@@ -205,7 +235,12 @@ function renderInitialOnboarding() {
       <button type="button" class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
     </div>
   `;
-  requestAnimationFrame(() => updateOnboardingNutrientHint());
+  requestAnimationFrame(() => {
+    updateOnboardingNutrientHint();
+    if (typeof toggleOnbHeaterSetpoint === 'function') {
+      toggleOnbHeaterSetpoint(!!document.getElementById('onbCompHeater')?.checked);
+    }
+  });
 }
 
 function toggleSkipInitialWelcome(checked) {
@@ -323,6 +358,8 @@ function completeInitialSetup() {
     return;
   }
   appConfig.completed = true;
+  const hardwareComplements = readOnboardingHardwareComplements();
+  appConfig.hardwareComplements = hardwareComplements;
   saveAppConfig();
 
   const siteCount = Math.min(48, Math.max(1, parseInt(appConfig.systemHardware?.sites, 10) || 2));
@@ -346,6 +383,7 @@ function completeInitialSetup() {
     climate: appConfig.climate || null,
     systemHardware: { ...appConfig.systemHardware },
     systemSizing: appConfig.systemSizingResult,
+    hardwareComplements,
   };
   activateGrow();
 }
@@ -513,6 +551,10 @@ function activateGrow(){
     climate: wizData.climate || appConfig?.climate || null,
     systemHardware: wizData.systemHardware || null,
     systemSizing: sizing,
+    hardwareComplements:
+      typeof normalizeHardwareComplements === 'function'
+        ? normalizeHardwareComplements(wizData.hardwareComplements ?? appConfig?.hardwareComplements)
+        : wizData.hardwareComplements || appConfig?.hardwareComplements,
     reservoirL: reservoirFromSizing,
     sourceEC: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).baseEC,
     sourcePH: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).basePH,
@@ -560,8 +602,13 @@ function renderActiveGrow(){
   else{phase='Flush / Cosecha';phClass='ph-flush';currentEC=0.2;currentPH='6.0–6.5';lightSched='12/12';humidity='35–45%';tempRange='18–22°C';}
   currentEC = Math.round(currentEC*10)/10;
   const mixPlan = calculateMixPlan(myGrow, n, phase);
+  const compGrow =
+    typeof normalizeHardwareComplements === 'function'
+      ? normalizeHardwareComplements(myGrow.hardwareComplements)
+      : {};
   const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
   const selectedPlantInfo = getSelectedPlantInfo(myGrow, s);
+  const volumeDiagramPanel = renderVolumeDiagramPanel(myGrow);
   const sz = myGrow.systemSizing;
   const sizingRecall =
     sz && !sz.nft
@@ -693,6 +740,21 @@ function renderActiveGrow(){
             <input id="cfgSourcePH" type="number" min="4.5" max="9" step="0.1" value="${myGrow.sourcePH||6.1}" onchange="updateMixConfig()">
           </div>
         </div>
+        <div class="section-label section-label--block complements-section-label">Complementos e instrumentación</div>
+        <p class="text-muted complements-section-hint">Igual que en el checklist: define qué equipos tienes; en <strong>Medir</strong> se filtran los tipos de gráfico.</p>
+        <div class="grid2 onboarding-complements">
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompPhEc" ${compGrow.meterPhEc ? 'checked' : ''}><span>Medidor <strong>pH</strong> y <strong>EC</strong></span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompWaterTemp" ${compGrow.meterWaterTemp ? 'checked' : ''}><span>Sonda <strong>Tª líquido</strong></span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompThermoHygro" ${compGrow.meterThermoHygro ? 'checked' : ''}><span><strong>Termohigrómetro</strong> (Tª + HR)</span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompCo2" ${compGrow.meterCo2 ? 'checked' : ''}><span>Medidor <strong>CO₂</strong></span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompPpfd" ${compGrow.meterPpfd ? 'checked' : ''}><span>Medidor <strong>luz</strong> (lux/PAR)</span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompHeater" ${compGrow.reservoirHeater ? 'checked' : ''} onchange="toggleCfgHeaterSetpoint(this.checked)"><span><strong>Calentador</strong> depósito + termostato</span></label>
+        </div>
+        <div class="form-group onboarding-heater-setpoint" id="cfgHeaterSetpointWrap" style="${compGrow.reservoirHeater ? '' : 'opacity:0.55'}">
+          <label>Termostato calentador (°C)</label>
+          <input type="number" id="cfgCompHeaterSetC" min="15" max="32" step="0.5" value="${Number.isFinite(compGrow.heaterThermostatC) ? compGrow.heaterThermostatC : 22}" ${compGrow.reservoirHeater ? '' : 'disabled'}>
+        </div>
+        <button type="button" class="btn btn-primary btn--compact" onclick="saveGrowHardwareComplements()"><i class="ti ti-device-floppy"></i> Guardar instrumentación</button>
         <div class="alert info"><i class="ti ti-database"></i><p>Estos valores se guardan en memoria local para tus próximos cálculos.</p></div>
       </div>
       <div class="card">
@@ -704,6 +766,11 @@ function renderActiveGrow(){
         <div class="param-row"><span class="param-key">Aditivos</span><span class="param-val">${mixPlan.additivesMl} mL</span></div>
         <div class="param-row"><span class="param-key">EC estimada final</span><span class="param-val blue">${mixPlan.estimatedEC} mS/cm</span></div>
         <div class="param-row"><span class="param-key">pH objetivo sugerido</span><span class="param-val purple">${mixPlan.targetPH}</span></div>
+        ${
+          mixPlan.heaterHint
+            ? `<div class="param-row"><span class="param-key">Calentador</span><span class="param-val">${mixPlan.heaterHint}</span></div>`
+            : ''
+        }
       </div>
     </div>
 
@@ -721,13 +788,7 @@ function renderActiveGrow(){
           <div class="param-row"><span class="param-key">Estado semanal</span><span class="param-val">${phase}</span></div>
           <div class="param-row"><span class="param-key">Rendimiento estimado/planta</span><span class="param-val c-amber">${selectedPlantInfo.estimatedPlantYield} g</span></div>
         </div>
-        <div class="card-sm">
-          <div class="section-label">Última medición ${myGrow.system === 'RDWC' ? '(circuito)' : 'asociada'}</div>
-          <div class="param-row"><span class="param-key">pH</span><span class="param-val blue">${selectedPlantInfo.latestPH}</span></div>
-          <div class="param-row"><span class="param-key">EC</span><span class="param-val green">${selectedPlantInfo.latestEC}</span></div>
-          <div class="param-row"><span class="param-key">Temp. agua</span><span class="param-val purple">${selectedPlantInfo.latestWaterTemp}</span></div>
-          <div class="param-row"><span class="param-key">Fecha medición</span><span class="param-val">${selectedPlantInfo.latestDate}</span></div>
-        </div>
+        ${volumeDiagramPanel}
       </div>
       <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista cenital: cada sitio lleva un <strong>icono de planta</strong> (plántula si germinación o &lt;18 días; hoja tipo cannabis si planta establecida o esqueje de proveedor). Toca el <strong>cubo o cesta</strong> para seleccionar P1…Pn; toca el <strong>icono</strong> para la ficha (variedad, edad, procedencia). ${myGrow.system === 'RDWC' ? 'En RDWC, pH/EC son de la solución común (depósito de control).' : ''}</p></div>
     </div>
@@ -848,6 +909,14 @@ function calculateMixPlan(grow, nutrient, phaseName) {
   const additivesMl = (dose.supplementsMlL * phaseMultiplier * reservoirL).toFixed(1);
   const estimatedEC = (sourceEC + (dose.baseMlL * phaseMultiplier * 0.35) + (water.calmagMlL * 0.2)).toFixed(2);
   const targetPH = phaseName.includes('Veg') ? '5.7–6.0' : phaseName.includes('Flush') ? '6.0–6.2' : '5.8–6.2';
+  const hc =
+    typeof normalizeHardwareComplements === 'function'
+      ? normalizeHardwareComplements(grow.hardwareComplements)
+      : { reservoirHeater: false, heaterThermostatC: null };
+  let heaterHint = '';
+  if (hc.reservoirHeater && Number.isFinite(hc.heaterThermostatC)) {
+    heaterHint = `Calentador ~${hc.heaterThermostatC}°C: verifica con la sonda en el líquido que no superas el rango radicular de la fase.`;
+  }
   return {
     waterLabel: water.label,
     baseMl,
@@ -855,7 +924,114 @@ function calculateMixPlan(grow, nutrient, phaseName) {
     additivesMl,
     estimatedEC,
     targetPH,
+    heaterHint,
   };
+}
+
+function readOnboardingHardwareComplements() {
+  const heater = !!document.getElementById('onbCompHeater')?.checked;
+  const setRaw = parseFloat(document.getElementById('onbCompHeaterSetC')?.value);
+  return {
+    reservoirHeater: heater,
+    heaterThermostatC: heater && Number.isFinite(setRaw) ? Math.min(35, Math.max(15, setRaw)) : null,
+    meterPhEc: !!document.getElementById('onbCompPhEc')?.checked,
+    meterWaterTemp: !!document.getElementById('onbCompWaterTemp')?.checked,
+    meterThermoHygro: !!document.getElementById('onbCompThermoHygro')?.checked,
+    meterCo2: !!document.getElementById('onbCompCo2')?.checked,
+    meterPpfd: !!document.getElementById('onbCompPpfd')?.checked,
+  };
+}
+
+function toggleOnbHeaterSetpoint(checked) {
+  const w = document.getElementById('onbHeaterSetpointWrap');
+  const inp = document.getElementById('onbCompHeaterSetC');
+  if (w) w.style.opacity = checked ? '1' : '0.55';
+  if (inp) inp.disabled = !checked;
+}
+
+function toggleCfgHeaterSetpoint(checked) {
+  const w = document.getElementById('cfgHeaterSetpointWrap');
+  const inp = document.getElementById('cfgCompHeaterSetC');
+  if (w) w.style.opacity = checked ? '1' : '0.55';
+  if (inp) inp.disabled = !checked;
+}
+
+function readCfgHardwareComplements() {
+  const heater = !!document.getElementById('cfgCompHeater')?.checked;
+  const setRaw = parseFloat(document.getElementById('cfgCompHeaterSetC')?.value);
+  return {
+    reservoirHeater: heater,
+    heaterThermostatC: heater && Number.isFinite(setRaw) ? Math.min(35, Math.max(15, setRaw)) : null,
+    meterPhEc: !!document.getElementById('cfgCompPhEc')?.checked,
+    meterWaterTemp: !!document.getElementById('cfgCompWaterTemp')?.checked,
+    meterThermoHygro: !!document.getElementById('cfgCompThermoHygro')?.checked,
+    meterCo2: !!document.getElementById('cfgCompCo2')?.checked,
+    meterPpfd: !!document.getElementById('cfgCompPpfd')?.checked,
+  };
+}
+
+function saveGrowHardwareComplements() {
+  if (!myGrow) return;
+  myGrow.hardwareComplements =
+    typeof normalizeHardwareComplements === 'function'
+      ? normalizeHardwareComplements(readCfgHardwareComplements())
+      : readCfgHardwareComplements();
+  saveGrowState();
+  renderActiveGrow();
+  if (typeof renderMonitor === 'function') renderMonitor();
+}
+
+function renderVolumeDiagramPanel(grow) {
+  const vol = Number.isFinite(grow.reservoirL) ? grow.reservoirL : 60;
+  const plantId = isRdwcSharedSolution(grow) ? 0 : grow.selectedPlant || 1;
+  const rows = getMeasurementsByPlant(grow, plantId)
+    .filter((m) => Number.isFinite(m.volume))
+    .slice(0, 24)
+    .reverse();
+  const last = rows.length ? rows[rows.length - 1] : null;
+  const lastVol = last && Number.isFinite(last.volume) ? last.volume : null;
+  const chart =
+    rows.length >= 2
+      ? renderVolumeMiniSvg(rows, vol)
+      : `<div class="volume-mono-display"><div class="volume-mono-row"><span class="volume-mono-val">${vol}</span><span class="volume-mono-unit">L</span></div><p class="text-muted volume-mono-note">Con 2+ registros de volumen en <strong>Medir</strong> aparecerá la tendencia.</p></div>`;
+  return `
+    <div class="card-sm volume-diagram-panel">
+      <div class="section-label">Volumen (depósito / circuito)</div>
+      <p class="volume-diagram-hint">Mezcla actual: <strong>${vol} L</strong>${lastVol != null ? ` · Última lectura: <strong>${lastVol.toFixed(1)} L</strong>` : ''}</p>
+      ${chart}
+    </div>`;
+}
+
+function renderVolumeMiniSvg(rows, baselineL) {
+  const w = 280;
+  const h = 100;
+  const padL = 14;
+  const padR = 10;
+  const padT = 18;
+  const padB = 22;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const vals = rows.map((r) => r.volume);
+  const minV = Math.min(...vals, baselineL * 0.92);
+  const maxV = Math.max(...vals, baselineL * 1.08, minV + 1);
+  const span = maxV - minV || 1;
+  const n = rows.length;
+  const toX = (i) => padL + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
+  const toY = (v) => padT + (1 - (Math.max(minV, Math.min(maxV, v)) - minV) / span) * innerH;
+  const pts = rows.map((r, i) => `${toX(i)},${toY(r.volume)}`).join(' ');
+  const yRef = toY(baselineL);
+  return `<svg viewBox="0 0 ${w} ${h}" class="volume-mini-svg" role="img" aria-label="Tendencia volumen depósito">
+    <rect x="0" y="0" width="${w}" height="${h}" rx="8" class="volume-mini-bg"></rect>
+    <text x="${padL}" y="14" class="volume-mini-title">Volumen (L)</text>
+    <line x1="${padL}" x2="${w - padR}" y1="${yRef}" y2="${yRef}" class="volume-mini-ref"></line>
+    <polyline points="${pts}" fill="none" class="volume-mini-line"></polyline>
+    ${rows
+      .map(
+        (r, i) =>
+          `<circle cx="${toX(i)}" cy="${toY(r.volume)}" r="3.5" class="volume-mini-dot"><title>${new Date(r.date).toLocaleString('es-ES')} · ${r.volume} L</title></circle>`,
+      )
+      .join('')}
+  </svg>`;
 }
 
 function renderSystemSvg(grow, strain, weekNum, phaseName) {
@@ -932,10 +1108,8 @@ function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
 
       <g>
         <rect x="${reservoirX}" y="140" width="90" height="110" rx="10" class="reservoir"></rect>
-        <text x="${reservoirX+45}" y="192" class="reservoir-label">DEPÓSITO</text>
-        <text x="${reservoirX+45}" y="210" class="reservoir-sub">${grow.reservoirL || 60} L</text>
-        <text x="${reservoirX+45}" y="232" class="reservoir-sample-hint">pH / EC · muestreo</text>
-        <text x="${reservoirX+45}" y="246" class="reservoir-sample-note">Solución común del circuito</text>
+        <text x="${reservoirX+45}" y="188" class="reservoir-label">DEPÓSITO</text>
+        <text x="${reservoirX+45}" y="218" class="reservoir-sub">${grow.reservoirL || 60} L</text>
       </g>
 
       <g>
@@ -961,7 +1135,7 @@ function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
 
       <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
       <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
-      <text x="370" y="305" class="reservoir-sub">Depósito ${grow.reservoirL || 60} L · Agua ${waterProfiles[grow.water]?.label || 'Ósmosis'} · pH/EC por depósito</text>
+      <text x="370" y="305" class="reservoir-sub">${grow.reservoirL || 60} L</text>
 
       ${Array.from({length:maxVisible}, (_,i)=>{
         const x = startX + i * spacing;
@@ -1005,7 +1179,7 @@ function renderFloatSvg(grow, strain, plantCount, weekNum, phaseName) {
 
       <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
       <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
-      <text x="370" y="305" class="reservoir-sub">Balsa ~${grow.reservoirL || 60} L · pH/EC en el volumen común · válido para cannabis con buena luz y oxigenación</text>
+      <text x="370" y="305" class="reservoir-sub">${grow.reservoirL || 60} L</text>
 
       ${Array.from({ length: maxVisible }, (_, i) => {
         const x = startX + i * spacing;
@@ -1054,7 +1228,8 @@ function renderNftSvg(grow, strain, plantCount, weekNum, phaseName) {
       <rect x="80" y="140" width="620" height="36" rx="8" class="water"></rect>
       <line x1="100" y1="${canalY}" x2="760" y2="${canalY}" class="pipe flow"></line>
       <rect x="720" y="120" width="100" height="70" rx="10" class="reservoir"></rect>
-      <text x="770" y="162" class="reservoir-label" text-anchor="middle">DEPÓSITO</text>
+      <text x="770" y="152" class="reservoir-label" text-anchor="middle">DEPÓSITO</text>
+      <text x="770" y="176" class="reservoir-sub" text-anchor="middle">${grow.reservoirL || 60} L</text>
       ${sites
         .map((node) => {
           const slotLabel = getCultivarShortLabelForSlot(grow, node.index);
@@ -1070,7 +1245,6 @@ function renderNftSvg(grow, strain, plantCount, weekNum, phaseName) {
         </g>`;
         })
         .join('')}
-      <text x="400" y="220" class="reservoir-sub">Canal inclinado · cestas / cubos en cada sitio · pH/EC en depósito</text>
       <text x="400" y="255" class="cultivar-label">Icono: germinado o material de proveedor — pulsa la planta para la ficha del sitio.</text>
     </svg>
   `;
@@ -1109,7 +1283,7 @@ function renderAeroSvg(grow, strain, plantCount, weekNum, phaseName) {
         </g>`;
         })
         .join('')}
-      <text x="410" y="300" class="reservoir-sub">Nebulización fina · tapa con portanet / cestas · icono en cada sitio</text>
+      <text x="410" y="288" class="reservoir-sub">Reserva / mezcla · ${grow.reservoirL || 60} L</text>
     </svg>
   `;
 }

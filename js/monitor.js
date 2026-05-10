@@ -514,6 +514,9 @@ function addMeasurement() {
   myGrow.measurements = Array.isArray(myGrow.measurements) ? myGrow.measurements : [];
   myGrow.measurements.unshift(reading);
   myGrow.measurements = myGrow.measurements.slice(0, 30);
+  if (Number.isFinite(reading.volume) && reading.volume > 0) {
+    myGrow.reservoirL = Math.max(5, Math.min(2000, reading.volume));
+  }
   const scopeLabel = rdwc ? 'circuito RDWC' : `P${plantId}`;
   myGrow.log.unshift({
     date: new Date().toISOString(),
@@ -522,6 +525,7 @@ function addMeasurement() {
   });
   saveGrowState();
   renderMonitor();
+  if (typeof renderCultivo === 'function' && myGrow) renderCultivo();
 }
 
 function renderMeasurementsTable() {
@@ -594,8 +598,14 @@ function renderPlantTrendCard() {
   const rdwc = isMonitorRdwc(myGrow);
   const scopeTitle = rdwc ? 'Circuito (solución común)' : `Planta P${plantId}`;
   const prof = typeof getSystemProfile === 'function' ? getSystemProfile(myGrow.system) : { chartModes: [], label: myGrow.system };
-  const mode = typeof getStoredTrendMode === 'function' ? getStoredTrendMode(myGrow.system) : 'solution';
-  const modeOpts = (prof.chartModes || [])
+  const modesList =
+    typeof getFilteredChartModes === 'function' ? getFilteredChartModes(myGrow) : prof.chartModes || [];
+  let mode = typeof getStoredTrendMode === 'function' ? getStoredTrendMode(myGrow.system) : 'solution';
+  if (!modesList.some((m) => m.id === mode)) {
+    mode = modesList[0]?.id || 'solution';
+    if (typeof setStoredTrendMode === 'function') setStoredTrendMode(myGrow.system, mode);
+  }
+  const modeOpts = modesList
     .map((m) => `<option value="${m.id}" ${mode === m.id ? 'selected' : ''}>${m.label}</option>`)
     .join('');
   const chartBody =

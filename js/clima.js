@@ -10,6 +10,13 @@ function escapeHtmlClima(s) {
     .replace(/"/g, '&quot;');
 }
 
+function escapeHtmlAttrClima(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
 function getClimaLocationLabel() {
   const loc = (myGrow && myGrow.location) || (appConfig && appConfig.location) || '';
   return (loc || '').trim();
@@ -509,6 +516,19 @@ async function refreshClimatologiaData(opts = {}) {
   const { force = false, manageButton = true } = opts;
   const label = getClimaLocationLabel();
 
+  if (!label) {
+    climaApiErrorMessage = force
+      ? 'Sin ubicación: indícala en «Ubicación manual» y pulsa Aplicar y cargar, o en Cultivo / checklist.'
+      : '';
+    const btnEarly = document.getElementById('climaRefreshBtn');
+    if (manageButton && btnEarly) {
+      btnEarly.disabled = false;
+      btnEarly.innerHTML = '<i class="ti ti-refresh"></i> Actualizar pronóstico';
+    }
+    renderClimatologia();
+    return;
+  }
+
   if (!force && label) {
     const snapEarly = myGrow?.siteWeather || appConfig?.climaSnapshot;
     const lastEarly = snapEarly?.updatedAt ? new Date(snapEarly.updatedAt).getTime() : 0;
@@ -523,7 +543,6 @@ async function refreshClimatologiaData(opts = {}) {
     btn.textContent = 'Consultando API…';
   }
   try {
-    if (!label) throw new Error('Indica la ubicación del sistema en el checklist (Sistema) o en el cultivo activo.');
     climaApiErrorMessage = '';
 
     const geo = await geocodeForClima(label);
@@ -579,6 +598,46 @@ async function refreshClimatologiaData(opts = {}) {
 
 async function refreshClimatologiaFromUi() {
   await refreshClimatologiaData({ force: true, manageButton: true });
+}
+
+/**
+ * Guarda la ubicación desde Climatología y consulta la API una sola vez (no hay recálculo al escribir).
+ */
+async function applyClimaManualLocationAndRefresh() {
+  const inp = document.getElementById('climaManualLocation');
+  const raw = (inp?.value || '').trim();
+  if (!raw) {
+    climaApiErrorMessage = 'Escribe una ciudad o lugar (p. ej. Valencia, España) y pulsa Aplicar y cargar.';
+    renderClimatologia();
+    return;
+  }
+
+  if (myGrow) {
+    const prev = (myGrow.location || '').trim();
+    const changed = raw !== prev;
+    myGrow.location = raw;
+    if (changed && typeof invalidateGrowWeatherSnapshot === 'function') {
+      invalidateGrowWeatherSnapshot();
+    }
+    saveGrowState();
+  }
+
+  if (!appConfig) appConfig = {};
+  appConfig.location = raw;
+  saveAppConfig();
+
+  climaApiErrorMessage = '';
+  await refreshClimatologiaData({ force: true, manageButton: true });
+  if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderInicio === 'function') renderInicio();
+  if (typeof renderCultivo === 'function') renderCultivo();
+}
+
+function climaManualLocationKeydown(ev) {
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    applyClimaManualLocationAndRefresh();
+  }
 }
 
 /** Llamado al abrir la pestaña Climatología: consulta APIs con la ubicación configurada. */
@@ -679,7 +738,15 @@ function renderClimatologia() {
         <div class="card-title"><i class="ti ti-map-pin"></i>Ubicación del sistema</div>
         <button type="button" class="btn btn-primary btn--compact" id="climaRefreshBtn" onclick="refreshClimatologiaFromUi()"><i class="ti ti-refresh"></i> Actualizar pronóstico</button>
       </div>
-      <p class="body-prose">Los datos se obtienen para <strong>${label || '— (sin ubicación)'}</strong> (misma cadena que en checklist o cultivo activo). <strong>Al entrar en esta pestaña</strong> se llama de forma automática a la API (geocodificación Open-Meteo, pronóstico en <strong>dos rejillas</strong> del modelo: tierra y «nearest», y elevación DEM). Los valores son salidas de modelos numéricos (p. ej. armonizados con servicios meteorológicos nacionales según región), no lecturas en tiempo real de una estación AEMET concreta.</p>
+      <p class="body-prose">Los datos se obtienen para <strong>${label || '— (sin ubicación)'}</strong> (misma cadena que en checklist o cultivo activo). Con ubicación definida, <strong>al entrar en esta pestaña</strong> se consulta la API (geocodificación Open-Meteo, pronóstico en <strong>dos rejillas</strong> del modelo: tierra y «nearest», y elevación DEM). Los valores son salidas de modelos numéricos, no lecturas en tiempo real de una estación concreta.</p>
+      <div class="form-group clima-manual-loc">
+        <label for="climaManualLocation">Ubicación manual</label>
+        <p class="text-muted clima-manual-loc-hint">Si borraste la zona o el checklist quedó vacío, escribe el lugar aquí. El pronóstico se recalcula <strong>solo al pulsar Aplicar</strong> (o Enter), no mientras escribes.</p>
+        <div class="clima-manual-loc-row">
+          <input type="text" id="climaManualLocation" value="${escapeHtmlAttrClima(label)}" placeholder="Ej: Valencia, España" autocomplete="address-level2" maxlength="120" onkeydown="climaManualLocationKeydown(event)">
+          <button type="button" class="btn btn-primary btn--compact clima-manual-loc-btn" onclick="applyClimaManualLocationAndRefresh()"><i class="ti ti-check"></i> Aplicar y cargar</button>
+        </div>
+      </div>
       <div class="param-row"><span class="param-key">Instalación</span><span class="param-val">${placement === 'exterior' ? 'Exterior' : 'Interior'}</span></div>
       ${
         snap?.updatedAt
@@ -753,6 +820,8 @@ function renderClimatologia() {
 
 window.refreshClimatologiaFromUi = refreshClimatologiaFromUi;
 window.refreshClimatologiaOnTabFocus = refreshClimatologiaOnTabFocus;
+window.applyClimaManualLocationAndRefresh = applyClimaManualLocationAndRefresh;
+window.climaManualLocationKeydown = climaManualLocationKeydown;
 window.renderClimatologia = renderClimatologia;
 window.siteWeatherMatchesGrow = siteWeatherMatchesGrow;
 window.buildExteriorHydroSolutions = buildExteriorHydroSolutions;
