@@ -864,6 +864,24 @@
 /* PLANT TREND SVG */
 .monitor-measure-intro{margin-bottom:0.35rem}
 .monitor-clima-link{margin-bottom:0.85rem}
+.metric-val--compact{font-size:0.9em;line-height:1.25}
+.clima-current-extended{margin-top:0.35rem}
+.clima-section-spaced{margin-top:1rem}
+.clima-geo-note{margin:0.25rem 0 0;font-size:0.875rem}
+.clima-alt-list{margin:0.35rem 0 0;padding-left:1.2rem;font-size:0.875rem;color:var(--text2);line-height:1.5}
+.clima-grid-note{margin:0 0 0.75rem;font-size:0.875rem;color:var(--text3);line-height:1.45}
+.clima-nearest-card{margin-bottom:0}
+.clima-match-warn{margin-top:0.75rem}
+.clima-exterior-plan-card .clima-plan-intro{margin-bottom:1rem}
+.clima-solution-block{
+  border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;background:var(--surface2);
+}
+.clima-solution-block--danger{border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.06)}
+.clima-solution-block--warn{border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.06)}
+.clima-solution-block--info{border-color:rgba(52,211,153,0.25);background:rgba(52,211,153,0.05)}
+.clima-solution-title{font-weight:600;font-size:0.95rem;margin:0 0 8px;color:var(--text)}
+.clima-solution-actions{margin:0;padding-left:1.15rem;font-size:0.875rem;color:var(--text2);line-height:1.5}
+.clima-solution-actions li{margin-bottom:6px}
 .monitor-metrics--tight{margin-top:0.25rem}
 .section-label--block{margin-top:1rem;margin-bottom:0.35rem}
 

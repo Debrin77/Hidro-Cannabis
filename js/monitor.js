@@ -36,14 +36,35 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
   const out = [];
   if (!grow || grow.placement !== 'exterior') return out;
   const snap = grow.siteWeather;
+  const match =
+    typeof siteWeatherMatchesGrow === 'function' ? siteWeatherMatchesGrow(grow, snap) : { ok: true };
+  if (match.code === 'stale' && match.message) {
+    out.push({
+      level: 'warn',
+      icon: 'refresh',
+      message: match.message,
+    });
+    return out;
+  }
+  if (match.code === 'no-location' && match.message) {
+    out.push({
+      level: 'warn',
+      icon: 'map-pin',
+      message: match.message,
+    });
+    return out;
+  }
+  const useSnap = match.ok;
   const cur = grow.climate;
   let tAir = null;
   let rh = null;
   let wind = null;
-  if (snap?.current && Number.isFinite(snap.current.temperature_2m)) {
+  if (useSnap && snap?.current && Number.isFinite(snap.current.temperature_2m)) {
     tAir = snap.current.temperature_2m;
     rh = snap.current.relative_humidity_2m;
     wind = snap.current.wind_speed_10m;
+  } else if (!useSnap) {
+    tAir = null;
   } else {
     tAir = parseClimateTemperature(cur?.temperature);
     rh = Number.isFinite(cur?.humidity) ? cur.humidity : null;
@@ -77,28 +98,46 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     });
   }
   const inFlower = weekNum > strain.vegW + 2;
-  const rain0 = snap?.daily?.precipitation_sum?.[0];
-  const prob0 = snap?.daily?.precipitation_probability_mean?.[0];
-  if (inFlower && Number.isFinite(rain0) && rain0 >= 6) {
+  const rain0 = useSnap ? snap?.daily?.precipitation_sum?.[0] : null;
+  const prob0 = useSnap ? snap?.daily?.precipitation_probability_mean?.[0] : null;
+  if (useSnap && inFlower && Number.isFinite(rain0) && rain0 >= 6) {
     out.push({
       level: 'warn',
       icon: 'cloud-rain',
       message: `Pronóstico: lluvia considerable hoy (~${rain0.toFixed(1)} mm) en floración exterior — riesgo de botrytis; mejora ventilación al secar.`,
     });
-  } else if (inFlower && Number.isFinite(prob0) && prob0 >= 75) {
+  } else if (useSnap && inFlower && Number.isFinite(prob0) && prob0 >= 75) {
     out.push({
       level: 'info',
       icon: 'cloud-fog',
       message: `Alta probabilidad de lluvia (${prob0}%). Prepara cubierta o retirada temporal si el espacio lo permite.`,
     });
   }
-  if (!snap?.updatedAt && grow.placement === 'exterior') {
+  if (!snap?.updatedAt && grow.placement === 'exterior' && match.code !== 'no-location') {
     out.push({
       level: 'info',
       icon: 'cloud-search',
-      message: 'Abre la pestaña Climatología y pulsa «Actualizar pronóstico» para avisos más precisos según tu ubicación.',
+      message: 'Abre la pestaña Climatología: se consulta sola la API para tu ubicación; puedes repetir con «Actualizar pronóstico» si hace falta.',
     });
   }
+
+  if (
+    useSnap &&
+    typeof buildExteriorHydroSolutions === 'function' &&
+    grow.placement === 'exterior'
+  ) {
+    const plan = buildExteriorHydroSolutions(grow, snap);
+    const top = plan.blocks.find((b) => b.level === 'danger') || plan.blocks[0];
+    if (top && top.actions && top.actions.length) {
+      const preview = top.actions.slice(0, 2).join(' ');
+      out.push({
+        level: top.level === 'danger' ? 'danger' : 'warn',
+        icon: 'tool',
+        message: `${top.title}: ${preview} Ver plan completo en Climatología.`,
+      });
+    }
+  }
+
   return out;
 }
 
