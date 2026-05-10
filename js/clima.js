@@ -76,6 +76,120 @@ function windDirLabel(deg) {
   return dirs[Math.round(deg / 45) % 8] + ` (${Math.round(deg)}°)`;
 }
 
+/** Código WMO (Open-Meteo) → icono Tabler, etiqueta ES y tono visual para la tarjeta. */
+function getDailyWeatherVisual(code) {
+  const c = Number(code);
+  if (!Number.isFinite(c)) return { icon: 'ti-cloud-off', label: 'Sin datos', tone: 'neutral' };
+  if (c === 0) return { icon: 'ti-sun', label: 'Despejado', tone: 'clear' };
+  if (c === 1) return { icon: 'ti-sun', label: 'Poco nublado', tone: 'clear' };
+  if (c === 2) return { icon: 'ti-cloud', label: 'Parcialmente nublado', tone: 'cloud' };
+  if (c === 3) return { icon: 'ti-cloud', label: 'Nublado', tone: 'cloud' };
+  if (c === 45 || c === 48) return { icon: 'ti-cloud-fog', label: 'Niebla', tone: 'fog' };
+  if (c >= 51 && c <= 55) return { icon: 'ti-droplet', label: 'Llovizna', tone: 'rain' };
+  if (c === 56 || c === 57) return { icon: 'ti-droplet', label: 'Llovizna helada', tone: 'rain' };
+  if (c === 61 || c === 63 || c === 65) return { icon: 'ti-cloud-rain', label: 'Lluvia', tone: 'rain' };
+  if (c === 66 || c === 67) return { icon: 'ti-cloud-rain', label: 'Lluvia helada', tone: 'rain' };
+  if (c === 71 || c === 73 || c === 75) return { icon: 'ti-snowflake', label: 'Nieve', tone: 'snow' };
+  if (c === 77) return { icon: 'ti-snowflake', label: 'Granizo fino', tone: 'snow' };
+  if (c === 80 || c === 81) return { icon: 'ti-cloud-rain', label: 'Chubascos', tone: 'rain' };
+  if (c === 82) return { icon: 'ti-cloud-storm', label: 'Chubascos fuertes', tone: 'storm' };
+  if (c === 85 || c === 86) return { icon: 'ti-snowflake', label: 'Chubascos de nieve', tone: 'snow' };
+  if (c === 95) return { icon: 'ti-bolt', label: 'Tormenta', tone: 'storm' };
+  if (c === 96 || c === 99) return { icon: 'ti-bolt', label: 'Tormenta y granizo', tone: 'storm' };
+  return { icon: 'ti-cloud', label: 'Variable', tone: 'cloud' };
+}
+
+function renderDailyForecastIconStrip(snap) {
+  if (!snap?.daily?.time || !Array.isArray(snap.daily.time)) return { strip: '', detailTable: '' };
+
+  const times = snap.daily.time.slice(0, 7);
+  const todayKey = new Date().toDateString();
+  const cards = times
+    .map((day, i) => {
+      const wcode = snap.daily.weather_code?.[i];
+      const vis = getDailyWeatherVisual(wcode);
+      const tmax = snap.daily.temperature_2m_max?.[i];
+      const tmin = snap.daily.temperature_2m_min?.[i];
+      const rain = snap.daily.precipitation_sum?.[i];
+      const prob = snap.daily.precipitation_probability_mean?.[i];
+      const wmax = snap.daily.wind_speed_10m_max?.[i];
+      const uv = snap.daily.uv_index_max?.[i];
+      const d = new Date(day);
+      const isToday = d.toDateString() === todayKey;
+      const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
+      const dayNum = d.getDate();
+      const rainLine =
+        Number.isFinite(rain) && rain >= 0.1
+          ? `<span class="clima-day-meta__item" title="Precipitación"><i class="ti ti-droplet" aria-hidden="true"></i>${rain.toFixed(1)} mm</span>`
+          : Number.isFinite(prob) && prob >= 40
+            ? `<span class="clima-day-meta__item" title="Prob. lluvia"><i class="ti ti-droplet-half-2" aria-hidden="true"></i>${prob}%</span>`
+            : '';
+      const windLine = Number.isFinite(wmax)
+        ? `<span class="clima-day-meta__item" title="Viento máx."><i class="ti ti-wind" aria-hidden="true"></i>${wmax.toFixed(0)}</span>`
+        : '';
+      const uvLine =
+        Number.isFinite(uv) && uv >= 3
+          ? `<span class="clima-day-meta__item clima-day-meta__uv" title="UV máx."><i class="ti ti-sun" aria-hidden="true"></i>${uv.toFixed(0)}</span>`
+          : '';
+      const temps =
+        Number.isFinite(tmin) && Number.isFinite(tmax)
+          ? `<div class="clima-day-temps"><span class="clima-day-tmax">${Math.round(tmax)}°</span><span class="clima-day-tmin">${Math.round(tmin)}°</span></div>`
+          : '<div class="clima-day-temps">—</div>';
+
+      return `<div class="clima-day-card clima-day-card--${vis.tone}${isToday ? ' clima-day-card--today' : ''}" title="${escapeHtmlClima(vis.label)}">
+        <div class="clima-day-card__top">
+          <span class="clima-day-name">${weekday}</span>
+          <span class="clima-day-num">${dayNum}</span>
+        </div>
+        <div class="clima-day-icon" aria-hidden="true"><i class="ti ${vis.icon}"></i></div>
+        <div class="clima-day-desc">${escapeHtmlClima(vis.label)}</div>
+        ${temps}
+        <div class="clima-day-meta">${rainLine}${windLine}${uvLine}</div>
+      </div>`;
+    })
+    .join('');
+
+  const hasUvDaily =
+    Array.isArray(snap?.daily?.uv_index_max) &&
+    snap.daily.uv_index_max.some((u) => Number.isFinite(u));
+  const thUv = hasUvDaily ? '<th>UV máx</th>' : '';
+
+  const dailyRows = times
+    .map((day, i) => {
+      const tmax = snap.daily.temperature_2m_max?.[i];
+      const tmin = snap.daily.temperature_2m_min?.[i];
+      const rain = snap.daily.precipitation_sum?.[i];
+      const prob = snap.daily.precipitation_probability_mean?.[i];
+      const wmax = snap.daily.wind_speed_10m_max?.[i];
+      const uv = snap.daily.uv_index_max?.[i];
+      const d = new Date(day);
+      const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+      const uvCell = hasUvDaily ? `<td>${Number.isFinite(uv) ? uv.toFixed(1) : '—'}</td>` : '';
+      return `<tr>
+        <td>${dayStr}</td>
+        <td class="ec-val">${Number.isFinite(tmin) && Number.isFinite(tmax) ? `${tmin.toFixed(0)} / ${tmax.toFixed(0)}°C` : '—'}</td>
+        <td>${Number.isFinite(rain) ? rain.toFixed(1) + ' mm' : '—'}</td>
+        <td>${Number.isFinite(prob) ? prob + '%' : '—'}</td>
+        <td>${Number.isFinite(wmax) ? wmax.toFixed(0) + ' km/h' : '—'}</td>
+        ${uvCell}
+      </tr>`;
+    })
+    .join('');
+
+  const strip = `<div class="clima-daily-scroll-wrap">
+    <div class="clima-daily-scroll" role="list" aria-label="Pronóstico 7 días con iconos">
+      ${cards}
+    </div>
+  </div>`;
+
+  const detailTable = `<details class="clima-forecast-details">
+    <summary class="clima-forecast-details__summary">Ver tabla numérica detallada</summary>
+    <div class="table-scroll"><table class="week-table"><thead><tr><th>Día</th><th>Tª mín / máx</th><th>Lluvia</th><th>Prob.</th><th>Viento máx</th>${thUv}</tr></thead><tbody>${dailyRows}</tbody></table></div>
+  </details>`;
+
+  return { strip, detailTable };
+}
+
 /** El pronóstico guardado debe corresponder al texto de ubicación del cultivo (cada sistema/cultivo puede estar en un sitio distinto). */
 function siteWeatherMatchesGrow(grow, snap) {
   if (!grow) return { ok: false, code: 'no-grow' };
@@ -495,43 +609,20 @@ function renderClimatologia() {
         : '';
   const locPlanEsc = escapeHtmlClima((myGrow?.location || label || '').trim() || 'tu zona');
 
-  const hasUvDaily =
-    Array.isArray(snap?.daily?.uv_index_max) &&
-    snap.daily.uv_index_max.some((u) => Number.isFinite(u));
-  const thUv = hasUvDaily ? '<th>UV máx</th>' : '';
-
-  const dailyRows =
-    snap?.daily?.time && Array.isArray(snap.daily.time)
-      ? snap.daily.time
-          .slice(0, 7)
-          .map((day, i) => {
-            const tmax = snap.daily.temperature_2m_max?.[i];
-            const tmin = snap.daily.temperature_2m_min?.[i];
-            const rain = snap.daily.precipitation_sum?.[i];
-            const prob = snap.daily.precipitation_probability_mean?.[i];
-            const wmax = snap.daily.wind_speed_10m_max?.[i];
-            const uv = snap.daily.uv_index_max?.[i];
-            const d = new Date(day);
-            const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-            const uvCell = hasUvDaily
-              ? `<td>${Number.isFinite(uv) ? uv.toFixed(1) : '—'}</td>`
-              : '';
-            return `<tr>
-              <td>${dayStr}</td>
-              <td class="ec-val">${Number.isFinite(tmin) && Number.isFinite(tmax) ? `${tmin.toFixed(0)} / ${tmax.toFixed(0)}°C` : '—'}</td>
-              <td>${Number.isFinite(rain) ? rain.toFixed(1) + ' mm' : '—'}</td>
-              <td>${Number.isFinite(prob) ? prob + '%' : '—'}</td>
-              <td>${Number.isFinite(wmax) ? wmax.toFixed(0) + ' km/h' : '—'}</td>
-              ${uvCell}
-            </tr>`;
-          })
-          .join('')
-      : '';
+  const forecast7 = renderDailyForecastIconStrip(snap);
 
   const cur0 = snap?.current;
+  const curVis = cur0 && Number.isFinite(cur0.temperature_2m) ? getDailyWeatherVisual(cur0.weather_code) : null;
   const currentBlock =
     cur0 && Number.isFinite(cur0.temperature_2m)
-      ? `<div class="grid4 monitor-metrics clima-current-extended">
+      ? `<div class="clima-current-hero clima-current-hero--${curVis.tone}">
+          <div class="clima-current-hero__icon" aria-hidden="true"><i class="ti ${curVis.icon}"></i></div>
+          <div class="clima-current-hero__text">
+            <div class="clima-current-hero__cond">${escapeHtmlClima(curVis.label)}</div>
+            <div class="clima-current-hero__temp">${Number(cur0.temperature_2m).toFixed(1)}°C</div>
+          </div>
+        </div>
+        <div class="grid4 monitor-metrics clima-current-extended">
           <div class="metric"><div class="metric-label">Temperatura</div><div class="metric-val c-amber">${Number(cur0.temperature_2m).toFixed(1)}°C</div></div>
           <div class="metric"><div class="metric-label">Sensación / aparente</div><div class="metric-val">${cur0.apparent_temperature != null ? Number(cur0.apparent_temperature).toFixed(1) + '°C' : '—'}</div></div>
           <div class="metric"><div class="metric-label">Humedad</div><div class="metric-val c-blue">${cur0.relative_humidity_2m ?? '—'}%</div></div>
@@ -642,11 +733,12 @@ function renderClimatologia() {
 
     ${nearestBlock}
 
-    <div class="card">
+    <div class="card clima-forecast-card">
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar-week"></i>Pronóstico 7 días</div></div>
+      <p class="text-muted clima-forecast-hint">Desliza horizontalmente · iconos según código meteorológico WMO (Open-Meteo).</p>
       ${
-        dailyRows
-          ? `<div class="table-scroll"><table class="week-table"><thead><tr><th>Día</th><th>Tª mín / máx</th><th>Lluvia</th><th>Prob.</th><th>Viento máx</th>${thUv}</tr></thead><tbody>${dailyRows}</tbody></table></div>`
+        forecast7.strip
+          ? `${forecast7.strip}${forecast7.detailTable}`
           : `<p class="text-muted">Sin datos diarios todavía.</p>`
       }
     </div>

@@ -1,5 +1,56 @@
 // Cultivo wizard and active grow
 
+function escapeHtmlAttr(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
+/** Elimina pronóstico y clima de API al cambiar ubicación o interior/exterior. */
+function invalidateGrowWeatherSnapshot() {
+  if (!myGrow) return;
+  delete myGrow.siteWeather;
+  const c = myGrow.climate;
+  if (c && typeof c === 'object' && typeof c.source === 'string' && /Open-Meteo|Climatología|rejilla/i.test(c.source)) {
+    myGrow.climate = null;
+  }
+}
+
+function saveGrowLocationAndPlacement() {
+  if (!myGrow) return;
+  const locInp = document.getElementById('cfgGrowLocation');
+  const placeInp = document.getElementById('cfgGrowPlacement');
+  const newLoc = (locInp?.value || '').trim();
+  const newPlace = placeInp?.value === 'exterior' ? 'exterior' : 'interior';
+  const prevLoc = (myGrow.location || '').trim();
+  const prevPlace = myGrow.placement === 'exterior' ? 'exterior' : 'interior';
+  const changed = newLoc !== prevLoc || newPlace !== prevPlace;
+  if (changed) {
+    invalidateGrowWeatherSnapshot();
+    myGrow.log.unshift({
+      date: new Date().toISOString(),
+      text:
+        newLoc !== prevLoc
+          ? `Ubicación actualizada («${prevLoc || '—'}» → «${newLoc || '—'}»). Pronóstico guardado invalidado: abre Climatología para cargar la nueva zona.`
+          : `Instalación ${prevPlace === 'exterior' ? 'exterior' : 'interior'} → ${newPlace === 'exterior' ? 'exterior' : 'interior'}. Pronóstico guardado invalidado: abre Climatología si usas tiempo exterior.`,
+      type: 'info',
+    });
+  }
+  myGrow.location = newLoc;
+  myGrow.placement = newPlace;
+  if (typeof appConfig === 'object' && appConfig) {
+    appConfig.location = newLoc;
+    appConfig.placement = newPlace;
+    saveAppConfig();
+  }
+  saveGrowState();
+  renderActiveGrow();
+  if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderClimatologia === 'function') renderClimatologia();
+  if (typeof renderInicio === 'function') renderInicio();
+}
+
 function startGrow(id){
   wizData.strainId = id;
   wizStep = 1;
@@ -506,6 +557,29 @@ function renderActiveGrow(){
     </div>
 
     ${sizingRecall}
+
+    <div class="card cultivo-site-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-map-pin"></i>Emplazamiento y clima</div></div>
+      <p class="body-prose cultivo-site-lead">La pestaña <strong>Climatología</strong> y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
+      <div class="grid2 cultivo-site-grid">
+        <div class="form-group">
+          <label>Ubicación del sistema</label>
+          <input id="cfgGrowLocation" type="text" value="${escapeHtmlAttr(myGrow.location || '')}" placeholder="Ej: Madrid, Vigo, Castelló de la Plana" autocomplete="address-level2">
+          <span class="form-hint">Misma cadena que se geocodifica en Climatología.</span>
+        </div>
+        <div class="form-group">
+          <label>Instalación</label>
+          <select id="cfgGrowPlacement">
+            <option value="interior" ${myGrow.placement === 'exterior' ? '' : 'selected'}>Interior</option>
+            <option value="exterior" ${myGrow.placement === 'exterior' ? 'selected' : ''}>Exterior</option>
+          </select>
+          <span class="form-hint">Exterior activa el plan hidropónico según tiempo y viento/lluvia.</span>
+        </div>
+      </div>
+      <div class="cultivo-site-actions">
+        <button type="button" class="btn btn-primary btn--compact" onclick="saveGrowLocationAndPlacement()"><i class="ti ti-device-floppy"></i> Guardar emplazamiento</button>
+      </div>
+    </div>
 
     <div class="gauge-grid">
       <div class="gauge"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span></div>

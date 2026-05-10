@@ -17,6 +17,201 @@ function computeDliMolM2d(ppfd, hoursLight) {
   return Math.round(((ppfd * hoursLight * 3600) / 1e6) * 10) / 10;
 }
 
+function escapeMonitorHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function parseMeasureInputFloat(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const t = String(el.value ?? '')
+    .trim()
+    .replace(/,/g, '.');
+  if (t === '' || t === '-' || t === '.' || t === '-.') return null;
+  const n = parseFloat(t);
+  return Number.isFinite(n) ? n : null;
+}
+
+function collectMonitorFormReading() {
+  const reading = {};
+  const ph = parseMeasureInputFloat('mPH');
+  const ec = parseMeasureInputFloat('mEC');
+  const vol = parseMeasureInputFloat('mVolume');
+  const wt = parseMeasureInputFloat('mWaterTemp');
+  const at = parseMeasureInputFloat('mAirTemp');
+  const rh = parseMeasureInputFloat('mHumidity');
+  const co2 = parseMeasureInputFloat('mCO2');
+  const ppfd = parseMeasureInputFloat('mPPFD');
+  const lh = parseMeasureInputFloat('mLightHours');
+  if (ph != null) reading.ph = ph;
+  if (ec != null) reading.ec = ec;
+  if (vol != null) reading.volume = vol;
+  if (wt != null) reading.waterTemp = wt;
+  if (at != null) reading.airTemp = at;
+  if (rh != null) reading.humidity = rh;
+  if (co2 != null) reading.co2 = co2;
+  if (ppfd != null) reading.ppfd = ppfd;
+  if (lh != null) reading.lightHours = lh;
+  return reading;
+}
+
+/** Avisos y soluciones calculadas mientras se rellena el formulario (sin guardar). */
+function buildLiveMeasureHints(reading, grow) {
+  const out = [];
+  const strain = grow.strain;
+  const daysSince = Math.floor((new Date() - grow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const phaseRef = getPhaseReference(strain, weekNum);
+
+  const hardPh = Number.isFinite(reading.ph) && (reading.ph < 4.5 || reading.ph > 8.5);
+  const hardEc = Number.isFinite(reading.ec) && (reading.ec < 0 || reading.ec > 4);
+
+  if (hardPh) {
+    out.push({
+      level: 'danger',
+      icon: 'alert-circle',
+      title: 'pH fuera del rango permitido',
+      text: `El valor ${reading.ph.toFixed(2)} no se puede guardar (límites 4,5–8,5). Corrige antes de guardar la medición.`,
+    });
+  }
+  if (hardEc) {
+    out.push({
+      level: 'danger',
+      icon: 'alert-circle',
+      title: 'EC fuera del rango permitido',
+      text: `El valor ${reading.ec.toFixed(2)} mS/cm no se puede guardar (límites 0–4).`,
+    });
+  }
+
+  if (typeof buildStrainCorrectionPlan === 'function' && Object.keys(reading).length > 0) {
+    const plan = buildStrainCorrectionPlan(reading, strain, weekNum, phaseRef, grow);
+    for (const step of plan.steps) {
+      if (hardPh && (step.key === 'ph-low' || step.key === 'ph-high')) continue;
+      if (hardEc && (step.key === 'ec-low' || step.key === 'ec-high')) continue;
+      const level =
+        step.key === 'ec-high' || step.key === 'water-hot' || step.key === 'rh-flower' ? 'danger' : 'warn';
+      out.push({
+        level,
+        icon: 'tool',
+        title: step.title,
+        text: step.detail,
+      });
+    }
+  }
+
+  if (Number.isFinite(reading.co2)) {
+    if (reading.co2 < 350) {
+      out.push({
+        level: 'warn',
+        icon: 'molecule',
+        title: 'CO₂ muy bajo',
+        text: `Lectura ~${reading.co2.toFixed(0)} ppm. Comprueba ventilación o calibración del sensor.`,
+      });
+    } else if (grow.co2 === 'si' && reading.co2 < (phaseRef.co2Min || 600) * 0.85) {
+      out.push({
+        level: 'info',
+        icon: 'molecule',
+        title: 'CO₂ bajo para recinto enriquecido',
+        text: `Orientativo en ${phaseRef.phase}: ~${phaseRef.co2Min}–${phaseRef.co2Max} ppm con CO₂ activado.`,
+      });
+    }
+  }
+
+  if (Number.isFinite(reading.ppfd)) {
+    if (reading.ppfd < (phaseRef.ppfdMin || 300) * 0.75) {
+      out.push({
+        level: 'warn',
+        icon: 'bulb',
+        title: 'PPFD bajo',
+        text: `~${reading.ppfd.toFixed(0)} µmol/m²/s para ${phaseRef.phase} (mínimo orientativo ~${phaseRef.ppfdMin}). Revisa altura o potencia de la luminaria.`,
+      });
+    }
+    if (reading.ppfd > (phaseRef.ppfdMax || 900) * 1.2) {
+      out.push({
+        level: 'danger',
+        icon: 'sun',
+        title: 'PPFD muy alto',
+        text: `~${reading.ppfd.toFixed(0)} µmol/m²/s supera el techo orientativo (~${phaseRef.ppfdMax}). Riesgo de estrés luminoso.`,
+      });
+    }
+  }
+
+  const ord = { danger: 0, warn: 1, info: 2 };
+  out.sort((a, b) => (ord[a.level] ?? 3) - (ord[b.level] ?? 3));
+  return out;
+}
+
+let monitorLiveValidationTimer = null;
+
+function updateMonitorLiveCorrection() {
+  const host = document.getElementById('monitorLiveCorrectionHost');
+  if (!host || !myGrow) return;
+  const reading = collectMonitorFormReading();
+  if (Object.keys(reading).length === 0) {
+    host.innerHTML = '';
+    host.hidden = true;
+    return;
+  }
+  const parts = buildLiveMeasureHints(reading, myGrow);
+  const strain = myGrow.strain;
+  const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const phaseRef = getPhaseReference(strain, weekNum);
+
+  if (!parts.length) {
+    host.innerHTML = `<div class="alert info monitor-live-ok"><i class="ti ti-check"></i><p><strong>En rango (${phaseRef.phase}):</strong> los valores introducidos encajan en los objetivos orientativos de <strong>${escapeMonitorHtml(strain.name)}</strong>. Tras cualquier corrección en depósito, vuelve a medir.</p></div>`;
+    host.hidden = false;
+    return;
+  }
+  host.innerHTML = parts
+    .map(
+      (p) =>
+        `<div class="alert ${p.level === 'danger' ? 'danger' : p.level === 'warn' ? 'warn' : 'info'} monitor-live-alert"><i class="ti ti-${p.icon}"></i><div class="monitor-live-alert__body"><strong class="monitor-live-alert__title">${escapeMonitorHtml(p.title)}</strong><p class="monitor-live-alert__text">${escapeMonitorHtml(p.text)}</p></div></div>`,
+    )
+    .join('');
+  host.hidden = false;
+}
+
+function scheduleMonitorLiveCorrection() {
+  clearTimeout(monitorLiveValidationTimer);
+  monitorLiveValidationTimer = setTimeout(updateMonitorLiveCorrection, 150);
+}
+
+const MONITOR_LIVE_FIELD_IDS = new Set([
+  'mPH',
+  'mEC',
+  'mVolume',
+  'mWaterTemp',
+  'mAirTemp',
+  'mHumidity',
+  'mCO2',
+  'mLux',
+  'mPPFD',
+  'mLightHours',
+  'mPlant',
+]);
+
+function onMonitorFormLiveEvent(ev) {
+  const mc = document.getElementById('monitorContent');
+  if (!mc || !myGrow || !mc.contains(ev.target)) return;
+  const id = ev.target.id;
+  if (!id || !MONITOR_LIVE_FIELD_IDS.has(id)) return;
+  scheduleMonitorLiveCorrection();
+}
+
+function initMonitorLiveValidation() {
+  if (!window.__hydroMonitorLiveDelegation) {
+    document.addEventListener('input', onMonitorFormLiveEvent);
+    document.addEventListener('change', onMonitorFormLiveEvent);
+    window.__hydroMonitorLiveDelegation = true;
+  }
+  requestAnimationFrame(() => updateMonitorLiveCorrection());
+}
+
 function formatMeasurementVpd(r) {
   const v = computeVpdKpa(r.airTemp, r.humidity);
   return v != null ? v.toFixed(2) : '—';
@@ -263,12 +458,14 @@ function renderMonitor(){
       <div class="grid2">
         <div class="form-group"><label>Notas</label><input id="mNote" type="text" placeholder="Observaciones del día"></div>
       </div>
+      <div id="monitorLiveCorrectionHost" class="monitor-live-correction" hidden aria-live="polite" aria-atomic="true"></div>
       <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
       ${renderMeasurementsTable()}
       ${renderCorrectionPlanCard()}
       ${renderPlantTrendCard()}
     </div>
   `;
+  requestAnimationFrame(() => initMonitorLiveValidation());
 }
 
 function addLog(){
