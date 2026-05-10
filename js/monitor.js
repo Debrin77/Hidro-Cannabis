@@ -336,6 +336,37 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
   return out;
 }
 
+/** Tarjeta de alertas (mantenimiento + última medición + exterior) para Inicio y Sistema. */
+function renderGrowAlertsCardHtml(grow) {
+  if (!grow || !grow.strain) return '';
+  const s = grow.strain;
+  const daysSince = Math.floor((new Date() - grow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const smartAlerts = buildSmartAlerts(grow, s, weekNum);
+  return `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-alert-triangle"></i>Alertas activas</div></div>
+      ${grow.ambTemp > 28 ? `<div class="alert warn"><i class="ti ti-thermometer"></i><p>Temperatura ambiente ${grow.ambTemp}°C detectada. Riesgo de solución caliente. Monitorear agua — no superar 23°C.</p></div>` : ''}
+      <div class="alert info"><i class="ti ti-calendar"></i><p>Próxima renovación de solución recomendada: en ${10 - (daysSince % 10)} días.</p></div>
+      <div class="alert info"><i class="ti ti-droplet"></i><p>Calibrar medidor pH con tampón 7.0 cada 7 días. Último calibrado: verificar manualmente.</p></div>
+      ${
+        weekNum >= grow.strain.vegW + grow.strain.flowerW - 2
+          ? `<div class="alert warn"><i class="ti ti-scissors"></i><p>Inicio del periodo de Flush recomendado. Cambiar a agua RO · EC 0.1–0.3 · pH 6.0</p></div>`
+          : ''
+      }
+      ${
+        smartAlerts.length
+          ? smartAlerts
+              .map(
+                (a) =>
+                  `<div class="alert ${a.level === 'danger' ? 'danger' : a.level === 'warn' ? 'warn' : 'info'}"><i class="ti ti-${a.icon}"></i><p>${a.message}</p></div>`,
+              )
+              .join('')
+          : `<div class="alert info"><i class="ti ti-check"></i><p>Sin alertas críticas en la última medición registrada.</p></div>`
+      }
+    </div>`;
+}
+
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
@@ -347,7 +378,6 @@ function renderMonitor(){
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
   const selectedPlant = myGrow.selectedPlant || 1;
-  const smartAlerts = buildSmartAlerts(myGrow, s, weekNum);
   const rdwc = isMonitorRdwc(myGrow);
   const latestCircuit = getLatestMeasurementForPlant(myGrow, selectedPlant);
   const phLive = latestCircuit && Number.isFinite(latestCircuit.ph) ? latestCircuit.ph : null;
@@ -380,26 +410,6 @@ function renderMonitor(){
       <div class="metric"><div class="metric-label">PPFD último</div><div class="metric-val">${ppfdLive != null ? ppfdLive.toFixed(0) + ' µmol' : '—'}</div><div class="metric-unit">sensor cuántico</div></div>
     </div>
 
-    <div class="grid2">
-      <div class="card">
-        <div class="card-header"><div class="card-title"><i class="ti ti-list"></i>Registro de cultivo</div></div>
-        <div class="log-list">
-          ${myGrow.log.map(e=>`<div class="log-entry"><div class="log-icon ${e.type}"><i class="ti ti-${e.type==='ok'?'check':e.type==='warn'?'alert-triangle':'info-circle'}"></i></div><div><div class="log-text">${e.text}</div><div class="log-time">${new Date(e.date).toLocaleDateString('es-ES')} ${new Date(e.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('')}
-        </div>
-        <div class="log-add-bar">
-          <input id="logInput" class="input-grow" type="text" placeholder="Añadir observación...">
-          <button class="btn btn-primary btn--compact" onclick="addLog()" type="button">Añadir</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title"><i class="ti ti-alert-triangle"></i>Alertas activas</div></div>
-        ${myGrow.ambTemp>28?`<div class="alert warn"><i class="ti ti-thermometer"></i><p>Temperatura ambiente ${myGrow.ambTemp}°C detectada. Riesgo de solución caliente. Monitorear agua — no superar 23°C.</p></div>`:''}
-        <div class="alert info"><i class="ti ti-calendar"></i><p>Próxima renovación de solución recomendada: en ${10-(daysSince%10)} días.</p></div>
-        <div class="alert info"><i class="ti ti-droplet"></i><p>Calibrar medidor pH con tampón 7.0 cada 7 días. Último calibrado: verificar manualmente.</p></div>
-        ${weekNum>=myGrow.strain.vegW+myGrow.strain.flowerW-2?`<div class="alert warn"><i class="ti ti-scissors"></i><p>Inicio del periodo de Flush recomendado. Cambiar a agua RO · EC 0.1–0.3 · pH 6.0</p></div>`:''}
-        ${smartAlerts.length?smartAlerts.map(a=>`<div class="alert ${a.level==='danger'?'danger':a.level==='warn'?'warn':'info'}"><i class="ti ti-${a.icon}"></i><p>${a.message}</p></div>`).join(''):`<div class="alert info"><i class="ti ti-check"></i><p>Sin alertas críticas en la última medición registrada.</p></div>`}
-      </div>
-    </div>
     ${greenhouseCard}
 
     <div class="card">
@@ -452,7 +462,12 @@ function renderMonitor(){
       </div>
       <div id="monitorLiveCorrectionHost" class="monitor-live-correction" hidden aria-live="polite" aria-atomic="true"></div>
       <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
-      ${renderMeasurementsTable()}
+      <details class="monitor-last-measure-details">
+        <summary class="monitor-last-measure-details__summary"><i class="ti ti-chevron-down monitor-last-measure-details__chev" aria-hidden="true"></i> Últimas mediciones registradas</summary>
+        <div class="monitor-last-measure-details__body">
+          ${renderMeasurementsTable()}
+        </div>
+      </details>
       ${renderCorrectionPlanCard()}
       ${renderPlantTrendCard()}
     </div>
@@ -502,13 +517,15 @@ function renderGreenhouseMonitoringCard(grow, latestCircuit, phaseRefQuick) {
     </div>`;
 }
 
-function addLog(){
-  const inp=document.getElementById('logInput');
-  if(!inp||!inp.value.trim()||!myGrow)return;
-  myGrow.log.unshift({date:new Date().toISOString(),text:inp.value.trim(),type:'info'});
+function addLog() {
+  const inp = document.getElementById('logInput');
+  if (!inp || !inp.value.trim() || !myGrow) return;
+  myGrow.log.unshift({ date: new Date().toISOString(), text: inp.value.trim(), type: 'info' });
   saveGrowState();
-  inp.value='';
-  renderMonitor();
+  inp.value = '';
+  if (typeof renderHistorial === 'function') renderHistorial();
+  if (typeof renderInicio === 'function') renderInicio();
+  if (typeof renderCultivo === 'function') renderCultivo();
 }
 
 function addMeasurement() {
@@ -535,12 +552,16 @@ function addMeasurement() {
   if (!Number.isFinite(reading.ph) || reading.ph < 4.5 || reading.ph > 8.5) {
     myGrow.log.unshift({ date: new Date().toISOString(), text: 'Medición rechazada: pH fuera de rango (4.5–8.5).', type: 'warn' });
     saveGrowState();
+    if (typeof renderHistorial === 'function') renderHistorial();
+    if (typeof renderInicio === 'function') renderInicio();
     renderMonitor();
     return;
   }
   if (!Number.isFinite(reading.ec) || reading.ec < 0 || reading.ec > 4) {
     myGrow.log.unshift({ date: new Date().toISOString(), text: 'Medición rechazada: EC fuera de rango (0–4).', type: 'warn' });
     saveGrowState();
+    if (typeof renderHistorial === 'function') renderHistorial();
+    if (typeof renderInicio === 'function') renderInicio();
     renderMonitor();
     return;
   }
@@ -552,12 +573,25 @@ function addMeasurement() {
     myGrow.reservoirL = Math.max(5, Math.min(2000, reading.volume));
   }
   const scopeLabel = rdwc ? 'circuito RDWC' : `P${plantId}`;
+  const summaryParts = [
+    `pH ${reading.ph.toFixed(1)}`,
+    `EC ${reading.ec.toFixed(2)}`,
+    `Vol ${(Number.isFinite(reading.volume) && reading.volume > 0 ? reading.volume : myGrow.reservoirL)}L`,
+  ];
+  if (Number.isFinite(reading.waterTemp)) summaryParts.push(`Tª agua ${reading.waterTemp.toFixed(1)}°C`);
+  if (Number.isFinite(reading.airTemp) && Number.isFinite(reading.humidity)) {
+    const vpdStr = formatMeasurementVpd(reading);
+    if (vpdStr !== '—') summaryParts.push(`VPD ${vpdStr} kPa`);
+  }
+  if (reading.note) summaryParts.push(`Nota: ${reading.note}`);
   myGrow.log.unshift({
     date: new Date().toISOString(),
-    text: `Medición diaria guardada (${scopeLabel}) · pH ${reading.ph.toFixed(1)} · EC ${reading.ec.toFixed(2)} · Vol ${reading.volume || myGrow.reservoirL}L`,
+    text: `Medición guardada (${scopeLabel}) · ${summaryParts.join(' · ')}`,
     type: 'ok',
   });
   saveGrowState();
+  if (typeof renderHistorial === 'function') renderHistorial();
+  if (typeof renderInicio === 'function') renderInicio();
   renderMonitor();
   if (typeof renderCultivo === 'function' && myGrow) renderCultivo();
 }
@@ -1126,7 +1160,7 @@ function renderHistorial() {
     .map(
       (e) => `<div class="log-entry">
       <div class="log-icon ${e.type}"><i class="ti ti-${e.type === 'ok' ? 'check' : e.type === 'warn' ? 'alert-triangle' : 'info-circle'}"></i></div>
-      <div><div class="log-text">${e.text}</div><div class="log-time">${new Date(e.date).toLocaleString('es-ES')}</div></div>
+      <div><div class="log-text">${escapeMonitorHtml(e.text)}</div><div class="log-time">${new Date(e.date).toLocaleString('es-ES')}</div></div>
     </div>`,
     )
     .join('');
@@ -1135,6 +1169,11 @@ function renderHistorial() {
   host.innerHTML = `${quickRef}
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Bitácora (${myGrow.strain.name})</div></div>
+      <p class="body-prose body-prose--tight historial-bitacora-hint">Observaciones manuales y resumen de cada medición guardada (desde <strong>Medir</strong>).</p>
+      <div class="log-add-bar">
+        <input id="logInput" class="input-grow" type="text" placeholder="Añadir observación al historial…" autocomplete="off">
+        <button class="btn btn-primary btn--compact" onclick="addLog()" type="button">Añadir</button>
+      </div>
       <div class="log-list">${logHtml || '<p class="text-muted">Sin entradas.</p>'}</div>
     </div>
     <div class="card">
@@ -1152,3 +1191,4 @@ window.onHistoryDiaryPhotosChange = onHistoryDiaryPhotosChange;
 window.removeHistoryDiaryPendingPhoto = removeHistoryDiaryPendingPhoto;
 window.saveHistoryDiaryEntry = saveHistoryDiaryEntry;
 window.renderHistorial = renderHistorial;
+window.renderGrowAlertsCardHtml = renderGrowAlertsCardHtml;

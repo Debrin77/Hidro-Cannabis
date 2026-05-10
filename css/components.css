@@ -1017,6 +1017,17 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 .monitor-live-alert__title{display:block;margin-bottom:0.25rem;font-size:0.9rem}
 .monitor-live-alert__text{margin:0;font-size:0.875rem;line-height:1.5;color:var(--text2)}
 .monitor-live-ok p{margin:0;font-size:0.875rem;line-height:1.5}
+.monitor-last-measure-details{
+  margin-top:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);padding:0 0.75rem 0.75rem;
+}
+.monitor-last-measure-details__summary{
+  cursor:pointer;list-style:none;display:flex;align-items:center;gap:0.35rem;padding:0.65rem 0;font-weight:600;font-size:0.95rem;color:var(--text);
+}
+.monitor-last-measure-details__summary::-webkit-details-marker{display:none}
+.monitor-last-measure-details__chev{transition:transform .15s ease;font-size:1rem;opacity:0.85}
+.monitor-last-measure-details[open] .monitor-last-measure-details__chev{transform:rotate(180deg)}
+.monitor-last-measure-details__body{padding-top:0.25rem}
+.historial-bitacora-hint{margin:0 0 0.65rem;font-size:0.875rem;line-height:1.45;color:var(--text2)}
 .metric-val--compact{font-size:0.9em;line-height:1.25}
 .clima-manual-loc{margin-bottom:1.1rem}
 .clima-manual-loc-hint{margin:0 0 0.65rem;font-size:0.85rem;line-height:1.45;color:var(--text2)}

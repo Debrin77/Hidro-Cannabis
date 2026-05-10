@@ -212,6 +212,7 @@ function renderInicio() {
 
     ${weatherLabel}
     ${weatherAlerts}
+    ${hasGrow && typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
 
     <section class="dash-actions">
       <button type="button" class="dash-tile dash-tile--primary" onclick="navTo('cultivo')">

@@ -1107,6 +1107,8 @@ function renderActiveGrow(){
       </div>
     </div>
 
+    ${typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
+
     <div class="gauge-grid">
       <div class="gauge"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span></div>
       <div class="gauge"><div class="gauge-label">pH objetivo</div><div class="gauge-value c-blue">${currentPH.split('–')[0]}</div><div class="gauge-range">${currentPH}</div><span class="gauge-status status-ok">En rango</span></div>
