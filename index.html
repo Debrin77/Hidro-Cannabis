@@ -69,7 +69,7 @@
   </div>
 
   <div class="strain-grid" id="strainGrid"></div>
-  <div id="strainDetail" style="margin-top:1.5rem"></div>
+  <div id="strainDetail" class="strain-detail-host"></div>
 </div>
 
 <!-- ══════════════ NUTRIENTES ══════════════ -->
@@ -264,10 +264,10 @@
         <tr><th>Tipo de luz</th><th>Potencia/m²</th><th>Ventajas</th><th>PPFD máx</th><th>Calor generado</th><th>Recomendado para</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong style="color:var(--g300)">LED Full Spectrum</strong></td><td class="ec-val">300–500W</td><td style="color:var(--text2)">Eficiencia, bajo calor, espectro completo</td><td class="ec-val">1000–1500 µmol</td><td style="color:var(--g400)">Bajo</td><td style="color:var(--g400)">★ Recomendado</td></tr>
-        <tr><td><strong style="color:var(--a200)">LEC CMH 315W</strong></td><td class="ec-val">250–315W</td><td style="color:var(--text2)">Espectro UV, más terpenos y resina</td><td class="ec-val">600–800 µmol</td><td style="color:var(--a200)">Medio</td><td style="color:var(--a200)">Calidad premium</td></tr>
-        <tr><td><strong style="color:var(--text2)">HPS 600W</strong></td><td class="ec-val">400W/m²</td><td style="color:var(--text2)">Penetración, coste bajo, probado</td><td class="ec-val">800–1000 µmol</td><td style="color:var(--r400)">Alto</td><td style="color:var(--text3)">Setup ya existente</td></tr>
-        <tr><td><strong style="color:var(--text3)">HM (Metal Halide)</strong></td><td class="ec-val">250–400W</td><td style="color:var(--text2)">Espectro azul, ideal vegetación</td><td class="ec-val">500–700 µmol</td><td style="color:var(--r400)">Alto</td><td style="color:var(--text3)">Solo vegetación</td></tr>
+        <tr><td><strong class="light-name light-name--led">LED Full Spectrum</strong></td><td class="ec-val">300–500W</td><td class="light-desc">Eficiencia, bajo calor, espectro completo</td><td class="ec-val">1000–1500 µmol</td><td class="heat heat--low">Bajo</td><td class="rec rec--ok">★ Recomendado</td></tr>
+        <tr><td><strong class="light-name light-name--lec">LEC CMH 315W</strong></td><td class="ec-val">250–315W</td><td class="light-desc">Espectro UV, más terpenos y resina</td><td class="ec-val">600–800 µmol</td><td class="heat heat--med">Medio</td><td class="rec rec--med">Calidad premium</td></tr>
+        <tr><td><strong class="light-name light-name--hps">HPS 600W</strong></td><td class="ec-val">400W/m²</td><td class="light-desc">Penetración, coste bajo, probado</td><td class="ec-val">800–1000 µmol</td><td class="heat heat--hi">Alto</td><td class="rec rec--muted">Setup ya existente</td></tr>
+        <tr><td><strong class="light-name light-name--mh">HM (Metal Halide)</strong></td><td class="ec-val">250–400W</td><td class="light-desc">Espectro azul, ideal vegetación</td><td class="ec-val">500–700 µmol</td><td class="heat heat--hi">Alto</td><td class="rec rec--muted">Solo vegetación</td></tr>
       </tbody>
     </table>
     </div>
@@ -316,7 +316,7 @@
   </div>
 
   <div class="grid2">
-    <div class="legal-section" style="margin-bottom:0">
+    <div class="legal-section legal-section--flush">
       <div class="legal-title"><i class="ti ti-map-pin"></i>Comunidad Valenciana (tu zona)</div>
       <ul class="legal-list">
         <li>Legislación estatal general aplicable sin restricciones adicionales autonómicas</li>
@@ -324,7 +324,7 @@
         <li>Filtro de carbón activo esencial — calor veraniego intensifica aromas</li>
       </ul>
     </div>
-    <div class="legal-section" style="margin-bottom:0">
+    <div class="legal-section legal-section--flush">
       <div class="legal-title"><i class="ti ti-shield-check"></i>Precauciones esenciales</div>
       <ul class="legal-list">
         <li>Armario o habitación opaca, sin luz exterior visible</li>
@@ -335,7 +335,7 @@
     </div>
   </div>
 
-  <div class="alert info" style="margin-top:1rem"><i class="ti ti-info-circle"></i><p>Información actualizada a mayo 2026. La ley española es ambigua y evolutiva. Cada juez puede interpretarla diferente. Esta app no constituye asesoría jurídica.</p></div>
+  <div class="alert info alert--mt"><i class="ti ti-info-circle"></i><p>Información actualizada a mayo 2026. La ley española es ambigua y evolutiva. Cada juez puede interpretarla diferente. Esta app no constituye asesoría jurídica.</p></div>
 </div>
 
 </main>
@@ -375,6 +375,26 @@
   </div>
 </div>
 
+</div>
+
+<div id="plantSiteModal" class="plant-site-modal" aria-hidden="true">
+  <div class="plant-site-modal__scrim" onclick="closePlantSiteModal()" role="presentation"></div>
+  <div class="plant-site-modal__panel" role="dialog" aria-labelledby="psmTitle">
+    <div class="plant-site-modal__head">
+      <div id="psmTitle" class="plant-site-modal__title">Sitio</div>
+      <button type="button" class="plant-site-modal__close" onclick="closePlantSiteModal()" aria-label="Cerrar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="plant-site-modal__body">
+      <div class="form-group"><label for="psmStrain">Cultivar / variedad</label><select id="psmStrain"></select></div>
+      <div class="form-group"><label for="psmAge">Edad (días en sistema o desde germinación)</label><input id="psmAge" type="number" min="0" max="200" step="1"></div>
+      <div class="form-group"><label for="psmOrigin">Procedencia (semilla, esqueje, banco…)</label><input id="psmOrigin" type="text" placeholder="Ej: esqueje propio"></div>
+      <div class="form-group"><label for="psmNickname">Nota / alias del sitio (opcional)</label><input id="psmNickname" type="text" placeholder="Ej: esquina ventilador"></div>
+    </div>
+    <div class="plant-site-modal__actions">
+      <button type="button" class="btn btn-ghost" onclick="closePlantSiteModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="savePlantSiteModal()">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <script src="js/data.js"></script>

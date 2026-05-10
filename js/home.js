@@ -209,7 +209,7 @@ function renderInicio() {
           <h2 class="dash-section-title">Buenas prácticas</h2>
           <p class="dash-section-sub">Referencia rápida · ${done}/${total} revisados</p>
         </div>
-        <div class="dash-mini-bar"><span style="width:${pct}%"></span></div>
+        <div class="dash-mini-bar" style="--dash-pct:${pct}%"><span></span></div>
         <button type="button" class="btn btn-ghost btn--tiny" onclick="resetExpertChecklist()">Reiniciar</button>
       </div>
       <div class="expert-checklist expert-checklist--inset">${checklistRows}</div>

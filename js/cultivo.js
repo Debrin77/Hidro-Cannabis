@@ -406,6 +406,7 @@ function activateGrow(){
     sourcePH: (waterProfiles[wizData.water||'RO']||waterProfiles.RO).basePH,
     selectedPlant: 1,
     measurements: [],
+    plantProfiles: {},
     log: [
       {date:new Date().toISOString(),text:'Cultivo activado: '+s.name+' en '+wizData.system,type:'ok'},
       {date:new Date().toISOString(),text:'Germinación iniciada. Solución EC 0.3 mS/cm · pH 5.5',type:'info'}
@@ -430,6 +431,7 @@ function activateGrow(){
 }
 
 function renderActiveGrow(){
+  ensurePlantProfiles(myGrow);
   const s = myGrow.strain;
   const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
   const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
@@ -447,7 +449,7 @@ function renderActiveGrow(){
   currentEC = Math.round(currentEC*10)/10;
   const mixPlan = calculateMixPlan(myGrow, n, phase);
   const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
-  const selectedPlantInfo = getSelectedPlantInfo(myGrow, s, weekNum, phase);
+  const selectedPlantInfo = getSelectedPlantInfo(myGrow, s);
   const sz = myGrow.systemSizing;
   const sizingRecall =
     sz && !sz.nft
@@ -585,14 +587,14 @@ function renderActiveGrow(){
           <div class="param-row"><span class="param-key">Rendimiento estimado/planta</span><span class="param-val c-amber">${selectedPlantInfo.estimatedPlantYield} g</span></div>
         </div>
         <div class="card-sm">
-          <div class="section-label">Última medición asociada</div>
+          <div class="section-label">Última medición ${myGrow.system === 'RDWC' ? '(circuito)' : 'asociada'}</div>
           <div class="param-row"><span class="param-key">pH</span><span class="param-val blue">${selectedPlantInfo.latestPH}</span></div>
           <div class="param-row"><span class="param-key">EC</span><span class="param-val green">${selectedPlantInfo.latestEC}</span></div>
           <div class="param-row"><span class="param-key">Temp. agua</span><span class="param-val purple">${selectedPlantInfo.latestWaterTemp}</span></div>
           <div class="param-row"><span class="param-key">Fecha medición</span><span class="param-val">${selectedPlantInfo.latestDate}</span></div>
         </div>
       </div>
-      <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista prototipo cenital. Se adapta al sistema elegido y al número de plantas configurado.</p></div>
+      <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista cenital: toca el cubo para seleccionar sitio; el icono verde junto al cubo abre la ficha por sitio (variedad, edad, procedencia). ${myGrow.system === 'RDWC' ? 'En RDWC, pH/EC son de la solución común (depósito de control).' : ''}</p></div>
     </div>
 
     <button type="button" class="btn btn-ghost reset-grow-btn" onclick="resetGrow()">
@@ -775,19 +777,26 @@ function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
       ${pipes.join('')}
       <line x1="${reservoirX - 15}" y1="${topY}" x2="${reservoirX - 15}" y2="${bottomY}" class="pipe flow" marker-end="url(#arrowBlue)" />
 
-      ${nodes.map(node=>`
-        <g class="plant-node" onclick="selectPlantInDiagram(${node.index})">
-          <rect x="${node.x-24}" y="${node.y-24}" width="48" height="48" rx="8" class="bucket ${grow.selectedPlant===node.index?'bucket-selected':''}"></rect>
-          <circle cx="${node.x}" cy="${node.y}" r="11" class="netpot"></circle>
-          <text x="${node.x}" y="${node.y+4}" class="bucket-label">${node.label}</text>
-          <text x="${node.x}" y="${node.y+35}" class="cultivar-label">${cultivar}</text>
-        </g>
-      `).join('')}
+      ${nodes.map(node=>{
+        const slotLabel = getCultivarShortLabelForSlot(grow, node.index);
+        return `
+        <g class="plant-node" data-plant="${node.index}">
+          <g class="plant-node-hit" onclick="selectPlantInDiagram(${node.index})">
+            <rect x="${node.x-24}" y="${node.y-24}" width="48" height="48" rx="8" class="bucket ${grow.selectedPlant===node.index?'bucket-selected':''}"></rect>
+            <circle cx="${node.x}" cy="${node.y}" r="11" class="netpot"></circle>
+            <text x="${node.x}" y="${node.y+4}" class="bucket-label">${node.label}</text>
+            <text x="${node.x}" y="${node.y+35}" class="cultivar-label">${slotLabel}</text>
+          </g>
+          ${renderPlantSiteTapGlyph(node, grow)}
+        </g>`;
+      }).join('')}
 
       <g>
         <rect x="${reservoirX}" y="140" width="90" height="110" rx="10" class="reservoir"></rect>
-        <text x="${reservoirX+45}" y="198" class="reservoir-label">DEPÓSITO</text>
-        <text x="${reservoirX+45}" y="216" class="reservoir-sub">${grow.reservoirL || 60} L</text>
+        <text x="${reservoirX+45}" y="192" class="reservoir-label">DEPÓSITO</text>
+        <text x="${reservoirX+45}" y="210" class="reservoir-sub">${grow.reservoirL || 60} L</text>
+        <text x="${reservoirX+45}" y="232" class="reservoir-sample-hint">pH / EC · muestreo</text>
+        <text x="${reservoirX+45}" y="246" class="reservoir-sample-note">Solución común del circuito</text>
       </g>
 
       <g>
@@ -813,17 +822,22 @@ function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
 
       <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
       <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
-      <text x="370" y="305" class="reservoir-sub">Depósito ${grow.reservoirL || 60} L · Agua ${waterProfiles[grow.water]?.label || 'Ósmosis'}</text>
+      <text x="370" y="305" class="reservoir-sub">Depósito ${grow.reservoirL || 60} L · Agua ${waterProfiles[grow.water]?.label || 'Ósmosis'} · pH/EC por depósito</text>
 
       ${Array.from({length:maxVisible}, (_,i)=>{
         const x = startX + i * spacing;
         const idx = i + 1;
+        const node = { x, y, index: idx };
+        const slotLabel = getCultivarShortLabelForSlot(grow, idx);
         return `
-          <g class="plant-node" onclick="selectPlantInDiagram(${idx})">
-            <circle cx="${x}" cy="${y}" r="22" class="netpot ${grow.selectedPlant===idx?'bucket-selected':''}"></circle>
-            <text x="${x}" y="${y+5}" class="bucket-label">P${i+1}</text>
-            <text x="${x}" y="${y+42}" class="cultivar-label">${cultivar}</text>
-            <line x1="${x}" y1="${y+24}" x2="${x}" y2="${waterY+18}" class="root-line"></line>
+          <g class="plant-node" data-plant="${idx}">
+            <g class="plant-node-hit" onclick="selectPlantInDiagram(${idx})">
+              <circle cx="${x}" cy="${y}" r="22" class="netpot ${grow.selectedPlant===idx?'bucket-selected':''}"></circle>
+              <text x="${x}" y="${y+5}" class="bucket-label">P${i+1}</text>
+              <text x="${x}" y="${y+42}" class="cultivar-label">${slotLabel}</text>
+              <line x1="${x}" y1="${y+24}" x2="${x}" y2="${waterY+18}" class="root-line"></line>
+            </g>
+            ${renderPlantSiteTapGlyph(node, grow)}
           </g>
         `;
       }).join('')}
@@ -850,10 +864,11 @@ function getSelectedPlantInfo(grow, strain) {
   const totalPlants = Math.max(1, parseInt(grow.plants, 10) || 1);
   const totalYield = Math.round(grow.m2 * parseInt(strain.yieldIn) * 0.85);
   const perPlant = Math.round(totalYield / totalPlants);
+  const slotStrain = getStrainForPlantSlot(grow, selected);
   const latest = getLatestMeasurementForPlant(grow, selected);
   return {
     plantLabel: `P${selected} / ${totalPlants}`,
-    cultivar: strain.name,
+    cultivar: slotStrain.name,
     estimatedPlantYield: perPlant,
     latestPH: latest && Number.isFinite(latest.ph) ? latest.ph.toFixed(1) : '—',
     latestEC: latest && Number.isFinite(latest.ec) ? `${latest.ec.toFixed(2)} mS/cm` : '—',
@@ -866,14 +881,134 @@ function getPlantCount(grow) {
   return Math.max(1, Math.min(8, parseInt(grow?.plants, 10) || 1));
 }
 
+function isRdwcSharedSolution(grow) {
+  return grow && grow.system === 'RDWC';
+}
+
+function measurementSiteLabel(grow, m) {
+  if (isRdwcSharedSolution(grow)) return 'Circuito';
+  const pid = Number.isFinite(m.plantId) ? m.plantId : 1;
+  return `P${pid}`;
+}
+
 function getMeasurementsByPlant(grow, plantId) {
   const list = Array.isArray(grow?.measurements) ? grow.measurements : [];
-  return list.filter((m) => (m.plantId || 1) === plantId);
+  if (isRdwcSharedSolution(grow)) {
+    return [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+  return list.filter((m) => (m.plantId ?? 1) === plantId);
 }
 
 function getLatestMeasurementForPlant(grow, plantId) {
   const list = getMeasurementsByPlant(grow, plantId);
   return list.length ? list[0] : null;
+}
+
+function ensurePlantProfiles(grow) {
+  if (!grow) return;
+  if (!grow.plantProfiles || typeof grow.plantProfiles !== 'object') grow.plantProfiles = {};
+  const n = getPlantCount(grow);
+  for (let i = 1; i <= n; i++) {
+    const k = String(i);
+    if (!grow.plantProfiles[k]) grow.plantProfiles[k] = {};
+  }
+}
+
+function getPlantSlotProfile(grow, index) {
+  ensurePlantProfiles(grow);
+  return grow.plantProfiles[String(index)] || {};
+}
+
+function plantSlotHasCustomCrop(grow, index) {
+  const p = getPlantSlotProfile(grow, index);
+  if (!p || typeof p !== 'object') return false;
+  if (p.strainId && p.strainId !== grow.strain?.id) return true;
+  if ((p.nickname || '').trim()) return true;
+  if ((p.origin || '').trim()) return true;
+  if (Number.isFinite(p.ageDays) && p.ageDays !== (grow.ageDays ?? 0)) return true;
+  return false;
+}
+
+function getStrainForPlantSlot(grow, index) {
+  const p = getPlantSlotProfile(grow, index);
+  if (p.strainId) {
+    const found = strains.find((s) => s.id === p.strainId);
+    if (found) return found;
+  }
+  return grow.strain;
+}
+
+function getCultivarShortLabelForSlot(grow, index) {
+  const s = getStrainForPlantSlot(grow, index);
+  return s.name.split(' ').slice(0, 2).join(' ');
+}
+
+function renderPlantSiteTapGlyph(node, grow) {
+  const custom = plantSlotHasCustomCrop(grow, node.index);
+  const cx = node.x + 20;
+  const cy = node.y - 22;
+  const cls = `plant-site-tap${custom ? ' plant-site-tap--custom' : ''}`;
+  return `
+    <g class="${cls}" role="button" focusable="true" tabindex="0" aria-label="Ficha cultivo sitio P${node.index}"
+      onclick="event.stopPropagation();openPlantSiteModal(${node.index})">
+      <circle cx="${cx}" cy="${cy}" r="14" class="plant-site-tap__ring"/>
+      <foreignObject x="${cx - 11}" y="${cy - 11}" width="22" height="22">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="plant-site-tap__icon"><i class="ti ti-cannabis"></i></div>
+      </foreignObject>
+    </g>`;
+}
+
+let plantSiteModalIndex = null;
+
+function openPlantSiteModal(index) {
+  if (!myGrow) return;
+  plantSiteModalIndex = Math.max(1, parseInt(index, 10) || 1);
+  ensurePlantProfiles(myGrow);
+  const p = getPlantSlotProfile(myGrow, plantSiteModalIndex);
+  const host = document.getElementById('plantSiteModal');
+  if (!host) return;
+  const strainSel = host.querySelector('#psmStrain');
+  const ageInp = host.querySelector('#psmAge');
+  const originInp = host.querySelector('#psmOrigin');
+  const nickInp = host.querySelector('#psmNickname');
+  const titleEl = host.querySelector('#psmTitle');
+  if (strainSel) {
+    strainSel.innerHTML = strains.map((st) => `<option value="${st.id}" ${(p.strainId || myGrow.strain.id) === st.id ? 'selected' : ''}>${st.name}</option>`).join('');
+  }
+  if (ageInp) ageInp.value = Number.isFinite(p.ageDays) ? p.ageDays : myGrow.ageDays ?? 0;
+  if (originInp) originInp.value = p.origin != null && p.origin !== '' ? p.origin : myGrow.origin || '';
+  if (nickInp) nickInp.value = p.nickname || '';
+  if (titleEl) titleEl.textContent = `Sitio P${plantSiteModalIndex}`;
+  host.classList.add('plant-site-modal--open');
+  host.setAttribute('aria-hidden', 'false');
+}
+
+function closePlantSiteModal() {
+  const host = document.getElementById('plantSiteModal');
+  if (host) {
+    host.classList.remove('plant-site-modal--open');
+    host.setAttribute('aria-hidden', 'true');
+  }
+  plantSiteModalIndex = null;
+}
+
+function savePlantSiteModal() {
+  if (!myGrow || plantSiteModalIndex == null) return;
+  ensurePlantProfiles(myGrow);
+  const strainId = document.getElementById('psmStrain')?.value || myGrow.strain.id;
+  const ageDays = parseInt(document.getElementById('psmAge')?.value, 10);
+  const origin = (document.getElementById('psmOrigin')?.value || '').trim();
+  const nickname = (document.getElementById('psmNickname')?.value || '').trim();
+  myGrow.plantProfiles[String(plantSiteModalIndex)] = {
+    strainId,
+    ageDays: Number.isFinite(ageDays) ? ageDays : myGrow.ageDays ?? 0,
+    origin,
+    nickname,
+  };
+  saveGrowState();
+  closePlantSiteModal();
+  renderActiveGrow();
+  if (typeof renderMonitor === 'function') renderMonitor();
 }
 
 function exportSystemSvg() {

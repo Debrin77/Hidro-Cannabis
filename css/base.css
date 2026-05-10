@@ -218,7 +218,15 @@ body{
 .metric-unit{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.35}
 .metric-bar{height:4px;background:rgba(0,0,0,0.2);border-radius:4px;margin-top:10px;overflow:hidden}
 [data-theme='light'] .metric-bar{background:var(--bg3)}
-.metric-fill{height:100%;border-radius:4px;transition:width 0.5s}
+.metric-fill{
+  height:100%;
+  width:var(--fill-pct,0%);
+  min-width:0;
+  border-radius:4px;
+  transition:width 0.5s;
+}
+.metric-fill--ph{background:var(--b400)}
+.metric-fill--ec{background:var(--g400)}
 .c-green{color:var(--g400)}.c-amber{color:var(--a400)}.c-blue{color:var(--b400)}.c-red{color:var(--r400)}.c-purple{color:var(--p400)}
 
 /* Tipografía util */

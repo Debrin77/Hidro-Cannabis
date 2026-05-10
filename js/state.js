@@ -47,7 +47,14 @@ function restoreGrow(payload) {
     strain,
     startDate: new Date(payload.startDate || new Date()),
     log: Array.isArray(payload.log) ? payload.log : [],
-    measurements: Array.isArray(payload.measurements) ? payload.measurements.map((m) => ({ ...m, plantId: m.plantId || 1 })) : [],
+    measurements: Array.isArray(payload.measurements)
+      ? payload.measurements.map((m) => ({
+          ...m,
+          plantId: Number.isFinite(m.plantId) ? m.plantId : 1,
+        }))
+      : [],
+    plantProfiles:
+      payload.plantProfiles && typeof payload.plantProfiles === 'object' ? payload.plantProfiles : {},
     selectedPlant: Number.isFinite(payload.selectedPlant) ? payload.selectedPlant : 1,
     water: payload.water || 'RO',
     reservoirL: Number.isFinite(payload.reservoirL) ? payload.reservoirL : 60,

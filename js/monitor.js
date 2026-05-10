@@ -1,5 +1,9 @@
 // Monitor
 
+function isMonitorRdwc(grow) {
+  return grow && grow.system === 'RDWC';
+}
+
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
@@ -7,20 +11,31 @@ function renderMonitor(){
     return;
   }
   const s = myGrow.strain;
-  const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
+    const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const n = nutrients.find(x=>x.rank===myGrow.nutri)||nutrients[0];
   const selectedPlant = myGrow.selectedPlant || 1;
   const smartAlerts = buildSmartAlerts(myGrow, s, weekNum);
+  const rdwc = isMonitorRdwc(myGrow);
+  const latestCircuit = getLatestMeasurementForPlant(myGrow, selectedPlant);
+  const phLive = latestCircuit && Number.isFinite(latestCircuit.ph) ? latestCircuit.ph : null;
+  const ecLive = latestCircuit && Number.isFinite(latestCircuit.ec) ? latestCircuit.ec : null;
+  const phaseRefQuick = getPhaseReference(s, weekNum);
+  const phPct = phLive != null ? Math.min(100, Math.max(0, ((phLive - 4.5) / (8.5 - 4.5)) * 100)) : 72;
+  const ecPct = ecLive != null ? Math.min(100, (ecLive / 3) * 100) : Math.min(100, s.ecFlower / 3 * 100);
   const climateCard = myGrow.climate
     ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>${myGrow.location || 'Ubicación'} (${myGrow.placement})</strong> · ${myGrow.climate.summary} · ${myGrow.climate.temperature}°C · HR ${myGrow.climate.humidity}% · Viento ${myGrow.climate.wind} km/h · Fuente: ${myGrow.climate.source}</p></div>`
+    : '';
+  const rdwcSamplingNote = rdwc
+    ? `<div class="alert info"><i class="ti ti-flask-2"></i><p><strong>RDWC:</strong> la solución es <strong>común a todo el circuito</strong>. El pH y la EC se miden en el <strong>depósito de control</strong> (o en el mismo volumen recirculado), no en cada cubo por separado. Aquí guardas una lectura representativa del circuito.</p></div>`
     : '';
 
   mc.innerHTML=`
     ${climateCard}
+    ${rdwcSamplingNote}
     <div class="grid4 monitor-metrics">
-      <div class="metric"><div class="metric-label">pH actual</div><div class="metric-val c-blue">6.1</div><div class="metric-unit">5.8–6.5 objetivo</div><div class="metric-bar"><div class="metric-fill" style="width:72%;background:var(--b400)"></div></div></div>
-      <div class="metric"><div class="metric-label">EC actual</div><div class="metric-val c-green">${s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill" style="width:${Math.min(100,s.ecFlower/3*100).toFixed(0)}%;background:var(--g400)"></div></div></div>
+      <div class="metric"><div class="metric-label">pH ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-blue">${phLive != null ? phLive.toFixed(1) : '—'}</div><div class="metric-unit">${phaseRefQuick.phMin.toFixed(1)}–${phaseRefQuick.phMax.toFixed(1)} objetivo (${phaseRefQuick.phase})</div><div class="metric-bar"><div class="metric-fill metric-fill--ph" style="--fill-pct:${phPct.toFixed(0)}%"></div></div></div>
+      <div class="metric"><div class="metric-label">EC ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-green">${ecLive != null ? ecLive.toFixed(2) : s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill metric-fill--ec" style="--fill-pct:${ecPct.toFixed(0)}%"></div></div></div>
       <div class="metric"><div class="metric-label">Temp. agua</div><div class="metric-val c-purple">${s.tempWater+1}°C</div><div class="metric-unit">óptimo ${s.tempWater}–${s.tempWater+2}°C</div></div>
       <div class="metric"><div class="metric-label">DO estimado</div><div class="metric-val c-blue">8.2</div><div class="metric-unit">mg/L (>6 óptimo)</div></div>
     </div>
@@ -51,7 +66,7 @@ function renderMonitor(){
       <div class="grid2">
         <div>
           <div class="section-label">Dosis esta semana</div>
-          <div class="body-prose" style="line-height:1.8">
+          <div class="body-prose body-prose--roomy">
             ${weekNum<=1?n.phases.germ:weekNum<=s.vegW?n.phases.veg:weekNum>=s.vegW+s.flowerW?n.phases.flush:n.phases.flower}
           </div>
         </div>
@@ -65,10 +80,10 @@ function renderMonitor(){
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-report-analytics"></i>Registro diario de mediciones</div></div>
       <div class="grid4">
-        <div class="form-group"><label>Planta</label>
+        <div class="form-group">${rdwc ? `<label>Sitio de la lectura</label><p class="form-static-text">Circuito RDWC (depósito de control / solución común)</p><input type="hidden" id="mPlant" value="0">` : `<label>Planta</label>
           <select id="mPlant">
             ${Array.from({length:getPlantCount(myGrow)},(_,i)=>`<option value="${i+1}" ${selectedPlant===i+1?'selected':''}>P${i+1}</option>`).join('')}
-          </select>
+          </select>`}
         </div>
         <div class="form-group"><label>pH</label><input id="mPH" type="number" step="0.1" min="4.5" max="8.5" placeholder="6.0"></div>
         <div class="form-group"><label>EC (mS/cm)</label><input id="mEC" type="number" step="0.01" min="0" max="4" placeholder="1.85"></div>
@@ -83,7 +98,7 @@ function renderMonitor(){
       <div class="grid2">
         <div class="form-group"><label>Notas</label><input id="mNote" type="text" placeholder="Observaciones del día"></div>
       </div>
-      <button class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
+      <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
       ${renderMeasurementsTable()}
       ${renderPlantTrendCard()}
     </div>
@@ -101,8 +116,9 @@ function addLog(){
 
 function addMeasurement() {
   if (!myGrow) return;
-  const plantId = parseInt(document.getElementById('mPlant')?.value, 10) || (myGrow.selectedPlant || 1);
-  myGrow.selectedPlant = plantId;
+  const rdwc = isMonitorRdwc(myGrow);
+  const plantId = rdwc ? 0 : parseInt(document.getElementById('mPlant')?.value, 10) || (myGrow.selectedPlant || 1);
+  if (!rdwc) myGrow.selectedPlant = plantId;
   const reading = {
     date: new Date().toISOString(),
     plantId,
@@ -132,9 +148,10 @@ function addMeasurement() {
   myGrow.measurements = Array.isArray(myGrow.measurements) ? myGrow.measurements : [];
   myGrow.measurements.unshift(reading);
   myGrow.measurements = myGrow.measurements.slice(0, 30);
+  const scopeLabel = rdwc ? 'circuito RDWC' : `P${plantId}`;
   myGrow.log.unshift({
     date: new Date().toISOString(),
-    text: `Medición diaria guardada (${`P${plantId}`}) · pH ${reading.ph.toFixed(1)} · EC ${reading.ec.toFixed(2)} · Vol ${reading.volume || myGrow.reservoirL}L`,
+    text: `Medición diaria guardada (${scopeLabel}) · pH ${reading.ph.toFixed(1)} · EC ${reading.ec.toFixed(2)} · Vol ${reading.volume || myGrow.reservoirL}L`,
     type: 'ok',
   });
   saveGrowState();
@@ -144,17 +161,19 @@ function addMeasurement() {
 function renderMeasurementsTable() {
   const plantId = myGrow.selectedPlant || 1;
   const rows = getMeasurementsByPlant(myGrow, plantId).slice(0, 7);
+  const rdwc = isMonitorRdwc(myGrow);
   if (!rows.length) {
-    return `<div class="alert info" style="margin-top:1rem"><i class="ti ti-info-circle"></i><p>Aún no hay mediciones diarias guardadas para la planta P${plantId}.</p></div>`;
+    const hint = rdwc ? 'el circuito RDWC (depósito de control).' : `la planta P${plantId}.`;
+    return `<div class="alert info alert--mt"><i class="ti ti-info-circle"></i><p>Aún no hay mediciones diarias guardadas para ${hint}</p></div>`;
   }
   return `
-    <div class="table-scroll" style="margin-top:1rem">
+    <div class="table-scroll table-scroll--mt">
       <table class="week-table">
-        <thead><tr><th>Fecha</th><th>Planta</th><th>pH</th><th>EC</th><th>Vol (L)</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>CO₂</th><th>Notas</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Planta'}</th><th>pH</th><th>EC</th><th>Vol (L)</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>CO₂</th><th>Notas</th></tr></thead>
         <tbody>
           ${rows.map(r=>`<tr>
             <td>${new Date(r.date).toLocaleDateString('es-ES')} ${new Date(r.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td>
-            <td class="ec-val">P${r.plantId || 1}</td>
+            <td class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
             <td class="ec-val">${Number.isFinite(r.ph)?r.ph.toFixed(1):'—'}</td>
             <td class="ec-val">${Number.isFinite(r.ec)?r.ec.toFixed(2):'—'}</td>
             <td>${Number.isFinite(r.volume)?r.volume.toFixed(1):'—'}</td>
@@ -172,16 +191,18 @@ function renderMeasurementsTable() {
 
 function renderPlantTrendCard() {
   const plantId = myGrow.selectedPlant || 1;
-  const rows = getMeasurementsByPlant(myGrow, plantId).slice(0, 10).reverse();
+  const rows = getMeasurementsByPlant(myGrow, plantId).slice(0, 14).reverse();
   if (!rows.length) return '';
   const strain = myGrow.strain;
   const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const phaseRef = getPhaseReference(strain, weekNum);
+  const rdwc = isMonitorRdwc(myGrow);
+  const scopeTitle = rdwc ? 'Circuito (solución común)' : `Planta P${plantId}`;
   return `
     <div class="card-sm trend-card">
-      <div class="section-label" style="margin-bottom:10px">
-        Tendencia pH y EC · Planta P${plantId} · ${phaseRef.phase}
+      <div class="section-label section-label--block">
+        Tendencia pH y EC · ${scopeTitle} · ${phaseRef.phase}
       </div>
       ${renderPlantTrendSvg(rows, phaseRef)}
     </div>
@@ -193,61 +214,160 @@ function renderPlantTrendSvg(rows, phaseRef) {
   if (valid.length < 2) {
     return `<div class="alert info"><i class="ti ti-info-circle"></i><p>Necesitas al menos 2 mediciones válidas para ver la tendencia.</p></div>`;
   }
-  const width = 780;
-  const height = 220;
-  const padL = 42;
-  const padR = 16;
-  const padT = 16;
-  const padB = 34;
+  const width = 820;
+  const height = 268;
+  const padL = 52;
+  const padR = 54;
+  const padT = 44;
+  const padB = 46;
   const innerW = width - padL - padR;
   const innerH = height - padT - padB;
+  const baseY = height - padB;
   const phMin = 5.0;
   const phMax = 7.0;
   const ecMin = 0.0;
   const ecMax = 3.0;
 
-  const toX = (i) => padL + (i / (valid.length - 1)) * innerW;
-  const toY = (v, min, max) => padT + (1 - (Math.max(min, Math.min(max, v)) - min) / (max - min)) * innerH;
-  const phPoints = valid.map((r, i) => `${toX(i)},${toY(r.ph, phMin, phMax)}`).join(' ');
-  const ecPoints = valid.map((r, i) => `${toX(i)},${toY(r.ec, ecMin, ecMax)}`).join(' ');
-  const phTargetY1 = toY(phaseRef.phMin, phMin, phMax);
-  const phTargetY2 = toY(phaseRef.phMax, phMin, phMax);
-  const ecTargetY1 = toY(phaseRef.ecMin, ecMin, ecMax);
-  const ecTargetY2 = toY(phaseRef.ecMax, ecMin, ecMax);
+  const denom = Math.max(1, valid.length - 1);
+  const toX = (i) => padL + (i / denom) * innerW;
+  const toYPh = (v) => padT + (1 - (Math.max(phMin, Math.min(phMax, v)) - phMin) / (phMax - phMin)) * innerH;
+  const toYEc = (v) => padT + (1 - (Math.max(ecMin, Math.min(ecMax, v)) - ecMin) / (ecMax - ecMin)) * innerH;
 
-  const labels = valid.map((r, i) => {
-    const x = toX(i);
-    const date = new Date(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-    return `<text x="${x}" y="${height-14}" class="trend-label">${date}</text>`;
-  }).join('');
+  const phPts = valid.map((r, i) => ({ x: toX(i), y: toYPh(r.ph), r }));
+  const ecPts = valid.map((r, i) => ({ x: toX(i), y: toYEc(r.ec), r }));
+  const phPoints = phPts.map((p) => `${p.x},${p.y}`).join(' ');
+  const ecPoints = ecPts.map((p) => `${p.x},${p.y}`).join(' ');
+  const phTargetY1 = toYPh(phaseRef.phMin);
+  const phTargetY2 = toYPh(phaseRef.phMax);
+  const ecTargetY1 = toYEc(phaseRef.ecMin);
+  const ecTargetY2 = toYEc(phaseRef.ecMax);
+
+  const phAreaD = (() => {
+    if (!phPts.length) return '';
+    const first = phPts[0];
+    const last = phPts[phPts.length - 1];
+    const seg = phPts.map((p) => `L ${p.x} ${p.y}`).join(' ');
+    return `M ${first.x} ${baseY} ${seg} L ${last.x} ${baseY} Z`;
+  })();
+  const ecAreaD = (() => {
+    if (!ecPts.length) return '';
+    const first = ecPts[0];
+    const last = ecPts[ecPts.length - 1];
+    const seg = ecPts.map((p) => `L ${p.x} ${p.y}`).join(' ');
+    return `M ${first.x} ${baseY} ${seg} L ${last.x} ${baseY} Z`;
+  })();
+
+  const phGridTicks = [5, 5.5, 6, 6.5, 7];
+  const phGrid = phGridTicks
+    .map((v) => {
+      const y = toYPh(v);
+      return `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" class="trend-grid-line"></line><text x="${padL - 8}" y="${y + 3}" class="trend-axis-num trend-axis-num--left">${v.toFixed(1)}</text>`;
+    })
+    .join('');
+
+  const ecTicks = [0, 0.5, 1, 1.5, 2, 2.5, 3];
+  const ecGrid = ecTicks
+    .map((v) => {
+      const y = toYEc(v);
+      return `<text x="${width - padR + 8}" y="${y + 3}" class="trend-axis-num trend-axis-num--right">${v.toFixed(1)}</text>`;
+    })
+    .join('');
+
+  const vGrid = valid
+    .map((_, i) => {
+      const x = toX(i);
+      return `<line x1="${x}" y1="${padT}" x2="${x}" y2="${baseY}" class="trend-grid-line trend-grid-line--vert"></line>`;
+    })
+    .join('');
+
+  const labels = valid
+    .map((row, i) => {
+      const x = toX(i);
+      const date = new Date(row.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+      return `<text x="${x}" y="${height - 18}" class="trend-label">${date}</text>`;
+    })
+    .join('');
+
+  const legend = `
+    <g class="trend-legend" transform="translate(${padL + innerW - 168}, ${padT - 28})">
+      <rect x="0" y="-10" width="168" height="36" rx="8" class="trend-legend-box"></rect>
+      <line x1="12" y1="8" x2="28" y2="8" class="trend-legend-line trend-legend-line--ph"></line>
+      <text x="34" y="11" class="trend-legend-text">pH</text>
+      <line x1="78" y1="8" x2="94" y2="8" class="trend-legend-line trend-legend-line--ec"></line>
+      <text x="100" y="11" class="trend-legend-text">EC</text>
+    </g>`;
+
+  const titleBlock = `
+    <text x="${padL}" y="22" class="trend-chart-title">Evolución pH / EC</text>
+    <text x="${padL}" y="36" class="trend-chart-sub">Bandas = rango objetivo · ${phaseRef.phase}</text>`;
+
+  const dots = valid
+    .map((r, i) => {
+      const x = toX(i);
+      const yp = toYPh(r.ph);
+      const ye = toYEc(r.ec);
+      const tip = `${new Date(r.date).toLocaleString('es-ES')} · pH ${r.ph.toFixed(2)} · EC ${r.ec.toFixed(2)}`;
+      return `<circle cx="${x}" cy="${yp}" r="4.5" class="trend-ph-dot"><title>${tip}</title></circle>
+        <circle cx="${x}" cy="${ye}" r="4.5" class="trend-ec-dot"><title>${tip}</title></circle>`;
+    })
+    .join('');
 
   return `
+    <div class="plant-trend-scroll">
     <svg viewBox="0 0 ${width} ${height}" class="plant-trend-svg" role="img" aria-label="Tendencia de pH y EC">
-      <rect x="0" y="0" width="${width}" height="${height}" rx="10" class="trend-bg"></rect>
-      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${height-padB}" class="trend-axis"></line>
-      <line x1="${padL}" y1="${height-padB}" x2="${width-padR}" y2="${height-padB}" class="trend-axis"></line>
+      <defs>
+        <linearGradient id="trendPhFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--b400)" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="var(--b400)" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="trendEcFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--g400)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--g400)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="${width}" height="${height}" rx="12" class="trend-bg"></rect>
+      ${titleBlock}
+      ${legend}
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
+      <line x1="${width - padR}" y1="${padT}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--secondary"></line>
+      <line x1="${padL}" y1="${baseY}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
+      <text x="${padL}" y="${padT - 6}" class="trend-axis-caption">pH (5–7)</text>
+      <text x="${width - padR - 72}" y="${padT - 6}" class="trend-axis-caption trend-axis-caption--right">EC mS/cm (0–3)</text>
 
-      <rect x="${padL}" y="${Math.min(phTargetY1, phTargetY2)}" width="${innerW}" height="${Math.abs(phTargetY2-phTargetY1)}" class="trend-ph-band"></rect>
-      <rect x="${padL}" y="${Math.min(ecTargetY1, ecTargetY2)}" width="${innerW}" height="${Math.abs(ecTargetY2-ecTargetY1)}" class="trend-ec-band"></rect>
+      ${phGrid}
+      ${vGrid}
+      ${ecGrid}
 
-      <polyline points="${phPoints}" fill="none" class="trend-ph"></polyline>
-      <polyline points="${ecPoints}" fill="none" class="trend-ec"></polyline>
+      <rect x="${padL}" y="${Math.min(phTargetY1, phTargetY2)}" width="${innerW}" height="${Math.abs(phTargetY2 - phTargetY1)}" class="trend-ph-band"></rect>
+      <rect x="${padL}" y="${Math.min(ecTargetY1, ecTargetY2)}" width="${innerW}" height="${Math.abs(ecTargetY2 - ecTargetY1)}" class="trend-ec-band"></rect>
 
-      ${valid.map((r, i) => `<circle cx="${toX(i)}" cy="${toY(r.ph, phMin, phMax)}" r="3" class="trend-ph-dot"></circle>`).join('')}
-      ${valid.map((r, i) => `<circle cx="${toX(i)}" cy="${toY(r.ec, ecMin, ecMax)}" r="3" class="trend-ec-dot"></circle>`).join('')}
+      <path d="${phAreaD}" fill="url(#trendPhFill)" class="trend-ph-area"></path>
+      <path d="${ecAreaD}" fill="url(#trendEcFill)" class="trend-ec-area"></path>
 
-      <text x="${padL}" y="12" class="trend-title">pH (azul) y EC (verde) · banda objetivo por fase</text>
+      <polyline points="${phPoints}" fill="none" class="trend-ph-line"></polyline>
+      <polyline points="${ecPoints}" fill="none" class="trend-ec-line"></polyline>
+
+      ${dots}
       ${labels}
     </svg>
+    </div>
   `;
 }
 
 function buildSmartAlerts(grow, strain, weekNum) {
   const alerts = [];
   const plantId = grow.selectedPlant || 1;
+  const rdwc = isMonitorRdwc(grow);
+  const tag = rdwc ? 'Circuito' : `P${plantId}`;
   const latest = getLatestMeasurementForPlant(grow, plantId);
   if (!latest) {
-    alerts.push({ level: 'info', icon: 'clipboard-text', message: `Añade una medición diaria para activar alertas inteligentes en P${plantId}.` });
+    alerts.push({
+      level: 'info',
+      icon: 'clipboard-text',
+      message: rdwc
+        ? 'Añade una medición del depósito de control para activar alertas sobre la solución común del RDWC.'
+        : `Añade una medición diaria para activar alertas inteligentes en P${plantId}.`,
+    });
     return alerts;
   }
 
@@ -256,7 +376,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'beaker',
-      message: `P${plantId}: pH fuera de rango para ${phaseRef.phase}: ${latest.ph.toFixed(1)} (objetivo ${phaseRef.phMin.toFixed(1)}-${phaseRef.phMax.toFixed(1)}).`,
+      message: `${tag}: pH fuera de rango para ${phaseRef.phase}: ${latest.ph.toFixed(1)} (objetivo ${phaseRef.phMin.toFixed(1)}-${phaseRef.phMax.toFixed(1)}).`,
     });
   }
 
@@ -264,14 +384,14 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'battery-2',
-      message: `P${plantId}: EC baja para ${phaseRef.phase}: ${latest.ec.toFixed(2)} mS/cm (mínimo recomendado ${phaseRef.ecMin.toFixed(2)}).`,
+      message: `${tag}: EC baja para ${phaseRef.phase}: ${latest.ec.toFixed(2)} mS/cm (mínimo recomendado ${phaseRef.ecMin.toFixed(2)}).`,
     });
   }
   if (Number.isFinite(latest.ec) && latest.ec > phaseRef.ecMax) {
     alerts.push({
       level: 'danger',
       icon: 'flame',
-      message: `P${plantId}: EC alta para ${phaseRef.phase}: ${latest.ec.toFixed(2)} mS/cm (máximo recomendado ${phaseRef.ecMax.toFixed(2)}).`,
+      message: `${tag}: EC alta para ${phaseRef.phase}: ${latest.ec.toFixed(2)} mS/cm (máximo recomendado ${phaseRef.ecMax.toFixed(2)}).`,
     });
   }
 
@@ -279,21 +399,21 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'danger',
       icon: 'temperature',
-      message: `P${plantId}: Temperatura de agua elevada (${latest.waterTemp.toFixed(1)}°C). Riesgo de bajo oxígeno disuelto y estrés radicular.`,
+      message: `${tag}: Temperatura de agua elevada (${latest.waterTemp.toFixed(1)}°C). Riesgo de bajo oxígeno disuelto y estrés radicular.`,
     });
   }
   if (Number.isFinite(latest.humidity) && latest.humidity > phaseRef.humidityMax) {
     alerts.push({
       level: 'warn',
       icon: 'droplet-filled',
-      message: `P${plantId}: Humedad alta (${latest.humidity.toFixed(0)}%) para ${phaseRef.phase}. Riesgo de hongos/botrytis.`,
+      message: `${tag}: Humedad alta (${latest.humidity.toFixed(0)}%) para ${phaseRef.phase}. Riesgo de hongos/botrytis.`,
     });
   }
   if (Number.isFinite(latest.humidity) && latest.humidity < phaseRef.humidityMin) {
     alerts.push({
       level: 'warn',
       icon: 'wind',
-      message: `P${plantId}: Humedad baja (${latest.humidity.toFixed(0)}%). Puede frenar crecimiento y aumentar estrés hídrico.`,
+      message: `${tag}: Humedad baja (${latest.humidity.toFixed(0)}%). Puede frenar crecimiento y aumentar estrés hídrico.`,
     });
   }
   return alerts;
@@ -325,19 +445,20 @@ function renderHistorialMeasurementsTable() {
   if (!rows.length) {
     return `<div class="alert info"><i class="ti ti-info-circle"></i><p>No hay mediciones guardadas. Regístralas en <strong>Medir</strong>.</p></div>`;
   }
+  const rdwc = isMonitorRdwc(myGrow);
   return `
-    <div class="table-scroll" style="margin-top:0.5rem">
+    <div class="table-scroll table-scroll--mt-sm">
       <table class="week-table">
-        <thead><tr><th>Fecha</th><th>Pl.</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Notas</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Pl.'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Notas</th></tr></thead>
         <tbody>
           ${rows.map((r) => `<tr>
             <td>${new Date(r.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-            <td class="ec-val">P${r.plantId || 1}</td>
+            <td class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
             <td class="ec-val">${Number.isFinite(r.ph) ? r.ph.toFixed(1) : '—'}</td>
             <td class="ec-val">${Number.isFinite(r.ec) ? r.ec.toFixed(2) : '—'}</td>
             <td>${Number.isFinite(r.volume) ? r.volume.toFixed(1) : '—'}</td>
             <td>${Number.isFinite(r.waterTemp) ? r.waterTemp.toFixed(1) + '°C' : '—'}</td>
-            <td style="font-size:11px;max-width:140px">${r.note || '—'}</td>
+            <td class="table-cell-note">${r.note || '—'}</td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -366,7 +487,7 @@ function renderHistorial() {
       <div class="log-list">${logHtml || '<p class="text-muted">Sin entradas.</p>'}</div>
     </div>
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Mediciones recientes (todas las plantas)</div></div>
+      <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Mediciones recientes (${isMonitorRdwc(myGrow) ? 'circuito RDWC' : 'todas las plantas'})</div></div>
       ${renderHistorialMeasurementsTable()}
       <button type="button" class="btn btn-ghost historial-actions" onclick="navTo('monitor')"><i class="ti ti-plus"></i> Añadir medición en Medir</button>
     </div>

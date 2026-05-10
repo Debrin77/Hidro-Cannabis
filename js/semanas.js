@@ -46,15 +46,16 @@ function renderSemanas(){
       accion='Solo agua RO. EC <0.3. Tricomas: 20-30% ámbar = COSECHAR. Oscuridad 48h opcional antes de cosecha.';
       nutri=n.phases.flush;
     }
+    const ecPct = Math.min(100, Math.round(((parseFloat(ec) || 0) / 3) * 100));
     rows.push(`<tr>
-      <td style="font-weight:600;color:var(--text);font-family:'DM Mono'">${w}</td>
+      <td class="td-week-num">${w}</td>
       <td><span class="phase-pill ${phClass}">${phase}</span></td>
-      <td><div class="ec-bar"><div class="ec-fill" style="width:${Math.min(100,parseFloat(ec)*35).toFixed(0)}px"></div><span class="ec-val">${ec}</span></div></td>
-      <td style="font-family:'DM Mono';color:var(--b400)">${ph}</td>
-      <td style="color:var(--a200)">${light}</td>
-      <td style="color:var(--text2)">${hum}</td>
-      <td style="color:var(--text2)">${temp}</td>
-      <td style="color:var(--text2);font-size:11px;max-width:160px">${accion}</td>
+      <td><div class="ec-bar"><div class="ec-fill" style="--fill-pct:${ecPct}%"></div><span class="ec-val">${ec}</span></div></td>
+      <td class="td-ph">${ph}</td>
+      <td class="td-light">${light}</td>
+      <td class="td-hum">${hum}</td>
+      <td class="td-temp">${temp}</td>
+      <td class="td-week-action">${accion}</td>
     </tr>`);
   }
   sc.innerHTML=`

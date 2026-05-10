@@ -21,6 +21,45 @@
 .section-label--block{margin-bottom:10px}
 .mb-text-block{margin-bottom:1rem}
 .svg-panel-grid{margin-top:0.75rem}
+
+/* Espaciado y hosts */
+.strain-detail-host{margin-top:1.5rem}
+.legal-section--flush{margin-bottom:0}
+.alert--mt{margin-top:1rem}
+.table-scroll--mt{margin-top:1rem}
+.table-scroll--mt-sm{margin-top:0.5rem}
+.body-prose--roomy{line-height:1.85}
+.body-prose--spaced{margin-bottom:12px}
+.nutri-meta-grid{margin-bottom:12px;font-size:12px}
+.nutri-pro-con-text{margin-top:4px}
+.nutri-tag--price{background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border2)}
+[data-theme='light'] .nutri-tag--price{background:rgba(0,0,0,0.04)}
+.nutri-icon-sm{font-size:9px;vertical-align:middle}
+.pill-tag--sm{font-size:10px;padding:3px 9px}
+.section-label--block{margin-bottom:10px}
+.section-label--after{margin-top:10px}
+
+/* Calendario semanal — celdas */
+.td-week-num{font-weight:600;color:var(--text);font-family:'DM Mono',monospace}
+.td-ph{font-family:'DM Mono',monospace;color:var(--b400)}
+.td-light{color:var(--a200)}
+.td-hum,.td-temp{color:var(--text2)}
+.td-week-action{color:var(--text2);font-size:11px;max-width:160px;line-height:1.45}
+.table-cell-note{font-size:11px;max-width:140px;line-height:1.4}
+
+/* Tabla iluminación (vista ambiental) */
+.light-name--led{color:var(--g300)}
+.light-name--lec{color:var(--a200)}
+.light-name--hps{color:var(--text2)}
+.light-name--mh{color:var(--text3)}
+.light-desc{color:var(--text2)}
+.heat--low{color:var(--g400)}
+.heat--med{color:var(--a200)}
+.heat--hi{color:var(--r400)}
+.rec--ok{color:var(--g400)}
+.rec--med{color:var(--a200)}
+.rec--muted{color:var(--text3)}
+
 .body-prose{font-size:13px;color:var(--text2);line-height:1.75}
 .pill-tag{
   font-size:11px;background:var(--surface2);color:var(--text2);
@@ -154,8 +193,11 @@
 .ph-flower{background:rgba(127,119,221,0.2);color:var(--p200)}
 .ph-engorde{background:rgba(226,75,74,0.15);color:#e88}
 .ph-flush{background:rgba(52,144,220,0.2);color:var(--b200)}
-.ec-bar{display:flex;align-items:center;gap:6px}
-.ec-fill{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--hydro-teal),var(--g500));min-width:4px}
+.ec-bar{display:flex;align-items:center;gap:8px;min-width:0;width:100%;max-width:220px}
+.ec-fill{
+  height:4px;border-radius:4px;background:linear-gradient(90deg,var(--hydro-teal),var(--g500));
+  min-width:4px;width:var(--fill-pct,18%);max-width:100%;
+}
 .ec-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);min-width:30px}
 
 /* ENVIRONMENT TABLE */
@@ -496,8 +538,14 @@
 .dash-check-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}
 .dash-section-title{font-family:'Syne',sans-serif;font-size:17px;margin:0;color:var(--text)}
 .dash-section-sub{font-size:12px;color:var(--text3);margin:2px 0 0}
-.dash-mini-bar{flex:1;min-width:80px;height:5px;background:var(--border2);border-radius:3px;overflow:hidden;max-width:120px}
-.dash-mini-bar span{display:block;height:100%;background:linear-gradient(90deg,var(--hydro-teal),var(--g500));border-radius:3px;transition:width .35s ease}
+.dash-mini-bar{
+  --dash-pct:0%;
+  flex:1;min-width:80px;height:5px;background:var(--border2);border-radius:3px;overflow:hidden;max-width:120px;
+}
+.dash-mini-bar > span{
+  display:block;height:100%;width:var(--dash-pct);min-width:0;
+  background:linear-gradient(90deg,var(--hydro-teal),var(--g500));border-radius:3px;transition:width .35s ease;
+}
 .btn--tiny{padding:5px 10px!important;font-size:11px!important}
 .expert-checklist--inset{max-height:280px;overflow-y:auto;padding-right:4px;margin:0 -4px}
 .expert-item--compact{padding:10px 0}
@@ -773,19 +821,68 @@
 .pump-label{fill:var(--a200);font-family:'DM Mono',monospace;font-size:10px;text-anchor:middle}
 .water{fill:rgba(52,144,220,0.45)}
 .root-line{stroke:rgba(232,240,228,0.55);stroke-width:2;stroke-linecap:round}
-.plant-node{cursor:pointer}
-.plant-node:hover .bucket,.plant-node:hover .netpot{filter:brightness(1.15)}
+.plant-node{cursor:default}
+.plant-node-hit{cursor:pointer}
+.plant-node:hover .plant-node-hit .bucket,.plant-node:hover .plant-node-hit .netpot{filter:brightness(1.15)}
+.plant-site-tap{cursor:pointer;outline:none}
+.plant-site-tap:focus .plant-site-tap__ring{stroke:var(--a200);stroke-width:2}
+.plant-site-tap__ring{fill:var(--surface3);stroke:var(--border2);stroke-width:1.5}
+.plant-site-tap--custom .plant-site-tap__ring{fill:rgba(76,175,48,0.28);stroke:var(--g400);stroke-width:2}
+.plant-site-tap__icon{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.7rem;color:var(--text3)}
+.plant-site-tap--custom .plant-site-tap__icon{color:var(--g100)}
+.reservoir-sample-hint{fill:var(--b200);font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-anchor:middle}
+.reservoir-sample-note{fill:var(--text3);font-family:'Inter',sans-serif;font-size:8px;text-anchor:middle}
+
+/* PLANT SITE MODAL */
+.plant-site-modal{position:fixed;inset:0;z-index:320;pointer-events:none;opacity:0;transition:opacity .2s ease}
+.plant-site-modal.plant-site-modal--open{pointer-events:auto;opacity:1}
+.plant-site-modal__scrim{position:absolute;inset:0;background:rgba(0,0,0,0.5)}
+.plant-site-modal__panel{
+  position:absolute;left:50%;bottom:0;transform:translate(-50%,110%);
+  width:min(420px,100%);max-height:85vh;overflow:auto;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2) var(--radius2) 0 0;
+  padding:1rem 1.1rem 1.25rem;box-shadow:0 -12px 40px rgba(0,0,0,0.35);
+  transition:transform .25s ease;
+}
+.plant-site-modal--open .plant-site-modal__panel{transform:translate(-50%,0)}
+.plant-site-modal__head{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem}
+.plant-site-modal__title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:600;color:var(--text)}
+.plant-site-modal__close{
+  border:none;background:transparent;color:var(--text2);cursor:pointer;padding:0.35rem;border-radius:8px;
+}
+.plant-site-modal__close:hover{background:var(--surface2);color:var(--text)}
+.plant-site-modal__body{display:flex;flex-direction:column;gap:0.5rem}
+.plant-site-modal__actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)}
+.form-static-text{margin:0;font-size:0.875rem;color:var(--text2);line-height:1.45}
 
 /* PLANT TREND SVG */
-.plant-trend-svg{width:100%;min-width:700px;height:auto;display:block}
+.plant-trend-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+.plant-trend-svg{width:100%;min-width:760px;height:auto;display:block}
 .trend-bg{fill:var(--surface2)}
-.trend-axis{stroke:var(--border2);stroke-width:1.5}
+.trend-axis{stroke:var(--border2);stroke-width:1.25}
+.trend-axis--main{stroke:var(--border)}
+.trend-axis--secondary{stroke:rgba(148,163,184,0.35)}
+.trend-grid-line{stroke:var(--border2);stroke-width:1;stroke-dasharray:4 5;opacity:0.55}
+.trend-grid-line--vert{opacity:0.35}
+.trend-axis-num{font-family:'DM Mono',monospace;font-size:9px;fill:var(--text3)}
+.trend-axis-num--left{text-anchor:end}
+.trend-axis-num--right{text-anchor:start}
+.trend-axis-caption{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;fill:var(--text2)}
+.trend-axis-caption--right{text-anchor:start}
+.trend-chart-title{fill:var(--text);font-family:'Syne',sans-serif;font-size:15px;font-weight:600}
+.trend-chart-sub{fill:var(--text3);font-family:'Inter',sans-serif;font-size:11px}
+.trend-legend-box{fill:var(--surface3);stroke:var(--border);stroke-width:1}
+.trend-legend-line{stroke-width:3;stroke-linecap:round}
+.trend-legend-line--ph{stroke:var(--b400)}
+.trend-legend-line--ec{stroke:var(--g400)}
+.trend-legend-text{font-family:'Inter',sans-serif;font-size:10px;fill:var(--text2)}
 .trend-ph-band{fill:rgba(52,144,220,0.08)}
 .trend-ec-band{fill:rgba(76,175,48,0.08)}
-.trend-ph{stroke:var(--b400);stroke-width:2.5}
-.trend-ec{stroke:var(--g400);stroke-width:2.5}
-.trend-ph-dot{fill:var(--b200)}
-.trend-ec-dot{fill:var(--g300)}
+.trend-ph-line{stroke:var(--b400);stroke-width:2.75;stroke-linejoin:round;stroke-linecap:round;fill:none}
+.trend-ec-line{stroke:var(--g400);stroke-width:2.75;stroke-linejoin:round;stroke-linecap:round;fill:none}
+.trend-ph-area,.trend-ec-area{pointer-events:none}
+.trend-ph-dot{fill:var(--b200);stroke:var(--surface2);stroke-width:1.5}
+.trend-ec-dot{fill:var(--g300);stroke:var(--surface2);stroke-width:1.5}
 .trend-title{fill:var(--text2);font-family:'DM Mono',monospace;font-size:10px}
 .trend-label{fill:var(--text3);font-family:'DM Mono',monospace;font-size:9px;text-anchor:middle}
 
