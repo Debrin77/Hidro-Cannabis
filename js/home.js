@@ -43,7 +43,7 @@ const expertChecklistItems = [
     id: 'registro',
     title: 'Registro diario',
     text:
-      'Anota pH, EC, volumen y síntomas. Las tendencias importan más que un valor aislado.',
+      'Anota pH, EC, temperatura de agua, aire, humedad (VPD), CO₂ y luz (PPFD/horas). Las tendencias importan más que un valor aislado.',
   },
   {
     id: 'legal',
@@ -111,6 +111,12 @@ function goToHistorial() {
   navTo('historial');
 }
 
+function renderConsejosPage() {
+  const host = document.getElementById('consejosStrainSpecs');
+  if (!host || typeof renderStrainSpecsTableHtml !== 'function') return;
+  host.innerHTML = renderStrainSpecsTableHtml();
+}
+
 function renderInicio() {
   const host = document.getElementById('inicioContent');
   if (!host) return;
@@ -128,7 +134,7 @@ function renderInicio() {
   let statusDetail = 'Pulsa Sistema y completa el checklist con datos reales de bomba, aire y depósitos.';
   if (hasGrow) {
     statusLabel = myGrow.strain.name;
-    statusDetail = `Semana activa en curso · Usa Medir para registrar pH/EC y Historial para la bitácora.`;
+    statusDetail = `Semana activa en curso · Medir (pH, EC, microclima, luz) · Climatología del emplazamiento · Historial.`;
   } else if (appDone || skipWelcome) {
     statusLabel = 'Listo para arrancar';
     statusDetail =
@@ -159,8 +165,8 @@ function renderInicio() {
         <h1 class="dash-headline">Hydro Cannabis</h1>
         <p class="dash-tagline">Planifica el sistema, mide con método y conserva el historial en un solo lugar.</p>
         <div class="dash-pill-row">
-          <span class="dash-pill"><i class="ti ti-droplet"></i> RDWC / DWC</span>
-          <span class="dash-pill"><i class="ti ti-cloud"></i> Clima</span>
+          <span class="dash-pill"><i class="ti ti-droplet"></i> RDWC · DWC · NFT…</span>
+          <span class="dash-pill"><i class="ti ti-cloud"></i> Climatología</span>
           <span class="dash-pill"><i class="ti ti-flask"></i> Nutrición</span>
         </div>
       </div>
@@ -183,7 +189,12 @@ function renderInicio() {
       <button type="button" class="dash-tile" onclick="navTo('monitor')" ${hasGrow ? '' : 'disabled'}>
         <i class="ti ti-gauge"></i>
         <span class="dash-tile-title">Medir</span>
-        <span class="dash-tile-sub">${hasGrow ? 'pH · EC · volumen' : 'Tras activar cultivo'}</span>
+        <span class="dash-tile-sub">${hasGrow ? 'Solución · VPD · luz' : 'Tras activar cultivo'}</span>
+      </button>
+      <button type="button" class="dash-tile" onclick="navTo('climatologia')">
+        <i class="ti ti-cloud-storm"></i>
+        <span class="dash-tile-title">Clima</span>
+        <span class="dash-tile-sub">Pronóstico del sistema</span>
       </button>
       <button type="button" class="dash-tile" onclick="navTo('semanas')" ${hasGrow ? '' : 'disabled'}>
         <i class="ti ti-calendar-stats"></i>
@@ -226,3 +237,4 @@ window.goToNutrientes = goToNutrientes;
 window.goToMonitor = goToMonitor;
 window.goToSemanas = goToSemanas;
 window.goToHistorial = goToHistorial;
+window.renderConsejosPage = renderConsejosPage;

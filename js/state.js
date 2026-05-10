@@ -47,12 +47,18 @@ function restoreGrow(payload) {
     strain,
     startDate: new Date(payload.startDate || new Date()),
     log: Array.isArray(payload.log) ? payload.log : [],
-    measurements: Array.isArray(payload.measurements)
-      ? payload.measurements.map((m) => ({
-          ...m,
-          plantId: Number.isFinite(m.plantId) ? m.plantId : 1,
-        }))
-      : [],
+    measurements: (() => {
+      let arr = Array.isArray(payload.measurements)
+        ? payload.measurements.map((m) => ({
+            ...m,
+            plantId: Number.isFinite(m.plantId) ? m.plantId : 1,
+          }))
+        : [];
+      if (payload.system === 'RDWC') {
+        arr = arr.map((m) => ({ ...m, plantId: 0 }));
+      }
+      return arr;
+    })(),
     plantProfiles:
       payload.plantProfiles && typeof payload.plantProfiles === 'object' ? payload.plantProfiles : {},
     selectedPlant: Number.isFinite(payload.selectedPlant) ? payload.selectedPlant : 1,
@@ -80,7 +86,12 @@ function loadGrowState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
+    const hadLegacyRdwcIds =
+      parsed.system === 'RDWC' &&
+      Array.isArray(parsed.measurements) &&
+      parsed.measurements.some((m) => !Number.isFinite(m.plantId) || m.plantId !== 0);
     myGrow = restoreGrow(parsed);
+    if (myGrow && hadLegacyRdwcIds) saveGrowState();
   } catch (error) {
     console.warn('No se pudo recuperar el cultivo guardado.', error);
     myGrow = null;

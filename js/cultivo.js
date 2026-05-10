@@ -71,12 +71,12 @@ function renderInitialOnboarding() {
         <div class="form-group">
           <label>Sistemas disponibles (elige uno o varios)</label>
           <div class="pill-tag-row">
-            ${['RDWC','DWC','NFT'].map(s=>`<label class="nutri-tag tag-level chip-check"><input type="checkbox" value="${s}" ${Array.isArray(cfg.systems)&&cfg.systems.includes(s)?'checked':''} onchange="toggleSystemType('${s}',this.checked)">${s}</label>`).join('')}
+            ${['RDWC','DWC','NFT','FLOAT','AERO'].map(s=>`<label class="nutri-tag tag-level chip-check"><input type="checkbox" value="${s}" ${Array.isArray(cfg.systems)&&cfg.systems.includes(s)?'checked':''} onchange="toggleSystemType('${s}',this.checked)">${s}</label>`).join('')}
           </div>
         </div>
         <div class="form-group">
           <label>Sistema activo inicial</label>
-          <select id="onbSystem" onchange="onOnboardingSystemTypeChange()"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option></select>
+          <select id="onbSystem" onchange="onOnboardingSystemTypeChange()"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option><option value="FLOAT" ${cfg.system==='FLOAT'?'selected':''}>Mesa flotante</option><option value="AERO" ${cfg.system==='AERO'?'selected':''}>Aeroponía</option></select>
         </div>
         <div class="form-group">
           <label>Ubicación (ciudad o zona)</label>
@@ -94,6 +94,11 @@ function renderInitialOnboarding() {
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Ingeniería del sistema · datos de montaje</div></div>
       <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> (regla habitual ~1 L/min por galón US por depósito en DWC) y de <strong>recirculación</strong> en RDWC (varios volúmenes/hora del circuito), además de pistas de tubería y materiales.</p>
+      ${(() => {
+        const pr = typeof getSystemProfile === 'function' ? getSystemProfile(sysActive) : null;
+        if (!pr) return '';
+        return `<div class="alert info"><i class="ti ti-bucket"></i><div><strong>${pr.label} — checklist técnico</strong><ul class="legal-list">${pr.checklistNotes.map((h) => `<li>${h}</li>`).join('')}</ul><p class="body-prose">${pr.optimalHint}</p></div></div>`;
+      })()}
       <div class="alert warn"><i class="ti ti-alert-triangle"></i><p>Resultados <strong>orientativos</strong>: altura manométrica, codos y pérdidas reales pueden exigir una bomba mayor. Contrasta siempre con la hoja del fabricante.</p></div>
       <div class="grid2">
         <div class="form-group"><label>Número de sitios (cubos / macetas)</label><input id="onbSites" type="number" min="1" max="48" value="${sites}"></div>
@@ -273,7 +278,7 @@ function renderWizStep(){
       ${errorBox}
       <div class="grid2">
         <div class="form-group"><label>Sistema hidropónico</label>
-          <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'selected':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${wizData.system==='NFT'?'selected':''}>NFT</option></select>
+          <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'selected':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${wizData.system==='NFT'?'selected':''}>NFT</option><option value="FLOAT" ${wizData.system==='FLOAT'?'selected':''}>Mesa flotante</option><option value="AERO" ${wizData.system==='AERO'?'selected':''}>Aeroponía</option></select>
         </div>
         <div class="form-group"><label>Metros cuadrados</label>
           <input type="number" id="wM2" min="0.5" max="10" step="0.25" value="${wizData.m2||1.2}">
@@ -703,7 +708,9 @@ function updateMixConfig() {
 function calculateMixPlan(grow, nutrient, phaseName) {
   const water = waterProfiles[grow.water] || waterProfiles.RO;
   const dose = doseByNutrientRank[nutrient.rank] || { baseMlL: 3, supplementsMlL: 0.5 };
-  const phaseMultiplier = phaseName.includes('Germ') ? 0.35 : phaseName.includes('Veg') ? 0.85 : phaseName.includes('Flush') ? 0.1 : 1;
+  const sysMod = typeof getSystemProfile === 'function' ? getSystemProfile(grow.system).nutrientModifier : 1;
+  const phaseMultiplier =
+    (phaseName.includes('Germ') ? 0.35 : phaseName.includes('Veg') ? 0.85 : phaseName.includes('Flush') ? 0.1 : 1) * sysMod;
   const reservoirL = Number.isFinite(grow.reservoirL) ? grow.reservoirL : 60;
   const sourceEC = Number.isFinite(grow.sourceEC) ? grow.sourceEC : water.baseEC;
   const baseMl = (dose.baseMlL * phaseMultiplier * reservoirL).toFixed(1);
@@ -723,9 +730,11 @@ function calculateMixPlan(grow, nutrient, phaseName) {
 
 function renderSystemSvg(grow, strain, weekNum, phaseName) {
   const plantCount = Math.max(1, Math.min(8, parseInt(grow.plants, 10) || 1));
-  return grow.system === 'RDWC'
-    ? renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName)
-    : renderDwcSvg(grow, strain, plantCount, weekNum, phaseName);
+  if (grow.system === 'RDWC') return renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName);
+  if (grow.system === 'FLOAT') return renderFloatSvg(grow, strain, plantCount, weekNum, phaseName);
+  if (grow.system === 'NFT') return renderNftSvg(grow, strain, plantCount, weekNum, phaseName);
+  if (grow.system === 'AERO') return renderAeroSvg(grow, strain, plantCount, weekNum, phaseName);
+  return renderDwcSvg(grow, strain, plantCount, weekNum, phaseName);
 }
 
 function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
@@ -847,6 +856,80 @@ function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
         <line x1="700" y1="192" x2="650" y2="192" class="pipe flow"></line>
         <text x="733" y="197" class="pump-label">AIRE</text>
       </g>
+    </svg>
+  `;
+}
+
+function renderFloatSvg(grow, strain, plantCount, weekNum, phaseName) {
+  const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  const maxVisible = Math.min(plantCount, 5);
+  const spacing = 130;
+  const startX = 150;
+  const y = 120;
+  const waterY = 178;
+  return `
+    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama mesa flotante">
+      <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
+      <text x="28" y="38" class="svg-title">Mesa flotante · DWC en balsa</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar} · Solución común, macetas flotando</text>
+
+      <rect x="70" y="85" width="600" height="190" rx="24" class="reservoir"></rect>
+      <rect x="90" y="${waterY}" width="560" height="80" rx="12" class="water"></rect>
+      <text x="370" y="305" class="reservoir-sub">Balsa ~${grow.reservoirL || 60} L · pH/EC en el volumen común · válido para cannabis con buena luz y oxigenación</text>
+
+      ${Array.from({ length: maxVisible }, (_, i) => {
+        const x = startX + i * spacing;
+        const idx = i + 1;
+        const node = { x, y, index: idx };
+        const slotLabel = getCultivarShortLabelForSlot(grow, idx);
+        return `
+          <g class="plant-node" data-plant="${idx}">
+            <g class="plant-node-hit" onclick="selectPlantInDiagram(${idx})">
+              <rect x="${x - 20}" y="${y - 18}" width="40" height="28" rx="6" class="netpot ${grow.selectedPlant === idx ? 'bucket-selected' : ''}"></rect>
+              <text x="${x}" y="${y + 2}" class="bucket-label">P${i + 1}</text>
+              <text x="${x}" y="${y + 42}" class="cultivar-label">${slotLabel}</text>
+              <line x1="${x}" y1="${y + 14}" x2="${x}" y2="${waterY + 18}" class="root-line"></line>
+            </g>
+            ${renderPlantSiteTapGlyph(node, grow)}
+          </g>`;
+      }).join('')}
+
+      <g>
+        <rect x="700" y="170" width="66" height="44" rx="8" class="pump"></rect>
+        <line x1="700" y1="192" x2="650" y2="192" class="pipe flow"></line>
+        <text x="733" y="197" class="pump-label">AIRE</text>
+      </g>
+    </svg>
+  `;
+}
+
+function renderNftSvg(grow, strain, plantCount, weekNum, phaseName) {
+  const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  return `
+    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama NFT">
+      <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
+      <text x="28" y="38" class="svg-title">NFT · Película de nutriente</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar}</text>
+      <rect x="80" y="140" width="620" height="36" rx="8" class="water"></rect>
+      <line x1="100" y1="158" x2="760" y2="158" class="pipe flow"></line>
+      <rect x="720" y="120" width="100" height="70" rx="10" class="reservoir"></rect>
+      <text x="770" y="162" class="reservoir-label" text-anchor="middle">DEPÓSITO</text>
+      <text x="400" y="220" class="reservoir-sub">Canal inclinado · caudal continuo · pH/EC en depósito mezclado</text>
+      <text x="400" y="255" class="cultivar-label">Cannabis en NFT es habitual; vigila raíces al final del canal y temperatura del depósito.</text>
+    </svg>
+  `;
+}
+
+function renderAeroSvg(grow, strain, plantCount, weekNum, phaseName) {
+  const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  return `
+    <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama aeroponía">
+      <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
+      <text x="28" y="38" class="svg-title">Aeroponía · Raíces en cámara</text>
+      <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar}</text>
+      <rect x="200" y="110" width="420" height="160" rx="16" class="reservoir"></rect>
+      <text x="410" y="200" class="reservoir-label">CÁMARA OSCURA</text>
+      <text x="410" y="300" class="reservoir-sub">Nebulización / fumigación fina · pH/EC en reserva · higiene y filtros críticos</text>
     </svg>
   `;
 }

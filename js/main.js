@@ -65,5 +65,7 @@ renderCultivo();
 renderMonitor();
 renderSemanas();
 renderHistorial();
+renderClimatologia();
+if (typeof renderConsejosPage === 'function') renderConsejosPage();
 
 window.enterApp = enterApp;

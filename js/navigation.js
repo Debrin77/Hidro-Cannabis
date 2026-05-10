@@ -57,6 +57,8 @@ function navTo(view) {
   if (view === 'semanas') renderSemanas();
   if (view === 'nutrientes') renderNutrientes();
   if (view === 'historial') renderHistorial();
+  if (view === 'climatologia') renderClimatologia();
+  if (view === 'consejos' && typeof renderConsejosPage === 'function') renderConsejosPage();
 }
 
 function nav(el, view) {

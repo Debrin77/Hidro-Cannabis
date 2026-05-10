@@ -18,6 +18,7 @@ const strains = [
    vegW:4,flowerW:9,
    desc:'Sativa dominante de ciclo corto. Perfil aromático complejo con notas de madera y tierra. Excelente en hidro por su vigor y asimilación de nutrientes elevada. Requiere ScrOG obligatorio por su tendencia vertical.',
    ambNotes:'Sensible a temperaturas nocturnas <16°C. Ventilación cruzada importante en floración para evitar botrytis en cogollos compactos.',
+   cultivarRules:{ nightAirMinC: 16, ecHardCap: 2.5 },
    nutriProfile:{veg:'Alta demanda N fase inicial. Micronutrientes quelatados importantes.',flower:'Responde muy bien a estimuladores de floración. Bajada gradual de N desde semana 3.'},
    tags:['Aromática','Sativa-dom','Alta EC','ScrOG ideal']},
 
@@ -28,6 +29,7 @@ const strains = [
    vegW:3,flowerW:8,
    desc:'Índica pura legendaria. La más sencilla en sistema hidropónico. Ciclo corto, compacta y con excelente relación esfuerzo/resultado. Perfecta primera cepa en DWC. Sin stretch en floración.',
    ambNotes:'Tolera temperaturas más bajas que otras cepas (mínimo 16°C). Ideal para cultivos en zonas con inviernos frescos.',
+   cultivarRules:{ ecHardCap: 2.05, ecVegSoftCap: 1.45, nightAirMinC: 15, waterTempMin: 16 },
    nutriProfile:{veg:'Dieta ligera. Sensible a sobrealimentación. EC máxima en veg: 1.4',flower:'Floración rápida, no sobrealimentar. EC máxima 2.0 suficiente.'},
    tags:['Compacta','SOG ideal','Indoor','Principiantes']},
 
@@ -38,6 +40,7 @@ const strains = [
    vegW:5,flowerW:11,
    desc:'Sativa de alto rendimiento y ciclo largo. En RDWC el ciclo se reduce 1-2 semanas vs tierra. Requiere control de altura mediante ScrOG desde semana 2 de veg. Aroma muy intenso: filtro de carbón imprescindible.',
    ambNotes:'En Castelló adaptar el cultivo para evitar la floración en agosto (temperatura extrema). Mejor iniciar en otoño para florar en noviembre-diciembre.',
+   cultivarRules:{ waterTempMax: 22, flowerRHMax: 55 },
    nutriProfile:{veg:'Gran demanda de N. Tolera EC alta (hasta 1.6 en veg avanzada).',flower:'Alta tolerancia a EC elevada. PK 13/14 semanas 7-8. Flush mínimo 14 días.'},
    tags:['Alta producción','Sativa pura','Aroma intenso','RDWC óptimo']},
 
@@ -48,6 +51,7 @@ const strains = [
    vegW:4,flowerW:9,
    desc:'Genética moderna de altísima potencia y resina extrema. En hidropónico desarrolla un vigor impresionante. Tolera EC muy alta en floración. Los filtros de carbón se saturan rápido por la resina — planificar mantenimiento.',
    ambNotes:'Muy resinosa: los vapores de terpenos pueden saturar el espacio. Ventilación reforzada en floración semanas 5-8.',
+   cultivarRules:{ flowerRHMax: 52, ecHardCap: 2.65 },
    nutriProfile:{veg:'Vigorosa, demanda alta de N y CalMag.',flower:'Aguanta hasta EC 2.6 sin quema. Amplificadores de resina muy efectivos.'},
    tags:['Alta potencia','Resina XXL','Popular','EC alta']},
 
@@ -58,6 +62,7 @@ const strains = [
    vegW:3,flowerW:8,
    desc:'Índica potente con CBD apreciable (1-2%). Muy productiva en hidropónico y compacta. Resistente al calor mediterráneo. Cogollos extremadamente densos — vigilar botrytis con HR >55% en floración.',
    ambNotes:'Excelente para Castelló: tolera el calor estival mejor que otras índicas. Defoliar en semana 4 de floración para mejorar ventilación de cogollos.',
+   cultivarRules:{ flowerRHMax: 55, ecHardCap: 2.35 },
    nutriProfile:{veg:'Dieta moderada. CalMag importante en hidro duro.',flower:'Cogollos densos responden a PK booster. No exceder EC 2.3.'},
    tags:['CBD','Mediterráneo','Productiva','Compacta']},
 
@@ -68,6 +73,7 @@ const strains = [
    vegW:3,flowerW:6,
    desc:'La autofloreciente perfecta para iniciarse en DWC. Sin cambio de fotoperiodo: 20h luz todo el ciclo. Sensible a sobrealimentación — empezar con EC baja. Ciclos cortos permiten 4-5 cosechas/año.',
    ambNotes:'20h luz todo el ciclo. No hacer topping en autos — solo LST suave desde semana 2.',
+   cultivarRules:{ ecHardCap: 1.85, ecVegSoftCap: 0.95 },
    nutriProfile:{veg:'EC muy baja (0.6–0.8). Sensible a exceso de N.',flower:'Floración automática. EC máxima 1.8. Flush solo 5-7 días.'},
    tags:['Automática','Ciclo corto','4-5/año','Sin fotoperiodo']},
 

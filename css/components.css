@@ -856,6 +856,55 @@
 .form-static-text{margin:0;font-size:0.875rem;color:var(--text2);line-height:1.45}
 
 /* PLANT TREND SVG */
+.monitor-measure-intro{margin-bottom:0.35rem}
+.monitor-clima-link{margin-bottom:0.85rem}
+.monitor-metrics--tight{margin-top:0.25rem}
+.section-label--block{margin-top:1rem;margin-bottom:0.35rem}
+
+.trend-card-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:0.75rem;margin-bottom:0.35rem}
+.trend-card-head__title{flex:1;min-width:200px;margin:0}
+.trend-mode-select{margin:0;min-width:200px}
+.trend-mode-select label{font-size:11px}
+.trend-profile-hint{font-size:12px;color:var(--text3);margin:0 0 0.5rem}
+
+.correction-step{border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;background:var(--surface2)}
+.correction-step__title{font-weight:600;font-size:13px;margin:0 0 6px;display:flex;align-items:center;gap:6px;color:var(--text)}
+.correction-step__text{margin:0;font-size:13px;color:var(--text2);line-height:1.45}
+
+.grow-calendar-card{margin-bottom:1rem}
+.cal-months-row{display:grid;grid-template-columns:1fr;gap:1.25rem}
+@media(min-width:900px){.cal-months-row{grid-template-columns:repeat(3,1fr)}}
+.cal-month{border:1px solid var(--border);border-radius:var(--radius2);padding:10px;background:var(--surface2)}
+.cal-month-title{font-family:'Syne',sans-serif;font-weight:600;font-size:15px;text-transform:capitalize;margin-bottom:8px;color:var(--text)}
+.cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.cal-wd{text-align:center;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{min-height:72px;border:1px solid var(--border2);border-radius:8px;padding:4px 5px;background:var(--surface);font-size:11px}
+.cal-cell--empty{background:transparent;border:none;min-height:0}
+.cal-cell--today{outline:2px solid var(--hydro-teal);outline-offset:-1px}
+.cal-cell--busy{border-color:rgba(52,211,153,0.35)}
+.cal-day-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.cal-day-num{font-weight:600;font-family:'DM Mono',monospace;color:var(--text)}
+.cal-dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.cal-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+.cal-dot--milestone{background:var(--a200)}
+.cal-dot--task{background:var(--b400)}
+.cal-dot--maint{background:var(--text3)}
+.cal-day-events{list-style:none;margin:4px 0 0;padding:0;font-size:10px;color:var(--text2);line-height:1.35}
+.cal-day-events li{display:flex;gap:4px;align-items:flex-start;margin-bottom:3px}
+.cal-day-events .ti{font-size:12px;flex-shrink:0;color:var(--hydro-teal)}
+
+.trend-watertemp-band{fill:rgba(167,139,250,0.12)}
+.trend-watertemp-line{stroke:#a78bfa;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.trend-watertemp-dot{fill:#c4b5fd;stroke:var(--surface2);stroke-width:1.5}
+.trend-vpd-band{fill:rgba(245,158,11,0.1)}
+.trend-vpd-line{stroke:var(--a200);stroke-width:2.5;fill:none;stroke-linecap:round}
+.trend-vpd-dot{fill:var(--a200);stroke:var(--surface2);stroke-width:1.5}
+.trend-rh-line{stroke:var(--b400);stroke-width:2;fill:none;stroke-dasharray:5 4;opacity:0.9}
+.trend-rh-dot{fill:var(--b200);stroke:var(--surface2);stroke-width:1.5}
+
+.consejos-strain-card{margin-top:1rem}
+
 .plant-trend-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
 .plant-trend-svg{width:100%;min-width:760px;height:auto;display:block}
 .trend-bg{fill:var(--surface2)}

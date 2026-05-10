@@ -4,6 +4,104 @@ function isMonitorRdwc(grow) {
   return grow && grow.system === 'RDWC';
 }
 
+/** VPD aire (kPa), aprox. ecuación Magnus · T en °C, HR en %. */
+function computeVpdKpa(airC, rhPct) {
+  if (!Number.isFinite(airC) || !Number.isFinite(rhPct)) return null;
+  const es = 0.6108 * Math.exp((17.27 * airC) / (airC + 237.3));
+  return Math.round(es * (1 - rhPct / 100) * 1000) / 1000;
+}
+
+/** DLI mol/m²/d a partir de PPFD (µmol/m²/s) y horas de luz encendida. */
+function computeDliMolM2d(ppfd, hoursLight) {
+  if (!Number.isFinite(ppfd) || !Number.isFinite(hoursLight) || ppfd <= 0 || hoursLight <= 0) return null;
+  return Math.round(((ppfd * hoursLight * 3600) / 1e6) * 10) / 10;
+}
+
+function formatMeasurementVpd(r) {
+  const v = computeVpdKpa(r.airTemp, r.humidity);
+  return v != null ? v.toFixed(2) : '—';
+}
+
+function parseClimateTemperature(val) {
+  if (typeof val === 'number' && Number.isFinite(val)) return val;
+  if (typeof val === 'string') {
+    const n = parseFloat(String(val).replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+/** Alertas de contexto exterior usando pronóstico guardado o clima del checklist. */
+function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
+  const out = [];
+  if (!grow || grow.placement !== 'exterior') return out;
+  const snap = grow.siteWeather;
+  const cur = grow.climate;
+  let tAir = null;
+  let rh = null;
+  let wind = null;
+  if (snap?.current && Number.isFinite(snap.current.temperature_2m)) {
+    tAir = snap.current.temperature_2m;
+    rh = snap.current.relative_humidity_2m;
+    wind = snap.current.wind_speed_10m;
+  } else {
+    tAir = parseClimateTemperature(cur?.temperature);
+    rh = Number.isFinite(cur?.humidity) ? cur.humidity : null;
+    wind = parseClimateTemperature(cur?.wind);
+  }
+  if (tAir != null && tAir >= 36) {
+    out.push({
+      level: 'danger',
+      icon: 'sun-high',
+      message: `Exterior: temperatura actual muy alta (${tAir.toFixed(1)}°C). Riesgo de estrés y parada de transpiración; sombreo temporal y revisa solución.`,
+    });
+  } else if (tAir != null && tAir >= 32) {
+    out.push({
+      level: 'warn',
+      icon: 'sun',
+      message: `Exterior: calor (${tAir.toFixed(1)}°C). Vigila temperatura de agua y HR foliar.`,
+    });
+  }
+  if (tAir != null && tAir <= 5) {
+    out.push({
+      level: 'danger',
+      icon: 'snowflake',
+      message: `Exterior: frío intenso (${tAir.toFixed(1)}°C). Protección antiheladas o retirada temporal si aplica.`,
+    });
+  }
+  if (Number.isFinite(wind) && wind >= 45) {
+    out.push({
+      level: 'warn',
+      icon: 'wind',
+      message: `Exterior: viento fuerte (~${wind.toFixed(0)} km/h). Refuerza amarres y evita daño mecánico al follaje.`,
+    });
+  }
+  const inFlower = weekNum > strain.vegW + 2;
+  const rain0 = snap?.daily?.precipitation_sum?.[0];
+  const prob0 = snap?.daily?.precipitation_probability_mean?.[0];
+  if (inFlower && Number.isFinite(rain0) && rain0 >= 6) {
+    out.push({
+      level: 'warn',
+      icon: 'cloud-rain',
+      message: `Pronóstico: lluvia considerable hoy (~${rain0.toFixed(1)} mm) en floración exterior — riesgo de botrytis; mejora ventilación al secar.`,
+    });
+  } else if (inFlower && Number.isFinite(prob0) && prob0 >= 75) {
+    out.push({
+      level: 'info',
+      icon: 'cloud-fog',
+      message: `Alta probabilidad de lluvia (${prob0}%). Prepara cubierta o retirada temporal si el espacio lo permite.`,
+    });
+  }
+  if (!snap?.updatedAt && grow.placement === 'exterior') {
+    out.push({
+      level: 'info',
+      icon: 'cloud-search',
+      message: 'Abre la pestaña Climatología y pulsa «Actualizar pronóstico» para avisos más precisos según tu ubicación.',
+    });
+  }
+  return out;
+}
+
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
@@ -23,6 +121,14 @@ function renderMonitor(){
   const phaseRefQuick = getPhaseReference(s, weekNum);
   const phPct = phLive != null ? Math.min(100, Math.max(0, ((phLive - 4.5) / (8.5 - 4.5)) * 100)) : 72;
   const ecPct = ecLive != null ? Math.min(100, (ecLive / 3) * 100) : Math.min(100, s.ecFlower / 3 * 100);
+  const waterLive = latestCircuit && Number.isFinite(latestCircuit.waterTemp) ? latestCircuit.waterTemp : null;
+  const hrLive = latestCircuit && Number.isFinite(latestCircuit.humidity) ? latestCircuit.humidity : null;
+  const airLive = latestCircuit && Number.isFinite(latestCircuit.airTemp) ? latestCircuit.airTemp : null;
+  const vpdLive = computeVpdKpa(latestCircuit?.airTemp, latestCircuit?.humidity);
+  const dliLive = computeDliMolM2d(latestCircuit?.ppfd, latestCircuit?.lightHours);
+  const ppfdLive = latestCircuit && Number.isFinite(latestCircuit.ppfd) ? latestCircuit.ppfd : null;
+  const waterPct =
+    waterLive != null ? Math.min(100, Math.max(0, ((waterLive - 15) / (24 - 15)) * 100)) : 50;
   const climateCard = myGrow.climate
     ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>${myGrow.location || 'Ubicación'} (${myGrow.placement})</strong> · ${myGrow.climate.summary} · ${myGrow.climate.temperature}°C · HR ${myGrow.climate.humidity}% · Viento ${myGrow.climate.wind} km/h · Fuente: ${myGrow.climate.source}</p></div>`
     : '';
@@ -33,11 +139,20 @@ function renderMonitor(){
   mc.innerHTML=`
     ${climateCard}
     ${rdwcSamplingNote}
+    <div class="alert info monitor-measure-intro"><i class="ti ti-gauge"></i><p><strong>Medición resolutiva:</strong> además de pH/EC y temperatura de agua, registra <strong>aire, humedad</strong> (para VPD), <strong>CO₂</strong> y, si puedes, <strong>PPFD + horas de luz</strong> (DLI). Las alertas usan la última lectura y la fase actual (${phaseRefQuick.phase}). En exterior, cruza con la pestaña <strong>Climatología</strong>.</p></div>
+    <button type="button" class="btn btn-ghost btn--compact monitor-clima-link" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología del emplazamiento</button>
+
     <div class="grid4 monitor-metrics">
-      <div class="metric"><div class="metric-label">pH ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-blue">${phLive != null ? phLive.toFixed(1) : '—'}</div><div class="metric-unit">${phaseRefQuick.phMin.toFixed(1)}–${phaseRefQuick.phMax.toFixed(1)} objetivo (${phaseRefQuick.phase})</div><div class="metric-bar"><div class="metric-fill metric-fill--ph" style="--fill-pct:${phPct.toFixed(0)}%"></div></div></div>
+      <div class="metric"><div class="metric-label">pH ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-blue">${phLive != null ? phLive.toFixed(1) : '—'}</div><div class="metric-unit">${phaseRefQuick.phMin.toFixed(1)}–${phaseRefQuick.phMax.toFixed(1)} (${phaseRefQuick.phase})</div><div class="metric-bar"><div class="metric-fill metric-fill--ph" style="--fill-pct:${phPct.toFixed(0)}%"></div></div></div>
       <div class="metric"><div class="metric-label">EC ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-green">${ecLive != null ? ecLive.toFixed(2) : s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill metric-fill--ec" style="--fill-pct:${ecPct.toFixed(0)}%"></div></div></div>
-      <div class="metric"><div class="metric-label">Temp. agua</div><div class="metric-val c-purple">${s.tempWater+1}°C</div><div class="metric-unit">óptimo ${s.tempWater}–${s.tempWater+2}°C</div></div>
-      <div class="metric"><div class="metric-label">DO estimado</div><div class="metric-val c-blue">8.2</div><div class="metric-unit">mg/L (>6 óptimo)</div></div>
+      <div class="metric"><div class="metric-label">Tª agua</div><div class="metric-val c-purple">${waterLive != null ? waterLive.toFixed(1) + '°C' : '—'}</div><div class="metric-unit">óptimo ~18–20 · alerta &gt;23°C</div><div class="metric-bar"><div class="metric-fill metric-fill--ec" style="--fill-pct:${waterPct.toFixed(0)}%"></div></div></div>
+      <div class="metric"><div class="metric-label">VPD aire</div><div class="metric-val c-amber">${vpdLive != null ? vpdLive.toFixed(2) + ' kPa' : '—'}</div><div class="metric-unit">${phaseRefQuick.vpdMin != null ? phaseRefQuick.vpdMin.toFixed(2) + '–' + phaseRefQuick.vpdMax.toFixed(2) + ' kPa' : 'Necesita Tª aire + HR'}</div></div>
+    </div>
+    <div class="grid4 monitor-metrics monitor-metrics--tight">
+      <div class="metric"><div class="metric-label">Humedad</div><div class="metric-val c-blue">${hrLive != null ? hrLive.toFixed(0) + '%' : '—'}</div><div class="metric-unit">${phaseRefQuick.humidityMin}-${phaseRefQuick.humidityMax}% fase</div></div>
+      <div class="metric"><div class="metric-label">Tª aire (copa)</div><div class="metric-val">${airLive != null ? airLive.toFixed(1) + '°C' : '—'}</div><div class="metric-unit">Microclima</div></div>
+      <div class="metric"><div class="metric-label">DLI estimado</div><div class="metric-val">${dliLive != null ? dliLive.toFixed(1) + ' mol/m²/d' : '—'}</div><div class="metric-unit">PPFD × horas luz</div></div>
+      <div class="metric"><div class="metric-label">PPFD último</div><div class="metric-val">${ppfdLive != null ? ppfdLive.toFixed(0) + ' µmol' : '—'}</div><div class="metric-unit">sensor cuántico</div></div>
     </div>
 
     <div class="grid2">
@@ -79,6 +194,7 @@ function renderMonitor(){
 
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-report-analytics"></i>Registro diario de mediciones</div></div>
+      <div class="section-label section-label--block">Solución y volumen</div>
       <div class="grid4">
         <div class="form-group">${rdwc ? `<label>Sitio de la lectura</label><p class="form-static-text">Circuito RDWC (depósito de control / solución común)</p><input type="hidden" id="mPlant" value="0">` : `<label>Planta</label>
           <select id="mPlant">
@@ -88,18 +204,29 @@ function renderMonitor(){
         <div class="form-group"><label>pH</label><input id="mPH" type="number" step="0.1" min="4.5" max="8.5" placeholder="6.0"></div>
         <div class="form-group"><label>EC (mS/cm)</label><input id="mEC" type="number" step="0.01" min="0" max="4" placeholder="1.85"></div>
         <div class="form-group"><label>Volumen (L)</label><input id="mVolume" type="number" step="0.1" min="1" max="2000" placeholder="${myGrow.reservoirL||60}"></div>
+        <div class="form-group"><label>Temp. agua (°C)</label><input id="mWaterTemp" type="number" step="0.1" min="10" max="35" placeholder="19.0"><span class="form-hint">Raíz / depósito</span></div>
       </div>
+
+      <div class="section-label section-label--block">Microclima (VPD con Tª aire + HR)</div>
       <div class="grid4">
-        <div class="form-group"><label>Temp. agua (°C)</label><input id="mWaterTemp" type="number" step="0.1" min="10" max="35" placeholder="19.0"></div>
-        <div class="form-group"><label>Temp. aire (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"></div>
-        <div class="form-group"><label>Humedad (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"></div>
+        <div class="form-group"><label>Temp. aire en copa (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"></div>
+        <div class="form-group"><label>Humedad relativa (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"></div>
         <div class="form-group"><label>CO₂ (ppm)</label><input id="mCO2" type="number" step="10" min="300" max="2000" placeholder="${myGrow.co2==='si'?'1200':'400'}"></div>
+        <div class="form-group"><label>Lux (opcional)</label><input id="mLux" type="number" step="100" min="0" max="200000" placeholder="35000"></div>
       </div>
+
+      <div class="section-label section-label--block">Luz (PPFD + horas encendido → DLI)</div>
+      <div class="grid4">
+        <div class="form-group"><label>PPFD medio (µmol/m²/s)</label><input id="mPPFD" type="number" step="10" min="0" max="2500" placeholder="600"><span class="form-hint">Sensor cuántico</span></div>
+        <div class="form-group"><label>Horas luz encendida</label><input id="mLightHours" type="number" step="0.5" min="0" max="24" placeholder="${weekNum <= myGrow.strain.vegW ? '18' : '12'}"><span class="form-hint">Fotoperiodo hoy</span></div>
+      </div>
+
       <div class="grid2">
         <div class="form-group"><label>Notas</label><input id="mNote" type="text" placeholder="Observaciones del día"></div>
       </div>
       <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
       ${renderMeasurementsTable()}
+      ${renderCorrectionPlanCard()}
       ${renderPlantTrendCard()}
     </div>
   `;
@@ -129,6 +256,9 @@ function addMeasurement() {
     airTemp: parseFloat(document.getElementById('mAirTemp')?.value),
     humidity: parseFloat(document.getElementById('mHumidity')?.value),
     co2: parseFloat(document.getElementById('mCO2')?.value),
+    lux: parseFloat(document.getElementById('mLux')?.value),
+    ppfd: parseFloat(document.getElementById('mPPFD')?.value),
+    lightHours: parseFloat(document.getElementById('mLightHours')?.value),
     note: (document.getElementById('mNote')?.value || '').trim(),
   };
 
@@ -169,7 +299,7 @@ function renderMeasurementsTable() {
   return `
     <div class="table-scroll table-scroll--mt">
       <table class="week-table">
-        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Planta'}</th><th>pH</th><th>EC</th><th>Vol (L)</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>CO₂</th><th>Notas</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Planta'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>VPD</th><th>CO₂</th><th>PPFD</th><th>h luz</th><th>Notas</th></tr></thead>
         <tbody>
           ${rows.map(r=>`<tr>
             <td>${new Date(r.date).toLocaleDateString('es-ES')} ${new Date(r.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td>
@@ -180,7 +310,10 @@ function renderMeasurementsTable() {
             <td>${Number.isFinite(r.waterTemp)?r.waterTemp.toFixed(1)+'°C':'—'}</td>
             <td>${Number.isFinite(r.airTemp)?r.airTemp.toFixed(1)+'°C':'—'}</td>
             <td>${Number.isFinite(r.humidity)?r.humidity.toFixed(0)+'%':'—'}</td>
+            <td class="ec-val">${formatMeasurementVpd(r)}</td>
             <td>${Number.isFinite(r.co2)?r.co2.toFixed(0)+' ppm':'—'}</td>
+            <td>${Number.isFinite(r.ppfd)?r.ppfd.toFixed(0):'—'}</td>
+            <td>${Number.isFinite(r.lightHours)?r.lightHours.toFixed(1):'—'}</td>
             <td>${r.note || '—'}</td>
           </tr>`).join('')}
         </tbody>
@@ -189,167 +322,63 @@ function renderMeasurementsTable() {
   `;
 }
 
+function renderCorrectionPlanCard() {
+  if (!myGrow || typeof buildStrainCorrectionPlan !== 'function') return '';
+  const plantId = myGrow.selectedPlant || 1;
+  const latest = getLatestMeasurementForPlant(myGrow, plantId);
+  if (!latest) return '';
+  const strain = myGrow.strain;
+  const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const phaseRef = getPhaseReference(strain, weekNum);
+  const plan = buildStrainCorrectionPlan(latest, strain, weekNum, phaseRef, myGrow);
+  if (!plan.steps.length) {
+    return `
+    <div class="card-sm trend-card">
+      <div class="section-label section-label--block">Validación ${strain.name} · ${phaseRef.phase}</div>
+      <div class="alert info"><i class="ti ti-check"></i><p>La última medición encaja en los rangos orientativos de la cepa y la fase. Mantén el registro para detectar derivas.</p></div>
+    </div>`;
+  }
+  return `
+    <div class="card-sm trend-card">
+      <div class="section-label section-label--block">Corrección orientativa · ${strain.name} · ${phaseRef.phase}</div>
+      <p class="body-prose body-prose--tight">Pasos calculados a partir de tu última lectura. Ajusta en pequeñas dosis y <strong>vuelve a medir</strong> antes de seguir.</p>
+      ${plan.steps.map((s) => `<div class="correction-step"><div class="correction-step__title"><i class="ti ti-tool"></i> ${s.title}</div><p class="correction-step__text">${s.detail}</p></div>`).join('')}
+    </div>`;
+}
+
 function renderPlantTrendCard() {
   const plantId = myGrow.selectedPlant || 1;
   const rows = getMeasurementsByPlant(myGrow, plantId).slice(0, 14).reverse();
   if (!rows.length) return '';
   const strain = myGrow.strain;
-  const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
-  const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
+  const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
   const phaseRef = getPhaseReference(strain, weekNum);
   const rdwc = isMonitorRdwc(myGrow);
   const scopeTitle = rdwc ? 'Circuito (solución común)' : `Planta P${plantId}`;
+  const prof = typeof getSystemProfile === 'function' ? getSystemProfile(myGrow.system) : { chartModes: [], label: myGrow.system };
+  const mode = typeof getStoredTrendMode === 'function' ? getStoredTrendMode(myGrow.system) : 'solution';
+  const modeOpts = (prof.chartModes || [])
+    .map((m) => `<option value="${m.id}" ${mode === m.id ? 'selected' : ''}>${m.label}</option>`)
+    .join('');
+  const chartBody =
+    typeof renderTrendBySystemMode === 'function'
+      ? renderTrendBySystemMode(rows, myGrow, phaseRef, strain, weekNum, mode)
+      : '';
   return `
     <div class="card-sm trend-card">
-      <div class="section-label section-label--block">
-        Tendencia pH y EC · ${scopeTitle} · ${phaseRef.phase}
+      <div class="trend-card-head">
+        <div class="section-label section-label--block trend-card-head__title">
+          Gráficos · ${prof.label || myGrow.system} · ${scopeTitle} · ${phaseRef.phase}
+        </div>
+        <div class="form-group trend-mode-select">
+          <label for="trendModeSel">Tipo de gráfico</label>
+          <select id="trendModeSel" onchange="onTrendModeChange(this)">${modeOpts}</select>
+        </div>
       </div>
-      ${renderPlantTrendSvg(rows, phaseRef)}
-    </div>
-  `;
-}
-
-function renderPlantTrendSvg(rows, phaseRef) {
-  const valid = rows.filter((r) => Number.isFinite(r.ph) && Number.isFinite(r.ec));
-  if (valid.length < 2) {
-    return `<div class="alert info"><i class="ti ti-info-circle"></i><p>Necesitas al menos 2 mediciones válidas para ver la tendencia.</p></div>`;
-  }
-  const width = 820;
-  const height = 268;
-  const padL = 52;
-  const padR = 54;
-  const padT = 44;
-  const padB = 46;
-  const innerW = width - padL - padR;
-  const innerH = height - padT - padB;
-  const baseY = height - padB;
-  const phMin = 5.0;
-  const phMax = 7.0;
-  const ecMin = 0.0;
-  const ecMax = 3.0;
-
-  const denom = Math.max(1, valid.length - 1);
-  const toX = (i) => padL + (i / denom) * innerW;
-  const toYPh = (v) => padT + (1 - (Math.max(phMin, Math.min(phMax, v)) - phMin) / (phMax - phMin)) * innerH;
-  const toYEc = (v) => padT + (1 - (Math.max(ecMin, Math.min(ecMax, v)) - ecMin) / (ecMax - ecMin)) * innerH;
-
-  const phPts = valid.map((r, i) => ({ x: toX(i), y: toYPh(r.ph), r }));
-  const ecPts = valid.map((r, i) => ({ x: toX(i), y: toYEc(r.ec), r }));
-  const phPoints = phPts.map((p) => `${p.x},${p.y}`).join(' ');
-  const ecPoints = ecPts.map((p) => `${p.x},${p.y}`).join(' ');
-  const phTargetY1 = toYPh(phaseRef.phMin);
-  const phTargetY2 = toYPh(phaseRef.phMax);
-  const ecTargetY1 = toYEc(phaseRef.ecMin);
-  const ecTargetY2 = toYEc(phaseRef.ecMax);
-
-  const phAreaD = (() => {
-    if (!phPts.length) return '';
-    const first = phPts[0];
-    const last = phPts[phPts.length - 1];
-    const seg = phPts.map((p) => `L ${p.x} ${p.y}`).join(' ');
-    return `M ${first.x} ${baseY} ${seg} L ${last.x} ${baseY} Z`;
-  })();
-  const ecAreaD = (() => {
-    if (!ecPts.length) return '';
-    const first = ecPts[0];
-    const last = ecPts[ecPts.length - 1];
-    const seg = ecPts.map((p) => `L ${p.x} ${p.y}`).join(' ');
-    return `M ${first.x} ${baseY} ${seg} L ${last.x} ${baseY} Z`;
-  })();
-
-  const phGridTicks = [5, 5.5, 6, 6.5, 7];
-  const phGrid = phGridTicks
-    .map((v) => {
-      const y = toYPh(v);
-      return `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" class="trend-grid-line"></line><text x="${padL - 8}" y="${y + 3}" class="trend-axis-num trend-axis-num--left">${v.toFixed(1)}</text>`;
-    })
-    .join('');
-
-  const ecTicks = [0, 0.5, 1, 1.5, 2, 2.5, 3];
-  const ecGrid = ecTicks
-    .map((v) => {
-      const y = toYEc(v);
-      return `<text x="${width - padR + 8}" y="${y + 3}" class="trend-axis-num trend-axis-num--right">${v.toFixed(1)}</text>`;
-    })
-    .join('');
-
-  const vGrid = valid
-    .map((_, i) => {
-      const x = toX(i);
-      return `<line x1="${x}" y1="${padT}" x2="${x}" y2="${baseY}" class="trend-grid-line trend-grid-line--vert"></line>`;
-    })
-    .join('');
-
-  const labels = valid
-    .map((row, i) => {
-      const x = toX(i);
-      const date = new Date(row.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-      return `<text x="${x}" y="${height - 18}" class="trend-label">${date}</text>`;
-    })
-    .join('');
-
-  const legend = `
-    <g class="trend-legend" transform="translate(${padL + innerW - 168}, ${padT - 28})">
-      <rect x="0" y="-10" width="168" height="36" rx="8" class="trend-legend-box"></rect>
-      <line x1="12" y1="8" x2="28" y2="8" class="trend-legend-line trend-legend-line--ph"></line>
-      <text x="34" y="11" class="trend-legend-text">pH</text>
-      <line x1="78" y1="8" x2="94" y2="8" class="trend-legend-line trend-legend-line--ec"></line>
-      <text x="100" y="11" class="trend-legend-text">EC</text>
-    </g>`;
-
-  const titleBlock = `
-    <text x="${padL}" y="22" class="trend-chart-title">Evolución pH / EC</text>
-    <text x="${padL}" y="36" class="trend-chart-sub">Bandas = rango objetivo · ${phaseRef.phase}</text>`;
-
-  const dots = valid
-    .map((r, i) => {
-      const x = toX(i);
-      const yp = toYPh(r.ph);
-      const ye = toYEc(r.ec);
-      const tip = `${new Date(r.date).toLocaleString('es-ES')} · pH ${r.ph.toFixed(2)} · EC ${r.ec.toFixed(2)}`;
-      return `<circle cx="${x}" cy="${yp}" r="4.5" class="trend-ph-dot"><title>${tip}</title></circle>
-        <circle cx="${x}" cy="${ye}" r="4.5" class="trend-ec-dot"><title>${tip}</title></circle>`;
-    })
-    .join('');
-
-  return `
-    <div class="plant-trend-scroll">
-    <svg viewBox="0 0 ${width} ${height}" class="plant-trend-svg" role="img" aria-label="Tendencia de pH y EC">
-      <defs>
-        <linearGradient id="trendPhFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--b400)" stop-opacity="0.22"/>
-          <stop offset="100%" stop-color="var(--b400)" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="trendEcFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--g400)" stop-opacity="0.18"/>
-          <stop offset="100%" stop-color="var(--g400)" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <rect x="0" y="0" width="${width}" height="${height}" rx="12" class="trend-bg"></rect>
-      ${titleBlock}
-      ${legend}
-      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
-      <line x1="${width - padR}" y1="${padT}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--secondary"></line>
-      <line x1="${padL}" y1="${baseY}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
-      <text x="${padL}" y="${padT - 6}" class="trend-axis-caption">pH (5–7)</text>
-      <text x="${width - padR - 72}" y="${padT - 6}" class="trend-axis-caption trend-axis-caption--right">EC mS/cm (0–3)</text>
-
-      ${phGrid}
-      ${vGrid}
-      ${ecGrid}
-
-      <rect x="${padL}" y="${Math.min(phTargetY1, phTargetY2)}" width="${innerW}" height="${Math.abs(phTargetY2 - phTargetY1)}" class="trend-ph-band"></rect>
-      <rect x="${padL}" y="${Math.min(ecTargetY1, ecTargetY2)}" width="${innerW}" height="${Math.abs(ecTargetY2 - ecTargetY1)}" class="trend-ec-band"></rect>
-
-      <path d="${phAreaD}" fill="url(#trendPhFill)" class="trend-ph-area"></path>
-      <path d="${ecAreaD}" fill="url(#trendEcFill)" class="trend-ec-area"></path>
-
-      <polyline points="${phPoints}" fill="none" class="trend-ph-line"></polyline>
-      <polyline points="${ecPoints}" fill="none" class="trend-ec-line"></polyline>
-
-      ${dots}
-      ${labels}
-    </svg>
+      <p class="form-hint trend-profile-hint">${prof.optimalHint || ''}</p>
+      ${chartBody}
     </div>
   `;
 }
@@ -372,26 +401,29 @@ function buildSmartAlerts(grow, strain, weekNum) {
   }
 
   const phaseRef = getPhaseReference(strain, weekNum);
-  if (Number.isFinite(latest.ph) && (latest.ph < phaseRef.phMin || latest.ph > phaseRef.phMax)) {
+  const targets =
+    typeof getStrainTargetsForWeek === 'function' ? getStrainTargetsForWeek(strain, weekNum, phaseRef) : phaseRef;
+
+  if (Number.isFinite(latest.ph) && (latest.ph < targets.phMin || latest.ph > targets.phMax)) {
     alerts.push({
       level: 'warn',
       icon: 'beaker',
-      message: `${tag}: pH fuera de rango para ${phaseRef.phase}: ${latest.ph.toFixed(1)} (objetivo ${phaseRef.phMin.toFixed(1)}-${phaseRef.phMax.toFixed(1)}).`,
+      message: `${tag}: pH fuera de rango (${strain.name}): ${latest.ph.toFixed(1)} (objetivo ~${targets.phMin.toFixed(2)}–${targets.phMax.toFixed(2)}).`,
     });
   }
 
-  if (Number.isFinite(latest.ec) && latest.ec < phaseRef.ecMin) {
+  if (Number.isFinite(latest.ec) && latest.ec < targets.ecMin) {
     alerts.push({
       level: 'warn',
       icon: 'battery-2',
-      message: `${tag}: EC baja para ${phaseRef.phase}: ${latest.ec.toFixed(2)} mS/cm (mínimo recomendado ${phaseRef.ecMin.toFixed(2)}).`,
+      message: `${tag}: EC baja (${strain.name}): ${latest.ec.toFixed(2)} mS/cm (mínimo ~${targets.ecMin.toFixed(2)}).`,
     });
   }
-  if (Number.isFinite(latest.ec) && latest.ec > phaseRef.ecMax) {
+  if (Number.isFinite(latest.ec) && latest.ec > targets.ecMax) {
     alerts.push({
       level: 'danger',
       icon: 'flame',
-      message: `${tag}: EC alta para ${phaseRef.phase}: ${latest.ec.toFixed(2)} mS/cm (máximo recomendado ${phaseRef.ecMax.toFixed(2)}).`,
+      message: `${tag}: EC alta (${strain.name}): ${latest.ec.toFixed(2)} mS/cm (techo orientativo ~${targets.ecMax.toFixed(2)}).`,
     });
   }
 
@@ -402,11 +434,12 @@ function buildSmartAlerts(grow, strain, weekNum) {
       message: `${tag}: Temperatura de agua elevada (${latest.waterTemp.toFixed(1)}°C). Riesgo de bajo oxígeno disuelto y estrés radicular.`,
     });
   }
-  if (Number.isFinite(latest.humidity) && latest.humidity > phaseRef.humidityMax) {
+  const rhCeil = weekNum > strain.vegW + 2 && targets.flowerRHMax != null ? targets.flowerRHMax : phaseRef.humidityMax;
+  if (Number.isFinite(latest.humidity) && latest.humidity > rhCeil) {
     alerts.push({
       level: 'warn',
       icon: 'droplet-filled',
-      message: `${tag}: Humedad alta (${latest.humidity.toFixed(0)}%) para ${phaseRef.phase}. Riesgo de hongos/botrytis.`,
+      message: `${tag}: Humedad alta (${latest.humidity.toFixed(0)}%) — límite orientativo ~${rhCeil}% (${phaseRef.phase}${weekNum > strain.vegW + 2 ? ', cogollos' : ''}).`,
     });
   }
   if (Number.isFinite(latest.humidity) && latest.humidity < phaseRef.humidityMin) {
@@ -416,26 +449,158 @@ function buildSmartAlerts(grow, strain, weekNum) {
       message: `${tag}: Humedad baja (${latest.humidity.toFixed(0)}%). Puede frenar crecimiento y aumentar estrés hídrico.`,
     });
   }
+
+  const vpd = computeVpdKpa(latest.airTemp, latest.humidity);
+  if (vpd != null && Number.isFinite(phaseRef.vpdMin) && vpd < phaseRef.vpdMin * 0.88) {
+    alerts.push({
+      level: 'warn',
+      icon: 'droplet',
+      message: `${tag}: VPD bajo (${vpd.toFixed(2)} kPa) para ${phaseRef.phase}. Transpiración lenta; vigilar enfermedades foliares si persiste.`,
+    });
+  }
+  if (vpd != null && Number.isFinite(phaseRef.vpdMax) && vpd > phaseRef.vpdMax * 1.12) {
+    alerts.push({
+      level: 'warn',
+      icon: 'flame',
+      message: `${tag}: VPD alto (${vpd.toFixed(2)} kPa) para ${phaseRef.phase}. Mayor demanda transpirativa; revisa riego de raíz y punta de hojas.`,
+    });
+  }
+
+  if (Number.isFinite(latest.co2)) {
+    if (grow.co2 === 'si' && latest.co2 < (phaseRef.co2Min || 600) * 0.85) {
+      alerts.push({
+        level: 'info',
+        icon: 'molecule',
+        message: `${tag}: CO₂ ${latest.co2.toFixed(0)} ppm por debajo del rango orientativo para ${phaseRef.phase} con enriquecimiento.`,
+      });
+    }
+    if (latest.co2 < 350) {
+      alerts.push({ level: 'warn', icon: 'alert-circle', message: `${tag}: CO₂ muy bajo (${latest.co2.toFixed(0)} ppm). Comprueba ventilación o medición.` });
+    }
+  }
+
+  if (Number.isFinite(latest.ppfd)) {
+    if (latest.ppfd < (phaseRef.ppfdMin || 300) * 0.75) {
+      alerts.push({
+        level: 'warn',
+        icon: 'bulb',
+        message: `${tag}: PPFD bajo (${latest.ppfd.toFixed(0)} µmol/m²/s) para ${phaseRef.phase}. Revisa altura de luminaria o potencia.`,
+      });
+    }
+    if (latest.ppfd > (phaseRef.ppfdMax || 900) * 1.2) {
+      alerts.push({
+        level: 'danger',
+        icon: 'sun',
+        message: `${tag}: PPFD muy alto (${latest.ppfd.toFixed(0)} µmol/m²/s). Riesgo de fotobleaching o estrés luminoso.`,
+      });
+    }
+  }
+
+  alerts.push(...buildOutdoorPlacementAlerts(grow, strain, weekNum));
   return alerts;
 }
 
 function getPhaseReference(strain, weekNum) {
   if (weekNum <= 1) {
-    return { phase: 'Germinación', ecMin: 0.3, ecMax: 0.6, phMin: 5.5, phMax: 5.8, humidityMin: 70, humidityMax: 90 };
+    return {
+      phase: 'Germinación',
+      ecMin: 0.3,
+      ecMax: 0.6,
+      phMin: 5.5,
+      phMax: 5.8,
+      humidityMin: 70,
+      humidityMax: 90,
+      vpdMin: 0.35,
+      vpdMax: 0.85,
+      co2Min: 400,
+      co2Max: 800,
+      ppfdMin: 200,
+      ppfdMax: 450,
+    };
   }
   if (weekNum <= strain.vegW) {
-    return { phase: 'Vegetación', ecMin: strain.ecVeg, ecMax: strain.ecVeg + 0.5, phMin: 5.6, phMax: 6.0, humidityMin: 55, humidityMax: 70 };
+    return {
+      phase: 'Vegetación',
+      ecMin: strain.ecVeg,
+      ecMax: strain.ecVeg + 0.5,
+      phMin: 5.6,
+      phMax: 6.0,
+      humidityMin: 55,
+      humidityMax: 70,
+      vpdMin: 0.75,
+      vpdMax: 1.25,
+      co2Min: 600,
+      co2Max: 1200,
+      ppfdMin: 400,
+      ppfdMax: 700,
+    };
   }
   if (weekNum <= strain.vegW + 2) {
-    return { phase: 'Prefloración', ecMin: (strain.ecVeg + strain.ecFlower) / 2, ecMax: strain.ecFlower + 0.2, phMin: 5.8, phMax: 6.2, humidityMin: 50, humidityMax: 60 };
+    return {
+      phase: 'Prefloración',
+      ecMin: (strain.ecVeg + strain.ecFlower) / 2,
+      ecMax: strain.ecFlower + 0.2,
+      phMin: 5.8,
+      phMax: 6.2,
+      humidityMin: 50,
+      humidityMax: 60,
+      vpdMin: 0.95,
+      vpdMax: 1.45,
+      co2Min: 800,
+      co2Max: 1200,
+      ppfdMin: 550,
+      ppfdMax: 900,
+    };
   }
   if (weekNum <= strain.vegW + strain.flowerW - 2) {
-    return { phase: 'Floración', ecMin: strain.ecFlower - 0.1, ecMax: strain.ecPeak, phMin: 6.0, phMax: 6.5, humidityMin: 40, humidityMax: 55 };
+    return {
+      phase: 'Floración',
+      ecMin: strain.ecFlower - 0.1,
+      ecMax: strain.ecPeak,
+      phMin: 6.0,
+      phMax: 6.5,
+      humidityMin: 40,
+      humidityMax: 55,
+      vpdMin: 1.1,
+      vpdMax: 1.65,
+      co2Min: 900,
+      co2Max: 1500,
+      ppfdMin: 650,
+      ppfdMax: 950,
+    };
   }
   if (weekNum <= strain.vegW + strain.flowerW) {
-    return { phase: 'Engorde', ecMin: strain.ecFlower, ecMax: strain.ecPeak, phMin: 6.0, phMax: 6.5, humidityMin: 35, humidityMax: 50 };
+    return {
+      phase: 'Engorde',
+      ecMin: strain.ecFlower,
+      ecMax: strain.ecPeak,
+      phMin: 6.0,
+      phMax: 6.5,
+      humidityMin: 35,
+      humidityMax: 50,
+      vpdMin: 1.05,
+      vpdMax: 1.6,
+      co2Min: 800,
+      co2Max: 1400,
+      ppfdMin: 600,
+      ppfdMax: 900,
+    };
   }
-  return { phase: 'Flush', ecMin: 0.1, ecMax: 0.4, phMin: 6.0, phMax: 6.5, humidityMin: 35, humidityMax: 45 };
+  return {
+    phase: 'Flush',
+    ecMin: 0.1,
+    ecMax: 0.4,
+    phMin: 6.0,
+    phMax: 6.5,
+    humidityMin: 35,
+    humidityMax: 45,
+    vpdMin: 0.85,
+    vpdMax: 1.35,
+    co2Min: 400,
+    co2Max: 600,
+    ppfdMin: 350,
+    ppfdMax: 550,
+  };
 }
 
 function renderHistorialMeasurementsTable() {
@@ -449,7 +614,7 @@ function renderHistorialMeasurementsTable() {
   return `
     <div class="table-scroll table-scroll--mt-sm">
       <table class="week-table">
-        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Pl.'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Notas</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Pl.'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>VPD</th><th>CO₂</th><th>PPFD</th><th>h</th><th>Notas</th></tr></thead>
         <tbody>
           ${rows.map((r) => `<tr>
             <td>${new Date(r.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
@@ -458,6 +623,12 @@ function renderHistorialMeasurementsTable() {
             <td class="ec-val">${Number.isFinite(r.ec) ? r.ec.toFixed(2) : '—'}</td>
             <td>${Number.isFinite(r.volume) ? r.volume.toFixed(1) : '—'}</td>
             <td>${Number.isFinite(r.waterTemp) ? r.waterTemp.toFixed(1) + '°C' : '—'}</td>
+            <td>${Number.isFinite(r.airTemp) ? r.airTemp.toFixed(1) + '°C' : '—'}</td>
+            <td>${Number.isFinite(r.humidity) ? r.humidity.toFixed(0) + '%' : '—'}</td>
+            <td class="ec-val">${formatMeasurementVpd(r)}</td>
+            <td>${Number.isFinite(r.co2) ? r.co2.toFixed(0) + ' ppm' : '—'}</td>
+            <td>${Number.isFinite(r.ppfd) ? r.ppfd.toFixed(0) : '—'}</td>
+            <td>${Number.isFinite(r.lightHours) ? r.lightHours.toFixed(1) : '—'}</td>
             <td class="table-cell-note">${r.note || '—'}</td>
           </tr>`).join('')}
         </tbody>

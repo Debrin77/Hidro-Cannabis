@@ -99,7 +99,7 @@
   <div class="page-header">
     <div class="breadcrumb">Hydro Cannabis / Monitor</div>
     <h1>Monitor de cultivo</h1>
-    <p>Estado en tiempo real y registro de eventos de tu cultivo activo.</p>
+    <p>Medición guiada: solución (pH, EC, agua), microclima (aire, HR, VPD, CO₂), luz (PPFD/DLI) y nutrientes por fase.</p>
   </div>
   <div id="monitorContent"></div>
 </div>
@@ -123,6 +123,16 @@
   <div id="historialContent"></div>
 </div>
 
+<!-- ══════════════ CLIMATOLOGÍA ══════════════ -->
+<div class="view" id="view-climatologia">
+  <div class="page-header">
+    <div class="breadcrumb">Hydro Cannabis / Climatología</div>
+    <h1>Climatología del emplazamiento</h1>
+    <p>Pronóstico y riesgos orientativos para la <strong>ubicación del sistema</strong> (la misma que en el checklist o cultivo activo). Cruza con tus mediciones de microclima en Medir.</p>
+  </div>
+  <div id="climatologiaContent"></div>
+</div>
+
 <!-- ══════════════ CONSEJOS ══════════════ -->
 <div class="view" id="view-consejos">
   <div class="page-header page-header--compact">
@@ -141,7 +151,7 @@
       <span class="consejo-num">2</span>
       <div>
         <strong>Medir</strong>
-        <p>Registra pH, EC y volumen cada día o cuando cambies la solución. Las alertas usan la última lectura.</p>
+        <p>Registra pH, EC, temperatura de agua, aire, humedad (VPD), CO₂ y luz (PPFD + horas → DLI). Las alertas usan la última lectura.</p>
       </div>
     </div>
     <div class="consejo-card">
@@ -154,11 +164,12 @@
     <div class="consejo-card">
       <span class="consejo-num">4</span>
       <div>
-        <strong>Más</strong>
-        <p>Variedades, nutrientes top 10, parámetros ambientales y marco legal (orientativo).</p>
+        <strong>Más y Clima</strong>
+        <p>Variedades, nutrientes, legal, y la pestaña <strong>Clima</strong> con pronóstico para la ubicación del sistema.</p>
       </div>
     </div>
     <div class="alert info"><i class="ti ti-info-circle"></i><p>Los cálculos y tablas son <strong>guías</strong>. Ajusta siempre según tus mediciones y el fabricante de nutrientes.</p></div>
+    <div id="consejosStrainSpecs"></div>
   </div>
 </div>
 
@@ -357,6 +368,9 @@
   <button type="button" class="bottom-nav-item" data-nav-view="historial" onclick="navTo('historial')">
     <i class="ti ti-chart-line" aria-hidden="true"></i><span>Historial</span>
   </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="climatologia" onclick="navTo('climatologia')">
+    <i class="ti ti-cloud-storm" aria-hidden="true"></i><span>Clima</span>
+  </button>
   <button type="button" class="bottom-nav-item" data-nav-view="more" onclick="toggleMoreMenu()" aria-expanded="false" id="moreNavBtn">
     <i class="ti ti-layout-grid" aria-hidden="true"></i><span>Más</span>
   </button>
@@ -403,10 +417,14 @@
 <script src="js/systemSizing.js"></script>
 <script src="js/strains.js"></script>
 <script src="js/nutrients.js"></script>
+<script src="js/systemProfiles.js"></script>
+<script src="js/strainTargets.js"></script>
 <script src="js/cultivo.js"></script>
 <script src="js/monitor.js"></script>
+<script src="js/trendCharts.js"></script>
 <script src="js/semanas.js"></script>
 <script src="js/home.js"></script>
+<script src="js/clima.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

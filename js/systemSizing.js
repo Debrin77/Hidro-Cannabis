@@ -14,7 +14,7 @@ const GAL_US_L = 3.78541;
  * @param {'standard'|'fine'} hw.airStoneType
  * @param {number} hw.airLineLengthM
  * @param {number} hw.solutionTempC
- * @param {'RDWC'|'DWC'|'NFT'} systemType
+ * @param {'RDWC'|'DWC'|'NFT'|'FLOAT'|'AERO'} systemType
  */
 function computeHydroSizing(hw, systemType) {
   const sites = Math.min(48, Math.max(1, parseInt(hw.sites, 10) || 1));
@@ -38,6 +38,22 @@ function computeHydroSizing(hw, systemType) {
     };
   }
 
+  if (systemType === 'AERO') {
+    return {
+      systemType,
+      nft: true,
+      hints: [
+        'Aeroponía: raíces en cámara oscura con nebulización o fumigación fina. Cannabis es viable con kits maduros y buena higiene.',
+        'Riesgo principal: boquillas obstruidas y exceso de humedad en raíz — filtrado fino, limpiezas y ciclos húmedo/seco según diseño.',
+        'pH/EC en reserva mezclada: revisa frecuencia alta; temperatura del líquido y de la cámara afecta al desarrollo radicular.',
+      ],
+      disclaimer:
+        'El dimensionado depende de presión, nº de boquillas y volumen de cámara. Sigue la guía del fabricante del kit aeropónico.',
+    };
+  }
+
+  const sizingSystem = systemType === 'FLOAT' ? 'DWC' : systemType;
+
   const galPerBucket = vSite / GAL_US_L;
   let lpmPerSite = galPerBucket;
   if (airStone === 'fine') lpmPerSite *= 0.9;
@@ -53,7 +69,7 @@ function computeHydroSizing(hw, systemType) {
 
   let airForSites = sites * lpmPerSite * tempFactor * lineFactor;
   let airControl = 0;
-  if (systemType === 'RDWC' && vControl > 0) {
+  if (sizingSystem === 'RDWC' && vControl > 0) {
     airControl = (vControl / GAL_US_L) * (airStone === 'fine' ? 0.9 : 1) * tempFactor * lineFactor;
   }
 
@@ -61,10 +77,10 @@ function computeHydroSizing(hw, systemType) {
   const airMinimum = airForSites * 0.85 + airControl * 0.85;
 
   const totalSolutionL =
-    systemType === 'RDWC' ? sites * vSite + vControl : sites * vSite;
+    sizingSystem === 'RDWC' ? sites * vSite + vControl : sites * vSite;
 
   let waterPump = null;
-  if (systemType === 'RDWC') {
+  if (sizingSystem === 'RDWC') {
     const turnoversPerHour = sites <= 4 ? 4 : sites <= 8 ? 3.5 : 3;
     const lhTarget = totalSolutionL * turnoversPerHour;
     const lhMin = totalSolutionL * 2.5;
@@ -78,7 +94,7 @@ function computeHydroSizing(hw, systemType) {
   }
 
   const mainPipeMm =
-    systemType === 'RDWC' && waterPump
+    sizingSystem === 'RDWC' && waterPump
       ? waterPump.gphTarget > 400
         ? '32–40 mm (1¼") o equivalente'
         : '25 mm (1") / 20–25 mm según accesorios'
@@ -87,7 +103,7 @@ function computeHydroSizing(hw, systemType) {
   const hints = [];
   hints.push(
     `Volumen útil de solución estimado: ~${Math.round(totalSolutionL)} L (${sites} sitio(s) × ${vSite} L${
-      systemType === 'RDWC' && vControl > 0 ? ` + ${vControl} L depósito control` : ''
+      sizingSystem === 'RDWC' && vControl > 0 ? ` + ${vControl} L depósito control` : ''
     }).`,
   );
   hints.push(
@@ -96,7 +112,7 @@ function computeHydroSizing(hw, systemType) {
   hints.push(
     `Manguera de aire: recortes cortos y distribuidor; si superas ~2 m por rama, compensa con bomba mayor (factor línea ~${lineFactor.toFixed(2)}).`,
   );
-  if (systemType === 'RDWC' && waterPump) {
+  if (sizingSystem === 'RDWC' && waterPump) {
     hints.push(
       `Bomba de agua (recirculación): apunta a ~${waterPump.lphTarget} L/h (~${waterPump.gphTarget} GPH) como referencia cómoda; mínimo razonable ~${waterPump.lphMin} L/h. Comprueba altura de elevación (cabeza) en la curva del fabricante.`,
     );
@@ -104,7 +120,11 @@ function computeHydroSizing(hw, systemType) {
       'Tubería retorno y mandante: evita codos innecesarios; purga de aire en el circuito maestro si procede.',
     );
   } else {
-    hints.push('DWC: no necesitas bomba de nutriente entre cubos si cada uno es autónomo; la clave es aireación suficiente por cubo.');
+    hints.push(
+      systemType === 'FLOAT'
+        ? 'Mesa flotante / balsa DWC: la solución es común; oxigenación por aireación de todo el volumen y raíces sumergidas en balsa. Válido para cannabis con control de luz, pH/EC y temperatura de agua.'
+        : 'DWC: no necesitas bomba de nutriente entre cubos si cada uno es autónomo; la clave es aireación suficiente por cubo.',
+    );
   }
   if (Number.isFinite(tempC) && tempC > 24) {
     hints.push('Agua >24 °C: considera chiller, botellas congeladas o bajar temperatura ambiente; el O₂ disuelto cae rápido.');
@@ -112,6 +132,7 @@ function computeHydroSizing(hw, systemType) {
 
   return {
     systemType,
+    sizingBasis: sizingSystem,
     sites,
     volumePerSiteL: vSite,
     controlReservoirL: vControl,
@@ -162,9 +183,10 @@ function runSystemSizingCalculation() {
 function renderSystemSizingHtml(result) {
   if (!result || result.nft) {
     const hs = (result && result.hints) || [];
+    const label = result?.systemType === 'AERO' ? 'Aeroponía' : 'NFT';
     return `
       <div class="sizing-result">
-        <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>NFT</strong><p>${result ? result.disclaimer : 'Selecciona sistema y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
+        <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>${label}</strong><p>${result ? result.disclaimer : 'Selecciona sistema y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
       </div>`;
   }
 
