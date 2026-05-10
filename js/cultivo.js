@@ -87,6 +87,9 @@ function renderInitialOnboarding() {
   const lineM = Number.isFinite(hw.airLineLengthM) ? hw.airLineLengthM : 2;
   const solT = Number.isFinite(hw.solutionTempC) ? hw.solutionTempC : '';
   const pipeMat = hw.pipeMaterial || 'pvc';
+  const buildType = hw.buildType === 'commercial' ? 'commercial' : 'diy';
+  const userAir = Number.isFinite(hw.userAirLpm) ? hw.userAirLpm : '';
+  const userWat = Number.isFinite(hw.userWaterLph) ? hw.userWaterLph : '';
   const ctlDisabled = sysActive !== 'RDWC';
   const sizingHtml = cfg.systemSizingResult
     ? renderSystemSizingHtml(cfg.systemSizingResult)
@@ -144,7 +147,7 @@ function renderInitialOnboarding() {
 
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Ingeniería del sistema · datos de montaje</div></div>
-      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> (regla habitual ~1 L/min por galón US por depósito en DWC) y de <strong>recirculación</strong> en RDWC (varios volúmenes/hora del circuito), además de pistas de tubería y materiales.</p>
+      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> y <strong>recirculación</strong> alineados con criterios habituales en hidroponía (DWC ~1 L/min de aire por galón US de solución; RDWC varios vuelcos del volumen/hora). Si es <strong>montaje propio</strong>, indica el <strong>L/min</strong> y <strong>L/h</strong> de tus bombas: si quedan cortos respecto al cálculo, verás <strong>avisos y un rango recomendado</strong> (y botón para rellenar el valor orientativo). En <strong>kit comercial</strong>, el fabricante suele dimensionar bien; puedes contrastar igualmente con la placa del equipo.</p>
       ${(() => {
         const pr = typeof getSystemProfile === 'function' ? getSystemProfile(sysActive) : null;
         if (!pr) return '';
@@ -159,6 +162,24 @@ function renderInitialOnboarding() {
         <div class="form-group"><label>Longitud aprox. manguera de aire (m)</label><input id="onbAirLineM" type="number" min="0" max="30" step="0.5" value="${lineM}"></div>
         <div class="form-group"><label>Temperatura típica del líquido (°C, opcional)</label><input id="onbSolutionTemp" type="number" min="10" max="35" step="0.5" placeholder="p. ej. 20" value="${solT === '' ? '' : solT}"></div>
         <div class="form-group"><label>Material línea de líquido</label><select id="onbPipeMaterial"><option value="pvc" ${pipeMat === 'pvc' ? 'selected' : ''}>PVC presión / rígido</option><option value="pe" ${pipeMat === 'pe' ? 'selected' : ''}>PE / polietileno</option><option value="reinforced" ${pipeMat === 'reinforced' ? 'selected' : ''}>Manguera reforzada</option></select></div>
+        <div class="form-group">
+          <label>Origen del sistema</label>
+          <select id="onbBuildType" onchange="onOnboardingBuildTypeChange()">
+            <option value="diy" ${buildType === 'diy' ? 'selected' : ''}>Montaje propio (DIY) — validar caudales</option>
+            <option value="commercial" ${buildType === 'commercial' ? 'selected' : ''}>Kit comercial / tienda</option>
+          </select>
+          <span class="form-hint">DIY: introduce bombas para contrastarlas con el cálculo. Kit: confía en el manual; puedes validar con la placa del equipo.</span>
+        </div>
+        <div class="form-group">
+          <label>Bomba de aire — caudal nominal (L/min)</label>
+          <input id="onbUserAirLpm" type="number" min="0" max="500" step="0.1" placeholder="Ej: 12" value="${userAir === '' ? '' : userAir}">
+          <span class="form-hint">Dato de la placa; el caudal útil baja con contrapresión y manguera larga.</span>
+        </div>
+        <div class="form-group">
+          <label>Bomba recirculación — caudal nominal (L/h), solo RDWC</label>
+          <input id="onbUserWaterLph" type="number" min="0" max="20000" step="1" placeholder="Ej: 800" value="${userWat === '' ? '' : userWat}" ${ctlDisabled ? 'disabled' : ''}>
+          <span class="form-hint">Vacío en DWC, NFT, balsa o aeroponía.</span>
+        </div>
       </div>
       <div class="btn-row">
         <button type="button" class="btn btn-primary" onclick="runSystemSizingCalculation()"><i class="ti ti-calculator"></i> Calcular dimensionado</button>
@@ -167,18 +188,24 @@ function renderInitialOnboarding() {
     </div>
 
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Paso 3 · Variedad, trasplante y nutrición</div></div>
+      <div class="card-header"><div class="card-title"><i class="ti ti-seedling"></i>Paso 3 · Variedad, trasplante, nutriente y dosificación</div></div>
+      <p class="body-prose mb-text-block">El <strong>nutriente principal</strong> define la base de la mezcla en toda la app (Germ / Veg / Flor / Flush). Los <strong>aditivos</strong> mostrados son los que suele combinar esa línea: úsalos según tabla del fabricante y tus mediciones de pH/EC.</p>
       <div class="grid2">
         <div class="form-group"><label>Variedad</label><select id="onbStrain">${strains.map(s=>`<option value="${s.id}" ${(cfg.strainId||'ww')===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
         <div class="form-group"><label>Edad (días)</label><input id="onbAge" type="number" min="0" max="120" value="${Number.isFinite(cfg.ageDays)?cfg.ageDays:0}"></div>
         <div class="form-group"><label>Origen (semilla/esqueje/proveedor)</label><input id="onbOrigin" type="text" value="${cfg.origin||''}" placeholder="Ej: Esqueje propio"></div>
         <div class="form-group"><label>Fecha trasplante al sistema</label><input id="onbTransplantDate" type="date" value="${cfg.transplantDate||new Date().toISOString().split('T')[0]}"></div>
-        <div class="form-group"><label>Nutriente principal</label><select id="onbNutri">${nutrients.map(n=>`<option value="${n.rank}" ${(cfg.nutri||1)===n.rank?'selected':''}>${n.rank}. ${n.name}</option>`).join('')}</select></div>
+        <div class="form-group">
+          <label>Nutriente principal (dosificación en la app)</label>
+          <select id="onbNutri" onchange="updateOnboardingNutrientHint()">${nutrients.map(n=>`<option value="${n.rank}" ${(cfg.nutri||1)===n.rank?'selected':''}>${n.rank}. ${n.name}</option>`).join('')}</select>
+        </div>
         <div class="form-group"><label>Tipo de agua</label><select id="onbWater"><option value="RO" ${(cfg.water||'RO')==='RO'?'selected':''}>Ósmosis</option><option value="destilada" ${cfg.water==='destilada'?'selected':''}>Destilada</option><option value="red" ${cfg.water==='red'?'selected':''}>Grifo</option></select></div>
       </div>
+      <div id="onbNutriHint" class="onboarding-nutri-hint-host"></div>
       <button type="button" class="btn btn-primary" onclick="completeInitialSetup()"><i class="ti ti-check"></i> Finalizar checklist y activar monitorización</button>
     </div>
   `;
+  requestAnimationFrame(() => updateOnboardingNutrientHint());
 }
 
 function toggleSkipInitialWelcome(checked) {
@@ -194,6 +221,33 @@ function toggleSystemType(systemName, enabled) {
   if (!enabled && exists) list.splice(list.indexOf(systemName), 1);
   appConfig.systems = list;
   saveAppConfig();
+}
+
+function onOnboardingBuildTypeChange() {
+  if (!appConfig) appConfig = {};
+  snapshotSystemHardwareToAppConfig();
+  saveAppConfig();
+  renderInitialOnboarding();
+}
+
+function updateOnboardingNutrientHint() {
+  const host = document.getElementById('onbNutriHint');
+  if (!host || typeof nutrients === 'undefined') return;
+  const rank = parseInt(document.getElementById('onbNutri')?.value, 10);
+  const n = nutrients.find((x) => x.rank === rank) || nutrients[0];
+  if (!n) {
+    host.innerHTML = '';
+    return;
+  }
+  const adds = (n.aditivos || []).map((a) => `<span class="pill-tag pill-tag--sm">${a}</span>`).join('');
+  const nameShort = n.name.split(' ').slice(0, 4).join(' ');
+  host.innerHTML = `<div class="onboarding-nutri-box card-sm">
+    <div class="section-label">Línea elegida · dosificación</div>
+    <p class="body-prose"><strong>${nameShort}</strong> · pH orientativo <span class="c-blue">${n.pHrange}</span> · EC <span class="c-green">${n.ECrange}</span></p>
+    <div class="section-label section-label--block">Aditivos complementarios habituales</div>
+    <div class="pill-tag-row">${adds || '<span class="text-muted">Sin lista en datos — revisa envase.</span>'}</div>
+    <p class="text-muted onboarding-nutri-foot">En <strong>Medir</strong> y <strong>Sistema</strong> la app usará esta base para mezclas; los aditivos son orientativos, no sustituyen al fabricante.</p>
+  </div>`;
 }
 
 async function analyzeClimateContext() {
@@ -243,7 +297,9 @@ function completeInitialSetup() {
   appConfig.error = '';
   snapshotSystemHardwareToAppConfig();
   appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
-  appConfig.systemSizingResult = computeHydroSizing(appConfig.systemHardware, appConfig.system);
+  const sz = computeHydroSizing(appConfig.systemHardware, appConfig.system);
+  sz.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, sz);
+  appConfig.systemSizingResult = sz;
   appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
   appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
   appConfig.strainId = document.getElementById('onbStrain')?.value || 'ww';

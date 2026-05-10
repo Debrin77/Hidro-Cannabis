@@ -1,8 +1,8 @@
 // Dimensionado hidráulico DWC / RDWC (orientativo, autoconsumo).
-// Referencias de partida (literatura y guías de cultivo hidropónico):
-// - DWC: regla habitual ~1 LPM de aire por galón US (~3,785 L) de solución por depósito (p. ej. guías tipo One Stop Grow Shop / YieldGrid).
-// - RDWC: bomba de recirculación dimensionada para varios recambios del volumen total por hora; ejemplos de foros/cultivadores en rangos 200–1000+ GPH según número de cubos y volumen.
-// Siempre verificar con el fabricante de la bomba y la altura manométrica real.
+// Referencias de partida (literatura, extensiones y guías de cultivo hidropónico):
+// - DWC: regla habitual ~1 LPM de aire por galón US (~3,785 L) por depósito (consenso en guías comerciales y foros de cultivo; p. ej. tablas tipo “air pump per gallon”).
+// - RDWC: recirculación con varios recambios del volumen total por hora (rangos habituales citados 200–1000+ GPH según tamaño de circuito).
+// - Contrasta siempre con la curva Q-H del fabricante (pérdidas por altura y codos reducen L/h y L/min reales).
 
 const GAL_US_L = 3.78541;
 
@@ -151,8 +151,113 @@ function computeHydroSizing(hw, systemType) {
   };
 }
 
+/**
+ * Contrasta caudales declarados por el usuario con el dimensionado (guías tipo ~1 LPM/gal US en DWC y recirculación RDWC).
+ * @param {object} hw hardware + userAirLpm, userWaterLph, buildType
+ * @param {ReturnType<typeof computeHydroSizing>} sizingResult
+ */
+function validateUserDeclaredPumps(hw, sizingResult) {
+  const buildType = hw.buildType === 'commercial' ? 'commercial' : 'diy';
+  const out = { buildType, issues: [], commercialNote: null };
+
+  if (!sizingResult || sizingResult.nft) {
+    out.commercialNote =
+      buildType === 'commercial'
+        ? 'NFT / aeroponía comercial: sigue el manual del kit (caudal de película o presión de niebla). El dimensionado fino depende del fabricante.'
+        : null;
+    return out;
+  }
+
+  const minAir = sizingResult.airPumpLpmMinimum;
+  const recAir = sizingResult.airPumpLpmRecommended;
+  const userAir = parseFloat(hw.userAirLpm);
+
+  if (buildType === 'commercial' && !Number.isFinite(userAir)) {
+    out.commercialNote =
+      'Kit comercial: los fabricantes suelen dimensionar bomba y aireador de forma coherente con el volumen. Revisa la ficha técnica. Si quieres que la app contraste cifras, elige «Montaje propio / DIY» e introduce el caudal nominal de la placa (L/min y L/h).';
+  }
+
+  if (Number.isFinite(userAir)) {
+    if (userAir < minAir * 0.92) {
+      out.issues.push({
+        level: 'danger',
+        key: 'air-low',
+        title: 'Bomba de aire por debajo del rango orientativo',
+        text: `Indicas ${userAir} L/min; con tu montaje el mínimo prudente es ~${minAir} L/min y el objetivo cómodo ≥${recAir} L/min (base habitual ~1 L/min por galón US por depósito, con ajustes por temperatura y manguera).`,
+        suggestMin: Math.round(minAir * 10) / 10,
+        suggestTarget: Math.round(recAir * 10) / 10,
+        unit: 'L/min',
+      });
+    } else if (userAir < recAir * 0.96) {
+      out.issues.push({
+        level: 'warn',
+        key: 'air-borderline',
+        title: 'Aireación algo justa',
+        text: `~${userAir} L/min queda por debajo del objetivo ~${recAir} L/min. Puede valer con agua fría y buenos difusores; en calor sube el riesgo de anoxia.`,
+        suggestMin: Math.round(minAir * 10) / 10,
+        suggestTarget: Math.round(recAir * 10) / 10,
+        unit: 'L/min',
+      });
+    }
+  } else if (buildType === 'diy') {
+    out.issues.push({
+      level: 'info',
+      key: 'air-missing',
+      title: 'Montaje propio: añade el caudal de tu aireador',
+      text: `Introduce los L/min nominales de la bomba de aire (placa del equipo) y vuelve a calcular. Referencia para tu volumen: mínimo ~${minAir} L/min, recomendado ≥${recAir} L/min.`,
+      suggestMin: Math.round(minAir * 10) / 10,
+      suggestTarget: Math.round(recAir * 10) / 10,
+      unit: 'L/min',
+    });
+  }
+
+  const wp = sizingResult.waterPump;
+  const userWat = parseFloat(hw.userWaterLph);
+  if (wp && sizingResult.sizingBasis === 'RDWC') {
+    if (Number.isFinite(userWat)) {
+      if (userWat < wp.lphMin * 0.88) {
+        out.issues.push({
+          level: 'danger',
+          key: 'water-low',
+          title: 'Recirculación RDWC baja',
+          text: `Indicas ${userWat} L/h; el mínimo razonable calculado es ~${wp.lphMin} L/h y el objetivo cómodo ~${wp.lphTarget} L/h (~${wp.turnoversPerHour} vuelcos/h del volumen total).`,
+          suggestMin: wp.lphMin,
+          suggestTarget: wp.lphTarget,
+          unit: 'L/h',
+        });
+      } else if (userWat < wp.lphTarget * 0.9) {
+        out.issues.push({
+          level: 'warn',
+          key: 'water-borderline',
+          title: 'Caudal de recirculación ajustado',
+          text: `${userWat} L/h puede quedarse corto con codos y tubería larga; valor de trabajo cómodo ~${wp.lphTarget} L/h.`,
+          suggestMin: wp.lphMin,
+          suggestTarget: wp.lphTarget,
+          unit: 'L/h',
+        });
+      }
+    } else if (buildType === 'diy') {
+      out.issues.push({
+        level: 'info',
+        key: 'water-missing',
+        title: 'RDWC DIY: añade L/h de la bomba de recirculación',
+        text: `Introduce el caudal nominal (L/h a poca altura). Referencia: mínimo ~${wp.lphMin} L/h, objetivo ~${wp.lphTarget} L/h.`,
+        suggestMin: wp.lphMin,
+        suggestTarget: wp.lphTarget,
+        unit: 'L/h',
+      });
+    }
+  }
+
+  return out;
+}
+
 function readSystemHardwareFromOnboardingForm() {
   const sys = document.getElementById('onbSystem')?.value || 'RDWC';
+  const airRaw = document.getElementById('onbUserAirLpm')?.value;
+  const watRaw = document.getElementById('onbUserWaterLph')?.value;
+  const userAirLpm = airRaw != null && String(airRaw).trim() !== '' ? parseFloat(String(airRaw).replace(',', '.')) : NaN;
+  const userWaterLph = watRaw != null && String(watRaw).trim() !== '' ? parseFloat(String(watRaw).replace(',', '.')) : NaN;
   return {
     sites: parseInt(document.getElementById('onbSites')?.value, 10) || 4,
     volumePerSiteL: parseFloat(document.getElementById('onbVolumePerSite')?.value) || 20,
@@ -162,6 +267,9 @@ function readSystemHardwareFromOnboardingForm() {
     airLineLengthM: parseFloat(document.getElementById('onbAirLineM')?.value) || 2,
     solutionTempC: parseFloat(document.getElementById('onbSolutionTemp')?.value),
     pipeMaterial: document.getElementById('onbPipeMaterial')?.value || 'pvc',
+    buildType: document.getElementById('onbBuildType')?.value === 'commercial' ? 'commercial' : 'diy',
+    userAirLpm: Number.isFinite(userAirLpm) ? userAirLpm : undefined,
+    userWaterLph: Number.isFinite(userWaterLph) ? userWaterLph : undefined,
   };
 }
 
@@ -175,18 +283,66 @@ function runSystemSizingCalculation() {
   if (!appConfig) appConfig = {};
   snapshotSystemHardwareToAppConfig();
   const sys = appConfig.system;
-  appConfig.systemSizingResult = computeHydroSizing(appConfig.systemHardware, sys);
+  const result = computeHydroSizing(appConfig.systemHardware, sys);
+  result.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, result);
+  appConfig.systemSizingResult = result;
   saveAppConfig();
   renderInitialOnboarding();
+}
+
+function renderUserPumpValidationHtml(validation, sizingResult) {
+  if (!validation) return '';
+  let html = '';
+  if (validation.commercialNote) {
+    html += `<div class="alert info sizing-user-pump-note"><i class="ti ti-building-store"></i><p>${validation.commercialNote}</p></div>`;
+  }
+  const order = { danger: 0, warn: 1, info: 2 };
+  const issues = [...(validation.issues || [])].sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3));
+  for (const iss of issues) {
+    const cls = iss.level === 'danger' ? 'danger' : iss.level === 'warn' ? 'warn' : 'info';
+    const sug =
+      iss.suggestTarget != null
+        ? `<p class="sizing-suggest"><strong>Rango orientativo:</strong> ${iss.suggestMin}–${iss.suggestTarget} ${iss.unit || ''} (nominal de placa; confirma curva del fabricante a tu altura real).</p>
+          <button type="button" class="btn btn-ghost btn--compact sizing-apply-btn" onclick="applyOnboardingPumpSuggestion('${iss.key}')">Usar ${iss.suggestTarget} ${iss.unit || ''}</button>`
+        : '';
+    html += `<div class="alert ${cls} sizing-user-pump-issue"><i class="ti ti-gauge"></i><div><strong>${iss.title}</strong><p>${iss.text}</p>${sug}</div></div>`;
+  }
+  if (!validation.commercialNote && !issues.length && sizingResult && !sizingResult.nft) {
+    html += `<div class="alert info sizing-user-pump-note"><i class="ti ti-check"></i><p>Caudales declarados coherentes con el dimensionado (o sin datos que contrastar). Ajusta si la altura manométrica real reduce el caudal efectivo.</p></div>`;
+  }
+  return html;
+}
+
+function applyOnboardingPumpSuggestion(key) {
+  const r = appConfig?.systemSizingResult;
+  const v = r?.userPumpValidation;
+  if (!v || !Array.isArray(v.issues)) return;
+  const iss = v.issues.find((x) => x.key === key);
+  if (!iss || iss.suggestTarget == null) return;
+  if (key === 'air-low' || key === 'air-borderline' || key === 'air-missing') {
+    const el = document.getElementById('onbUserAirLpm');
+    if (el) el.value = iss.suggestTarget;
+  }
+  if (key === 'water-low' || key === 'water-borderline' || key === 'water-missing') {
+    const el = document.getElementById('onbUserWaterLph');
+    if (el) el.value = iss.suggestTarget;
+  }
+  runSystemSizingCalculation();
 }
 
 function renderSystemSizingHtml(result) {
   if (!result || result.nft) {
     const hs = (result && result.hints) || [];
     const label = result?.systemType === 'AERO' ? 'Aeroponía' : 'NFT';
+    const uv =
+      result && !result.userPumpValidation && typeof appConfig !== 'undefined' && appConfig?.systemHardware
+        ? validateUserDeclaredPumps(appConfig.systemHardware, result)
+        : result?.userPumpValidation;
+    const pumpExtra = uv ? renderUserPumpValidationHtml(uv, result) : '';
     return `
       <div class="sizing-result">
         <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>${label}</strong><p>${result ? result.disclaimer : 'Selecciona sistema y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
+        ${pumpExtra ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Equipo declarado</div>${pumpExtra}</div>` : ''}
       </div>`;
   }
 
@@ -198,6 +354,13 @@ function renderSystemSizingHtml(result) {
       </div>`
     : `<div class="sizing-block"><div class="sizing-label">Bomba de agua</div><p>No aplica en DWC autónomo por cubos.</p></div>`;
 
+  const uvMerged =
+    result.userPumpValidation ||
+    (typeof appConfig !== 'undefined' && appConfig?.systemHardware
+      ? validateUserDeclaredPumps(appConfig.systemHardware, result)
+      : null);
+  const pumpValHtml = renderUserPumpValidationHtml(uvMerged, result);
+
   return `
     <div class="sizing-result">
       <div class="sizing-block">
@@ -205,6 +368,7 @@ function renderSystemSizingHtml(result) {
         <p>Bomba de aire recomendada: <strong>≥ ${result.airPumpLpmRecommended} L/min</strong> (mínimo prudente ~${result.airPumpLpmMinimum} L/min) para ${result.sites} depósito(s) de ${result.volumePerSiteL} L.</p>
       </div>
       ${waterBlock}
+      ${pumpValHtml ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Contraste con tu equipo (DIY / kit)</div>${pumpValHtml}</div>` : ''}
       <div class="sizing-block">
         <div class="sizing-label">Tubería principal (orientativo)</div>
         <p>${result.mainPipeHint}</p>
@@ -224,3 +388,5 @@ function renderSystemSizingHtml(result) {
 window.computeHydroSizing = computeHydroSizing;
 window.runSystemSizingCalculation = runSystemSizingCalculation;
 window.snapshotSystemHardwareToAppConfig = snapshotSystemHardwareToAppConfig;
+window.validateUserDeclaredPumps = validateUserDeclaredPumps;
+window.applyOnboardingPumpSuggestion = applyOnboardingPumpSuggestion;

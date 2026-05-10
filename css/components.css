@@ -995,6 +995,15 @@
 .cultivo-site-lead{margin:0 0 0.85rem;font-size:0.9rem;color:var(--text2);line-height:1.45}
 .cultivo-site-grid{margin-bottom:0.75rem}
 .cultivo-site-actions{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center}
+
+.sizing-block--validation{margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border2)}
+.sizing-user-pump-issue p{margin:0.35rem 0 0;font-size:0.875rem;line-height:1.5;color:var(--text2)}
+.sizing-suggest{margin:0.5rem 0 0;font-size:0.85rem;color:var(--text2)}
+.sizing-apply-btn{margin-top:0.5rem!important}
+.sizing-user-pump-note p{margin:0;font-size:0.875rem;line-height:1.5}
+.onboarding-nutri-hint-host{margin:0.75rem 0 1rem}
+.onboarding-nutri-box{padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius)}
+.onboarding-nutri-foot{margin:0.65rem 0 0!important;font-size:12px;line-height:1.45}
 .monitor-metrics--tight{margin-top:0.25rem}
 .section-label--block{margin-top:1rem;margin-bottom:0.35rem}
 
