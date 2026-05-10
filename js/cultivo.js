@@ -599,7 +599,7 @@ function renderActiveGrow(){
           <div class="param-row"><span class="param-key">Fecha medición</span><span class="param-val">${selectedPlantInfo.latestDate}</span></div>
         </div>
       </div>
-      <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista cenital: toca el cubo para seleccionar sitio; el icono verde junto al cubo abre la ficha por sitio (variedad, edad, procedencia). ${myGrow.system === 'RDWC' ? 'En RDWC, pH/EC son de la solución común (depósito de control).' : ''}</p></div>
+      <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista cenital: cada sitio lleva un <strong>icono de planta</strong> (plántula si germinación o &lt;18 días; hoja tipo cannabis si planta establecida o esqueje de proveedor). Toca el <strong>cubo o cesta</strong> para seleccionar P1…Pn; toca el <strong>icono</strong> para la ficha (variedad, edad, procedencia). ${myGrow.system === 'RDWC' ? 'En RDWC, pH/EC son de la solución común (depósito de control).' : ''}</p></div>
     </div>
 
     <button type="button" class="btn btn-ghost reset-grow-btn" onclick="resetGrow()">
@@ -796,7 +796,7 @@ function renderRdwcSvg(grow, strain, plantCount, weekNum, phaseName) {
             <text x="${node.x}" y="${node.y+4}" class="bucket-label">${node.label}</text>
             <text x="${node.x}" y="${node.y+35}" class="cultivar-label">${slotLabel}</text>
           </g>
-          ${renderPlantSiteTapGlyph(node, grow)}
+          ${renderPlantSiteMarker(node, grow, weekNum, -38)}
         </g>`;
       }).join('')}
 
@@ -846,7 +846,7 @@ function renderDwcSvg(grow, strain, plantCount, weekNum, phaseName) {
               <text x="${x}" y="${y+42}" class="cultivar-label">${slotLabel}</text>
               <line x1="${x}" y1="${y+24}" x2="${x}" y2="${waterY+18}" class="root-line"></line>
             </g>
-            ${renderPlantSiteTapGlyph(node, grow)}
+            ${renderPlantSiteMarker(node, grow, weekNum, -40)}
           </g>
         `;
       }).join('')}
@@ -890,7 +890,7 @@ function renderFloatSvg(grow, strain, plantCount, weekNum, phaseName) {
               <text x="${x}" y="${y + 42}" class="cultivar-label">${slotLabel}</text>
               <line x1="${x}" y1="${y + 14}" x2="${x}" y2="${waterY + 18}" class="root-line"></line>
             </g>
-            ${renderPlantSiteTapGlyph(node, grow)}
+            ${renderPlantSiteMarker(node, grow, weekNum, -36)}
           </g>`;
       }).join('')}
 
@@ -905,31 +905,81 @@ function renderFloatSvg(grow, strain, plantCount, weekNum, phaseName) {
 
 function renderNftSvg(grow, strain, plantCount, weekNum, phaseName) {
   const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  const maxV = Math.max(1, Math.min(8, plantCount));
+  const canalY = 158;
+  const basketY = 128;
+  const span = 560;
+  const startXN = 120;
+  const gap = maxV <= 1 ? 0 : span / (maxV - 1);
+  const sites = [];
+  for (let i = 0; i < maxV; i++) {
+    const x = maxV === 1 ? 400 : startXN + i * gap;
+    sites.push({ x, y: basketY, index: i + 1 });
+  }
   return `
     <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama NFT">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">NFT · Película de nutriente</text>
       <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar}</text>
       <rect x="80" y="140" width="620" height="36" rx="8" class="water"></rect>
-      <line x1="100" y1="158" x2="760" y2="158" class="pipe flow"></line>
+      <line x1="100" y1="${canalY}" x2="760" y2="${canalY}" class="pipe flow"></line>
       <rect x="720" y="120" width="100" height="70" rx="10" class="reservoir"></rect>
       <text x="770" y="162" class="reservoir-label" text-anchor="middle">DEPÓSITO</text>
-      <text x="400" y="220" class="reservoir-sub">Canal inclinado · caudal continuo · pH/EC en depósito mezclado</text>
-      <text x="400" y="255" class="cultivar-label">Cannabis en NFT es habitual; vigila raíces al final del canal y temperatura del depósito.</text>
+      ${sites
+        .map((node) => {
+          const slotLabel = getCultivarShortLabelForSlot(grow, node.index);
+          return `
+        <g class="plant-node" data-plant="${node.index}">
+          <g class="plant-node-hit" onclick="selectPlantInDiagram(${node.index})">
+            <rect x="${node.x - 18}" y="${node.y - 8}" width="36" height="24" rx="6" class="netpot ${grow.selectedPlant === node.index ? 'bucket-selected' : ''}"></rect>
+            <text x="${node.x}" y="${node.y + 36}" class="bucket-label">P${node.index}</text>
+            <text x="${node.x}" y="${node.y + 52}" class="cultivar-label">${slotLabel}</text>
+            <line x1="${node.x}" y1="${node.y + 18}" x2="${node.x}" y2="168" class="root-line"></line>
+          </g>
+          ${renderPlantSiteMarker(node, grow, weekNum, -34)}
+        </g>`;
+        })
+        .join('')}
+      <text x="400" y="220" class="reservoir-sub">Canal inclinado · cestas / cubos en cada sitio · pH/EC en depósito</text>
+      <text x="400" y="255" class="cultivar-label">Icono: germinado o material de proveedor — pulsa la planta para la ficha del sitio.</text>
     </svg>
   `;
 }
 
 function renderAeroSvg(grow, strain, plantCount, weekNum, phaseName) {
   const cultivar = strain.name.split(' ').slice(0, 2).join(' ');
+  const maxV = Math.max(1, Math.min(6, plantCount));
+  const lidY = 102;
+  const chamberX = 200;
+  const chamberW = 420;
+  const sites = [];
+  for (let i = 0; i < maxV; i++) {
+    const x = chamberX + ((i + 1) / (maxV + 1)) * chamberW;
+    sites.push({ x, y: lidY, index: i + 1 });
+  }
   return `
     <svg viewBox="0 0 860 360" class="system-svg" role="img" aria-label="Diagrama aeroponía">
       <rect x="12" y="12" width="836" height="336" rx="14" class="svg-bg"></rect>
       <text x="28" y="38" class="svg-title">Aeroponía · Raíces en cámara</text>
       <text x="28" y="58" class="svg-sub">Semana ${weekNum} · ${phaseName} · ${cultivar}</text>
       <rect x="200" y="110" width="420" height="160" rx="16" class="reservoir"></rect>
+      <rect x="200" y="102" width="420" height="14" rx="4" class="aero-lid"></rect>
       <text x="410" y="200" class="reservoir-label">CÁMARA OSCURA</text>
-      <text x="410" y="300" class="reservoir-sub">Nebulización / fumigación fina · pH/EC en reserva · higiene y filtros críticos</text>
+      ${sites
+        .map((node) => {
+          const slotLabel = getCultivarShortLabelForSlot(grow, node.index);
+          return `
+        <g class="plant-node" data-plant="${node.index}">
+          <g class="plant-node-hit" onclick="selectPlantInDiagram(${node.index})">
+            <circle cx="${node.x}" cy="${node.y + 8}" r="16" class="netpot ${grow.selectedPlant === node.index ? 'bucket-selected' : ''}"></circle>
+            <text x="${node.x}" y="${node.y + 52}" class="bucket-label">P${node.index}</text>
+            <text x="${node.x}" y="${node.y + 68}" class="cultivar-label">${slotLabel}</text>
+          </g>
+          ${renderPlantSiteMarker({ x: node.x, y: node.y + 2 }, grow, weekNum, -36)}
+        </g>`;
+        })
+        .join('')}
+      <text x="410" y="300" class="reservoir-sub">Nebulización fina · tapa con portanet / cestas · icono en cada sitio</text>
     </svg>
   `;
 }
@@ -1026,18 +1076,48 @@ function getCultivarShortLabelForSlot(grow, index) {
   return s.name.split(' ').slice(0, 2).join(' ');
 }
 
-function renderPlantSiteTapGlyph(node, grow) {
-  const custom = plantSlotHasCustomCrop(grow, node.index);
-  const cx = node.x + 20;
-  const cy = node.y - 22;
-  const cls = `plant-site-tap${custom ? ' plant-site-tap--custom' : ''}`;
+function getEffectivePlantAgeDays(grow, index) {
+  const p = getPlantSlotProfile(grow, index);
+  if (Number.isFinite(p.ageDays)) return p.ageDays;
+  const daysSince = Math.floor((new Date() - grow.startDate) / 86400000);
+  return Number.isFinite(grow.ageDays) ? grow.ageDays : daysSince;
+}
+
+/** Icono SVG nativo (plántula recién germinada / esqueje o planta establecida). */
+function renderPlantSiteMarkerSvgInner(isYoung) {
+  if (isYoung) {
+    return `
+      <line x1="0" y1="10" x2="0" y2="22" class="plant-marker-stem"/>
+      <ellipse cx="-7" cy="6" rx="5" ry="8" transform="rotate(-25 -7 6)" class="plant-marker-cotyl plant-marker-cotyl--l"/>
+      <ellipse cx="7" cy="6" rx="5" ry="8" transform="rotate(25 7 6)" class="plant-marker-cotyl plant-marker-cotyl--r"/>
+      <circle cx="0" cy="-2" r="3" class="plant-marker-meristem"/>`;
+  }
   return `
-    <g class="${cls}" role="button" focusable="true" tabindex="0" aria-label="Ficha cultivo sitio P${node.index}"
-      onclick="event.stopPropagation();openPlantSiteModal(${node.index})">
-      <circle cx="${cx}" cy="${cy}" r="14" class="plant-site-tap__ring"/>
-      <foreignObject x="${cx - 11}" y="${cy - 11}" width="22" height="22">
-        <div xmlns="http://www.w3.org/1999/xhtml" class="plant-site-tap__icon"><i class="ti ti-cannabis"></i></div>
-      </foreignObject>
+    <path class="plant-marker-cannabis" d="M0,-22 C-16,-10 -14,8 -2,14 C-6,6 -8,-4 -2,-12 C-4,-2 -2,4 0,14 C2,4 4,-2 2,-12 C8,-4 6,6 2,14 C14,8 16,-10 0,-22 Z"/>
+    <path class="plant-marker-cannabis-accent" d="M0,-18 Q6,-8 4,6 Q0,-2 0,12 Q-4,-2 -4,6 Q-6,-8 0,-18" fill="none"/>
+    <line x1="0" y1="12" x2="0" y2="22" class="plant-marker-stem"/>`;
+}
+
+/**
+ * Marcador gráfico en cada cubo / cesta / sitio (germinado, esqueje de proveedor, etc.).
+ * Clic abre la ficha del sitio; no interferir con la selección del cubo (plant-node-hit).
+ */
+function renderPlantSiteMarker(node, grow, weekNum, yOffset = -40) {
+  const custom = plantSlotHasCustomCrop(grow, node.index);
+  const age = getEffectivePlantAgeDays(grow, node.index);
+  const isYoung = weekNum <= 1 || age < 18;
+  const cls = `plant-site-marker${custom ? ' plant-site-marker--custom' : ''}${isYoung ? ' plant-site-marker--young' : ''}`;
+  const labelHint = isYoung ? 'Plántula / recién en sistema' : 'Planta en sitio';
+  const inner = renderPlantSiteMarkerSvgInner(isYoung);
+  return `
+    <g transform="translate(${node.x},${node.y + yOffset})">
+      <g class="${cls}" role="button" focusable="true" tabindex="0"
+        aria-label="Ficha cultivo P${node.index} · ${labelHint}"
+        onclick="event.stopPropagation();openPlantSiteModal(${node.index})">
+        <title>Sitio P${node.index} · ${labelHint} · pulsa para editar cultivo, edad, procedencia</title>
+        <circle cx="0" cy="0" r="24" class="plant-site-marker__halo"/>
+        <g transform="translate(0,2)">${inner}</g>
+      </g>
     </g>`;
 }
 

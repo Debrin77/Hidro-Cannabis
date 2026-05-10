@@ -824,12 +824,18 @@
 .plant-node{cursor:default}
 .plant-node-hit{cursor:pointer}
 .plant-node:hover .plant-node-hit .bucket,.plant-node:hover .plant-node-hit .netpot{filter:brightness(1.15)}
-.plant-site-tap{cursor:pointer;outline:none}
-.plant-site-tap:focus .plant-site-tap__ring{stroke:var(--a200);stroke-width:2}
-.plant-site-tap__ring{fill:var(--surface3);stroke:var(--border2);stroke-width:1.5}
-.plant-site-tap--custom .plant-site-tap__ring{fill:rgba(76,175,48,0.28);stroke:var(--g400);stroke-width:2}
-.plant-site-tap__icon{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.7rem;color:var(--text3)}
-.plant-site-tap--custom .plant-site-tap__icon{color:var(--g100)}
+.system-svg .plant-site-marker{cursor:pointer;outline:none}
+.system-svg .plant-site-marker:focus .plant-site-marker__halo{stroke:var(--a200);stroke-width:2.5}
+.system-svg .plant-site-marker__halo{fill:rgba(22,28,20,0.55);stroke:rgba(76,175,48,0.45);stroke-width:1.5}
+.system-svg .plant-site-marker--custom .plant-site-marker__halo{fill:rgba(76,175,48,0.35);stroke:var(--g400)}
+.system-svg .plant-site-marker--young .plant-site-marker__halo{stroke:rgba(139,195,74,0.7)}
+.system-svg .plant-marker-stem{stroke:#5d8c3e;stroke-width:2.2;stroke-linecap:round}
+.system-svg .plant-marker-cotyl{fill:#9ccc65;stroke:#558b2f;stroke-width:0.6}
+.system-svg .plant-marker-meristem{fill:#c5e1a5;stroke:#33691e;stroke-width:0.4}
+.system-svg .plant-marker-cannabis{fill:#66bb6a;stroke:#2e7d32;stroke-width:0.75}
+.system-svg .plant-marker-cannabis-accent{stroke:#a5d6a7;stroke-width:0.9;stroke-linecap:round}
+.system-svg .plant-site-marker--young .plant-marker-cannabis{fill:#9ccc65}
+.system-svg .aero-lid{fill:var(--surface3);stroke:var(--border2);stroke-width:1.5}
 .reservoir-sample-hint{fill:var(--b200);font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-anchor:middle}
 .reservoir-sample-note{fill:var(--text3);font-family:'Inter',sans-serif;font-size:8px;text-anchor:middle}
 
