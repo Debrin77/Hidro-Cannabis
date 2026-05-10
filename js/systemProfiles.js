@@ -93,10 +93,19 @@ function normalizeHardwareComplements(raw) {
       meterThermoHygro: true,
       meterCo2: false,
       meterPpfd: false,
+      greenhouseReflectiveInterior: false,
+      greenhouseAerationControl: false,
+      greenhouseHumidityControl: false,
+      greenhouseLedMode: 'none',
+      greenhouseLedPowerW: null,
     };
   }
   const heater = !!raw.reservoirHeater;
   const setC = parseFloat(raw.heaterThermostatC);
+  const ledRaw = parseFloat(raw.greenhouseLedPowerW);
+  const ledMode = ['none', 'full', 'veg_bloom', 'supplement'].includes(raw.greenhouseLedMode)
+    ? raw.greenhouseLedMode
+    : 'none';
   return {
     reservoirHeater: heater,
     heaterThermostatC: heater && Number.isFinite(setC) ? Math.min(35, Math.max(15, setC)) : null,
@@ -105,6 +114,11 @@ function normalizeHardwareComplements(raw) {
     meterThermoHygro: raw.meterThermoHygro !== false,
     meterCo2: !!raw.meterCo2,
     meterPpfd: !!raw.meterPpfd,
+    greenhouseReflectiveInterior: !!raw.greenhouseReflectiveInterior,
+    greenhouseAerationControl: !!raw.greenhouseAerationControl,
+    greenhouseHumidityControl: !!raw.greenhouseHumidityControl,
+    greenhouseLedMode: ledMode,
+    greenhouseLedPowerW: ledMode !== 'none' && Number.isFinite(ledRaw) ? Math.max(20, Math.min(3000, ledRaw)) : null,
   };
 }
 

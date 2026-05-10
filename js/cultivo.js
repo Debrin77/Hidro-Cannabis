@@ -83,6 +83,7 @@ function onOnboardingSystemTypeChange() {
 
 function renderCultivo(){
   if(myGrow){ renderActiveGrow(); return; }
+  updateSystemSwitchTriggerState();
   if(!appConfig?.completed && !isSkipInitialWelcome()){ renderInitialOnboarding(); return; }
   document.getElementById('cultivoContent').innerHTML=`
     <div class="wizard-progress">${[0,1,2,3].map(i=>`<div class="wiz-step ${i<wizStep?'done':i===wizStep?'active':''}"></div>`).join('')}</div>
@@ -90,6 +91,243 @@ function renderCultivo(){
   `;
   renderWizStep();
 }
+
+const WORK_SYSTEM_OPTIONS = ['RDWC', 'DWC', 'NFT', 'FLOAT', 'AERO'];
+let pendingWorkSystemTarget = null;
+const SYSTEM_WORKSPACE_EXCLUDED_KEYS = new Set(['strain', 'startDate', 'system', 'systemWorkspaces']);
+
+function deepCloneWorkspaceValue(value) {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') return value;
+  return JSON.parse(JSON.stringify(value));
+}
+
+function ensureSystemWorkspaces(grow) {
+  if (!grow || typeof grow !== 'object') return;
+  if (!grow.systemWorkspaces || typeof grow.systemWorkspaces !== 'object') grow.systemWorkspaces = {};
+}
+
+function buildSystemWorkspaceSnapshot(grow) {
+  if (!grow || typeof grow !== 'object') return null;
+  const snapshot = {};
+  Object.keys(grow).forEach((key) => {
+    if (SYSTEM_WORKSPACE_EXCLUDED_KEYS.has(key)) return;
+    snapshot[key] = deepCloneWorkspaceValue(grow[key]);
+  });
+  return snapshot;
+}
+
+function applySystemWorkspaceSnapshot(grow, snapshot) {
+  if (!grow || !snapshot || typeof snapshot !== 'object') return;
+  Object.keys(grow).forEach((key) => {
+    if (SYSTEM_WORKSPACE_EXCLUDED_KEYS.has(key)) return;
+    delete grow[key];
+  });
+  Object.entries(snapshot).forEach(([key, val]) => {
+    if (SYSTEM_WORKSPACE_EXCLUDED_KEYS.has(key)) return;
+    grow[key] = deepCloneWorkspaceValue(val);
+  });
+}
+
+function buildDefaultWorkspaceForSystem(grow, systemName) {
+  const isTargetOnboardingSystem = appConfig?.system === systemName;
+  const hwBase = isTargetOnboardingSystem ? appConfig?.systemHardware : null;
+  const sizingBase = isTargetOnboardingSystem ? appConfig?.systemSizingResult : null;
+  const source = waterProfiles[grow?.water || 'RO'] || waterProfiles.RO;
+  const siteCount = Math.min(48, Math.max(1, parseInt(hwBase?.sites, 10) || parseInt(grow?.plants, 10) || 2));
+  return {
+    plants: siteCount,
+    technique: grow?.technique || 'ScrOG',
+    m2: grow?.m2 || 1.2,
+    light: grow?.light || 'LED',
+    nutri: Number.isFinite(grow?.nutri) ? grow.nutri : 1,
+    water: grow?.water || 'RO',
+    ambTemp: Number.isFinite(grow?.ambTemp) ? grow.ambTemp : 22,
+    ambHum: Number.isFinite(grow?.ambHum) ? grow.ambHum : 55,
+    co2: grow?.co2 || 'no',
+    ageDays: Number.isFinite(grow?.ageDays) ? grow.ageDays : 0,
+    origin: grow?.origin || 'No especificado',
+    transplantDate: grow?.transplantDate || new Date().toISOString().split('T')[0],
+    location: grow?.location || appConfig?.location || '',
+    placement: grow?.placement || appConfig?.placement || 'interior',
+    climate: grow?.climate || appConfig?.climate || null,
+    systemHardware: hwBase ? deepCloneWorkspaceValue(hwBase) : null,
+    systemSizing: sizingBase ? deepCloneWorkspaceValue(sizingBase) : null,
+    hardwareComplements:
+      typeof normalizeHardwareComplements === 'function'
+        ? normalizeHardwareComplements(grow?.hardwareComplements ?? appConfig?.hardwareComplements)
+        : grow?.hardwareComplements || appConfig?.hardwareComplements,
+    reservoirL:
+      Number.isFinite(sizingBase?.totalSolutionL) && sizingBase.totalSolutionL > 0
+        ? Math.round(sizingBase.totalSolutionL)
+        : Math.max(20, siteCount * 20),
+    sourceEC: source.baseEC,
+    sourcePH: source.basePH,
+    selectedPlant: 1,
+    measurements: [],
+    plantProfiles: {},
+    historyChecklist: Array.isArray(grow?.historyChecklist) ? [] : undefined,
+    diaryEntries: Array.isArray(grow?.diaryEntries) ? [] : undefined,
+    log: [{ date: new Date().toISOString(), text: `Espacio de trabajo creado para ${systemName}.`, type: 'info' }],
+  };
+}
+
+function syncCurrentSystemWorkspaceState() {
+  if (!myGrow || !WORK_SYSTEM_OPTIONS.includes(myGrow.system)) return;
+  ensureSystemWorkspaces(myGrow);
+  const snapshot = buildSystemWorkspaceSnapshot(myGrow);
+  if (!snapshot) return;
+  myGrow.systemWorkspaces[myGrow.system] = snapshot;
+}
+
+function getAvailableWorkSystems() {
+  const cfgList = Array.isArray(appConfig?.systems) ? appConfig.systems : [];
+  const raw = cfgList.length ? cfgList : [myGrow?.system].filter(Boolean);
+  const uniq = Array.from(new Set(raw.filter((s) => WORK_SYSTEM_OPTIONS.includes(s))));
+  if (!uniq.length && myGrow?.system && WORK_SYSTEM_OPTIONS.includes(myGrow.system)) return [myGrow.system];
+  return uniq;
+}
+
+function updateSystemSwitchTriggerState() {
+  const el = document.getElementById('sideStatus');
+  if (!el) return;
+  const available = getAvailableWorkSystems();
+  const canSwitch = !!myGrow && available.length > 1;
+  el.classList.toggle('topbar-status--switchable', canSwitch);
+  el.setAttribute('aria-label', canSwitch ? 'Cambiar sistema activo de trabajo' : 'Estado del cultivo');
+  el.setAttribute('title', canSwitch ? 'Pulsa para elegir el sistema activo' : 'Estado del cultivo');
+  el.setAttribute('role', canSwitch ? 'button' : 'status');
+  el.tabIndex = canSwitch ? 0 : -1;
+}
+
+function closeSystemWorkspaceSelector() {
+  const m = document.getElementById('workSystemModal');
+  if (!m) return;
+  pendingWorkSystemTarget = null;
+  m.classList.remove('work-system-modal--open');
+  m.setAttribute('aria-hidden', 'true');
+}
+
+function applyWorkSystemSelection(systemName) {
+  if (!myGrow || !WORK_SYSTEM_OPTIONS.includes(systemName)) return;
+  pendingWorkSystemTarget = systemName;
+  const list = document.getElementById('workSystemList');
+  if (list) {
+    list.querySelectorAll('.work-system-item').forEach((btn) => {
+      const code = btn.getAttribute('data-system');
+      btn.classList.toggle('work-system-item--active', code === pendingWorkSystemTarget);
+    });
+  }
+  const helper = document.getElementById('workSystemPendingLabel');
+  if (helper) {
+    helper.textContent =
+      myGrow.system === systemName
+        ? `Sistema actual: ${systemName}.`
+        : `Seleccionado: ${systemName}. Pulsa «Confirmar cambio» para trabajar sobre ese sistema.`;
+  }
+  const confirmBtn = document.getElementById('workSystemConfirmBtn');
+  if (confirmBtn) confirmBtn.disabled = myGrow.system === systemName;
+}
+
+function confirmWorkSystemSelection() {
+  const systemName = pendingWorkSystemTarget;
+  if (!myGrow || !WORK_SYSTEM_OPTIONS.includes(systemName)) return;
+  const prev = myGrow.system;
+  if (prev === systemName) {
+    closeSystemWorkspaceSelector();
+    return;
+  }
+  syncCurrentSystemWorkspaceState();
+  ensureSystemWorkspaces(myGrow);
+  myGrow.system = systemName;
+  const targetWorkspace = myGrow.systemWorkspaces[systemName] || buildDefaultWorkspaceForSystem(myGrow, systemName);
+  myGrow.systemWorkspaces[systemName] = targetWorkspace;
+  applySystemWorkspaceSnapshot(myGrow, targetWorkspace);
+  if (typeof ensureHistoryData === 'function') ensureHistoryData(myGrow);
+  if (appConfig && Array.isArray(appConfig.systems) && appConfig.systems.includes(systemName)) {
+    appConfig.system = systemName;
+    saveAppConfig();
+  }
+  myGrow.log.unshift({
+    date: new Date().toISOString(),
+    type: 'info',
+    text: `Sistema activo cambiado: ${prev} → ${systemName}.`,
+  });
+  saveGrowState();
+  closeSystemWorkspaceSelector();
+  renderCultivo();
+  if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderSemanas === 'function') renderSemanas();
+  if (typeof renderHistorial === 'function') renderHistorial();
+  if (typeof renderClimatologia === 'function') renderClimatologia();
+  if (typeof renderInicio === 'function') renderInicio();
+}
+
+function openSystemWorkspaceSelector() {
+  if (!myGrow) return;
+  const available = getAvailableWorkSystems();
+  if (available.length <= 1) return;
+  let m = document.getElementById('workSystemModal');
+  if (!m) {
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      `<div id="workSystemModal" class="work-system-modal" aria-hidden="true">
+        <div class="work-system-modal__scrim" onclick="closeSystemWorkspaceSelector()"></div>
+        <div class="work-system-modal__panel" role="dialog" aria-labelledby="workSystemTitle">
+          <div class="work-system-modal__head">
+            <div id="workSystemTitle" class="work-system-modal__title">Seleccionar sistema activo</div>
+            <button type="button" class="work-system-modal__close" onclick="closeSystemWorkspaceSelector()" aria-label="Cerrar"><i class="ti ti-x"></i></button>
+          </div>
+          <p class="form-hint">Elige con claridad el sistema/cultivo sobre el que vas a trabajar ahora.</p>
+          <div id="workSystemList" class="work-system-modal__list"></div>
+          <p id="workSystemPendingLabel" class="form-hint">Selecciona un sistema y confirma el cambio.</p>
+          <div class="work-system-modal__actions">
+            <button type="button" class="btn btn-ghost btn--compact" onclick="closeSystemWorkspaceSelector()">Cancelar</button>
+            <button type="button" id="workSystemConfirmBtn" class="btn btn-primary btn--compact" onclick="confirmWorkSystemSelection()" disabled>Confirmar cambio</button>
+          </div>
+        </div>
+      </div>`,
+    );
+    m = document.getElementById('workSystemModal');
+  }
+  const list = document.getElementById('workSystemList');
+  if (list) {
+    list.innerHTML = available
+      .map((sys) => {
+        const p = typeof getSystemProfile === 'function' ? getSystemProfile(sys) : null;
+        const label = p?.label || sys;
+        const active = myGrow.system === sys;
+        return `<button type="button" class="work-system-item ${active ? 'work-system-item--active' : ''}" data-system="${sys}" onclick="applyWorkSystemSelection('${sys}')">
+          <span class="work-system-item__name">${label}</span>
+          <span class="work-system-item__code">${sys}</span>
+        </button>`;
+      })
+      .join('');
+  }
+  pendingWorkSystemTarget = myGrow.system;
+  const helper = document.getElementById('workSystemPendingLabel');
+  if (helper) helper.textContent = `Sistema actual: ${myGrow.system}.`;
+  const confirmBtn = document.getElementById('workSystemConfirmBtn');
+  if (confirmBtn) confirmBtn.disabled = true;
+  m.classList.add('work-system-modal--open');
+  m.setAttribute('aria-hidden', 'false');
+}
+
+function onSideStatusInteraction(ev) {
+  if (!myGrow) return;
+  const available = getAvailableWorkSystems();
+  if (available.length <= 1) return;
+  if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
+  if (ev.type === 'keydown') ev.preventDefault();
+  openSystemWorkspaceSelector();
+}
+
+window.openSystemWorkspaceSelector = openSystemWorkspaceSelector;
+window.closeSystemWorkspaceSelector = closeSystemWorkspaceSelector;
+window.applyWorkSystemSelection = applyWorkSystemSelection;
+window.confirmWorkSystemSelection = confirmWorkSystemSelection;
+window.syncCurrentSystemWorkspaceState = syncCurrentSystemWorkspaceState;
 
 function renderInitialOnboarding() {
   const cfg = appConfig || {};
@@ -316,6 +554,26 @@ function renderInitialOnboarding() {
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompCo2" ${comp.meterCo2 ? 'checked' : ''}><span>Medidor <strong>CO₂</strong> (interior)</span></label>
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompPpfd" ${comp.meterPpfd ? 'checked' : ''}><span>Medidor de <strong>luz</strong> (lux o PAR/PPFD)</span></label>
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompHeater" ${comp.reservoirHeater ? 'checked' : ''} onchange="toggleOnbHeaterSetpoint(this.checked)"><span><strong>Calentador</strong> en depósito (sumergible o similar) con termostato</span></label>
+      </div>
+      <div class="section-label section-label--block">Variables de invernadero (si aplica)</div>
+      <div class="grid2 onboarding-complements">
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbGhReflective" ${comp.greenhouseReflectiveInterior ? 'checked' : ''}><span>Interior <strong>reflectante</strong> (mylar/similar)</span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbGhAeration" ${comp.greenhouseAerationControl ? 'checked' : ''}><span><strong>Aireación/ventilación</strong> controlada (extractor, intractor, recirculación)</span></label>
+        <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbGhHumidity" ${comp.greenhouseHumidityControl ? 'checked' : ''}><span>Control de <strong>humedad</strong> (humidificador/deshumidificador)</span></label>
+        <div class="form-group">
+          <label>Iluminación LED del invernadero</label>
+          <select id="onbGhLedMode">
+            <option value="none" ${comp.greenhouseLedMode === 'none' ? 'selected' : ''}>No / solo luz natural</option>
+            <option value="full" ${comp.greenhouseLedMode === 'full' ? 'selected' : ''}>LED espectro completo</option>
+            <option value="veg_bloom" ${comp.greenhouseLedMode === 'veg_bloom' ? 'selected' : ''}>LED con canales Veg/Bloom</option>
+            <option value="supplement" ${comp.greenhouseLedMode === 'supplement' ? 'selected' : ''}>LED suplementario</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Potencia LED instalada (W)</label>
+          <input type="number" id="onbGhLedPowerW" min="20" max="3000" step="10" inputmode="numeric" value="${Number.isFinite(comp.greenhouseLedPowerW) ? comp.greenhouseLedPowerW : ''}">
+          <span class="form-hint">Opcional. Útil para monitorizar consistencia de fotoperiodo y carga térmica.</span>
+        </div>
       </div>
       <div class="form-group onboarding-heater-setpoint" id="onbHeaterSetpointWrap" style="${comp.reservoirHeater ? '' : 'opacity:0.55'}">
         <label>Temperatura del termostato del calentador (°C)</label>
@@ -732,6 +990,7 @@ function activateGrow(){
       type: 'info',
     });
   }
+  syncCurrentSystemWorkspaceState();
   saveGrowState();
   document.getElementById('sideStatus').textContent = s.name + ' · S1';
   renderActiveGrow();
@@ -748,6 +1007,13 @@ function renderActiveGrow(){
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const totalW = s.vegW+s.flowerW+2;
   document.getElementById('sideStatus').textContent = s.name+' · S'+weekNum;
+  const sideStatus = document.getElementById('sideStatus');
+  if (sideStatus && !sideStatus._workSystemBound) {
+    sideStatus._workSystemBound = true;
+    sideStatus.addEventListener('click', onSideStatusInteraction);
+    sideStatus.addEventListener('keydown', onSideStatusInteraction);
+  }
+  updateSystemSwitchTriggerState();
 
   let phase='Germinación',phClass='ph-germ',currentEC=0.4,currentPH='5.5–5.8',lightSched='18/6',humidity='70–90%',tempRange='22–26°C',co2='400 ppm';
   if(weekNum<=1){phase='Germinación';phClass='ph-germ';currentEC=0.4;currentPH='5.5–5.8';lightSched='18/6';humidity='70–90%';tempRange='22–26°C';}
@@ -806,6 +1072,7 @@ function renderActiveGrow(){
         </div>
         <div class="grow-summary-aside">
           <span class="phase-pill ${phClass}">${phase}</span>
+          <span class="strain-tag-pill">Variedad: ${s.name}</span>
           <div class="grow-nutri-hint">Nutriente: ${n.name.split(' ').slice(0,2).join(' ')}</div>
         </div>
       </div>
@@ -923,11 +1190,47 @@ function renderActiveGrow(){
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompPpfd" ${compGrow.meterPpfd ? 'checked' : ''}><span>Medidor <strong>luz</strong> (lux/PAR)</span></label>
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompHeater" ${compGrow.reservoirHeater ? 'checked' : ''} onchange="toggleCfgHeaterSetpoint(this.checked)"><span><strong>Calentador</strong> depósito + termostato</span></label>
         </div>
+        <div class="section-label section-label--block">Variables de invernadero</div>
+        <div class="grid2 onboarding-complements">
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgGhReflective" ${compGrow.greenhouseReflectiveInterior ? 'checked' : ''}><span>Interior <strong>reflectante</strong></span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgGhAeration" ${compGrow.greenhouseAerationControl ? 'checked' : ''}><span><strong>Aireación/ventilación</strong> controlada</span></label>
+          <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgGhHumidity" ${compGrow.greenhouseHumidityControl ? 'checked' : ''}><span>Control de <strong>humedad</strong></span></label>
+          <div class="form-group">
+            <label>LED invernadero</label>
+            <select id="cfgGhLedMode">
+              <option value="none" ${compGrow.greenhouseLedMode === 'none' ? 'selected' : ''}>No / natural</option>
+              <option value="full" ${compGrow.greenhouseLedMode === 'full' ? 'selected' : ''}>Espectro completo</option>
+              <option value="veg_bloom" ${compGrow.greenhouseLedMode === 'veg_bloom' ? 'selected' : ''}>Canales Veg/Bloom</option>
+              <option value="supplement" ${compGrow.greenhouseLedMode === 'supplement' ? 'selected' : ''}>Suplementario</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Potencia LED (W)</label>
+            <input type="number" id="cfgGhLedPowerW" min="20" max="3000" step="10" inputmode="numeric" value="${Number.isFinite(compGrow.greenhouseLedPowerW) ? compGrow.greenhouseLedPowerW : ''}">
+          </div>
+        </div>
         <div class="form-group onboarding-heater-setpoint" id="cfgHeaterSetpointWrap" style="${compGrow.reservoirHeater ? '' : 'opacity:0.55'}">
           <label>Termostato calentador (°C)</label>
           <input type="number" id="cfgCompHeaterSetC" min="15" max="32" step="0.5" value="${Number.isFinite(compGrow.heaterThermostatC) ? compGrow.heaterThermostatC : 22}" ${compGrow.reservoirHeater ? '' : 'disabled'}>
         </div>
         <button type="button" class="btn btn-primary btn--compact" onclick="saveGrowHardwareComplements()"><i class="ti ti-device-floppy"></i> Guardar instrumentación</button>
+        <div class="section-label section-label--block">Resumen invernadero activo</div>
+        <div class="pill-tag-row">
+          ${compGrow.greenhouseReflectiveInterior ? '<span class="pill-tag">Interior reflectante</span>' : ''}
+          ${compGrow.greenhouseAerationControl ? '<span class="pill-tag">Aireación controlada</span>' : ''}
+          ${compGrow.greenhouseHumidityControl ? '<span class="pill-tag">Control de humedad</span>' : ''}
+          ${
+            compGrow.greenhouseLedMode !== 'none'
+              ? `<span class="pill-tag">LED ${
+                  compGrow.greenhouseLedMode === 'full'
+                    ? 'espectro completo'
+                    : compGrow.greenhouseLedMode === 'veg_bloom'
+                      ? 'Veg/Bloom'
+                      : 'suplementario'
+                }${Number.isFinite(compGrow.greenhouseLedPowerW) ? ` · ${compGrow.greenhouseLedPowerW}W` : ''}</span>`
+              : '<span class="text-muted">Sin iluminación LED de invernadero declarada.</span>'
+          }
+        </div>
         <div class="alert info"><i class="ti ti-database"></i><p>Estos valores se guardan en memoria local para tus próximos cálculos.</p></div>
       </div>
       <div class="card">
@@ -949,7 +1252,7 @@ function renderActiveGrow(){
 
     <div class="card">
       <div class="card-header card-header--split">
-        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (${myGrow.system})</div>
+        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (<button type="button" class="btn btn-ghost btn--tiny" ${getAvailableWorkSystems().length > 1 ? 'onclick="openSystemWorkspaceSelector()"' : 'disabled'}>${myGrow.system}</button>)</div>
         <button type="button" class="btn btn-ghost btn--compact" onclick="exportSystemSvg()"><i class="ti ti-download"></i> Exportar SVG</button>
       </div>
       <div class="system-svg-wrap">${systemSvg}</div>
@@ -977,6 +1280,7 @@ function resetGrow() {
   wizStep = 0;
   wizData = { error: '' };
   document.getElementById('sideStatus').textContent = 'Sin cultivo activo';
+  updateSystemSwitchTriggerState();
   renderCultivo();
   renderMonitor();
   renderSemanas();
@@ -1104,6 +1408,11 @@ function calculateMixPlan(grow, nutrient, phaseName) {
 function readOnboardingHardwareComplements() {
   const heater = !!document.getElementById('onbCompHeater')?.checked;
   const setRaw = parseFloat(document.getElementById('onbCompHeaterSetC')?.value);
+  const ledMode =
+    document.getElementById('onbGhLedMode')?.value && ['none', 'full', 'veg_bloom', 'supplement'].includes(document.getElementById('onbGhLedMode')?.value)
+      ? document.getElementById('onbGhLedMode')?.value
+      : 'none';
+  const ledPowerRaw = parseFloat(document.getElementById('onbGhLedPowerW')?.value);
   return {
     reservoirHeater: heater,
     heaterThermostatC: heater && Number.isFinite(setRaw) ? Math.min(35, Math.max(15, setRaw)) : null,
@@ -1112,6 +1421,11 @@ function readOnboardingHardwareComplements() {
     meterThermoHygro: !!document.getElementById('onbCompThermoHygro')?.checked,
     meterCo2: !!document.getElementById('onbCompCo2')?.checked,
     meterPpfd: !!document.getElementById('onbCompPpfd')?.checked,
+    greenhouseReflectiveInterior: !!document.getElementById('onbGhReflective')?.checked,
+    greenhouseAerationControl: !!document.getElementById('onbGhAeration')?.checked,
+    greenhouseHumidityControl: !!document.getElementById('onbGhHumidity')?.checked,
+    greenhouseLedMode: ledMode,
+    greenhouseLedPowerW: ledMode !== 'none' && Number.isFinite(ledPowerRaw) ? Math.max(20, Math.min(3000, ledPowerRaw)) : null,
   };
 }
 
@@ -1132,6 +1446,11 @@ function toggleCfgHeaterSetpoint(checked) {
 function readCfgHardwareComplements() {
   const heater = !!document.getElementById('cfgCompHeater')?.checked;
   const setRaw = parseFloat(document.getElementById('cfgCompHeaterSetC')?.value);
+  const ledMode =
+    document.getElementById('cfgGhLedMode')?.value && ['none', 'full', 'veg_bloom', 'supplement'].includes(document.getElementById('cfgGhLedMode')?.value)
+      ? document.getElementById('cfgGhLedMode')?.value
+      : 'none';
+  const ledPowerRaw = parseFloat(document.getElementById('cfgGhLedPowerW')?.value);
   return {
     reservoirHeater: heater,
     heaterThermostatC: heater && Number.isFinite(setRaw) ? Math.min(35, Math.max(15, setRaw)) : null,
@@ -1140,6 +1459,11 @@ function readCfgHardwareComplements() {
     meterThermoHygro: !!document.getElementById('cfgCompThermoHygro')?.checked,
     meterCo2: !!document.getElementById('cfgCompCo2')?.checked,
     meterPpfd: !!document.getElementById('cfgCompPpfd')?.checked,
+    greenhouseReflectiveInterior: !!document.getElementById('cfgGhReflective')?.checked,
+    greenhouseAerationControl: !!document.getElementById('cfgGhAeration')?.checked,
+    greenhouseHumidityControl: !!document.getElementById('cfgGhHumidity')?.checked,
+    greenhouseLedMode: ledMode,
+    greenhouseLedPowerW: ledMode !== 'none' && Number.isFinite(ledPowerRaw) ? Math.max(20, Math.min(3000, ledPowerRaw)) : null,
   };
 }
 

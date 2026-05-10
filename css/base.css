@@ -107,6 +107,19 @@ body{
   border:1px solid rgba(52,211,153,0.2);
   box-shadow:0 0 0 1px rgba(0,0,0,0.04);
 }
+.topbar-status--switchable{
+  cursor:pointer;user-select:none;
+  transition:border-color .15s,box-shadow .15s,color .15s,transform .1s;
+}
+.topbar-status--switchable:hover,.topbar-status--switchable:focus-visible{
+  border-color:rgba(52,211,153,0.45);
+  box-shadow:0 0 0 3px rgba(52,211,153,0.09);
+  outline:none;
+}
+[data-theme='light'] .topbar-status--switchable:hover,[data-theme='light'] .topbar-status--switchable:focus-visible{
+  border-color:rgba(5,150,105,0.45);
+  box-shadow:0 0 0 3px rgba(5,150,105,0.09);
+}
 [data-theme='light'] .topbar-status{
   color:var(--hydro-deep);
   border-color:rgba(5,150,105,0.22);

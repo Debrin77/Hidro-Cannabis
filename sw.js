@@ -1,5 +1,5 @@
 /* Caché ligera del shell para uso offline parcial (PWA / Play). */
-const CACHE_NAME = 'hydro-cannabis-shell-v1';
+const CACHE_NAME = 'hydro-cannabis-shell-v2';
 const SHELL = [
   './',
   './index.html',
@@ -22,7 +22,7 @@ const SHELL = [
   './js/clima.js',
   './js/main.js',
   './manifest.webmanifest',
-  './assets/icons/favicon.svg',
+  './assets/icons/cannabis-start.svg',
   './assets/icons/hydro-cannabis-logo.svg',
 ];
 

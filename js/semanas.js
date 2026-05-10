@@ -18,6 +18,14 @@ function monthAdd(y, m, delta) {
   return { y: d.getFullYear(), m: d.getMonth() };
 }
 
+function escapeCalendarAttrText(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 /** Mapa día (YYYY-MM-DD) → lista de eventos */
 function collectGrowCalendarEvents(grow) {
   const s = grow.strain;
@@ -83,13 +91,26 @@ function renderMonthGrid(year, month, eventMap) {
     const marks = evs
       .map((e) => `<span class="cal-dot cal-dot--${e.type}" title="${e.label.replace(/"/g, '&quot;')}"></span>`)
       .join('');
-    const evList =
-      evs.length > 0
-        ? `<ul class="cal-day-events">${evs.map((e) => `<li><i class="ti ti-${e.icon}"></i> ${e.label}</li>`).join('')}</ul>`
-        : '';
-    cells += `<div class="cal-cell ${isToday ? 'cal-cell--today' : ''} ${evs.length ? 'cal-cell--busy' : ''}">
+    const miniIcons = evs.length
+      ? `<div class="cal-mini-icons">${evs
+          .slice(0, 2)
+          .map((e) => `<i class="ti ti-${e.icon}" title="${escapeCalendarAttrText(e.label)}"></i>`)
+          .join('')}</div>`
+      : '';
+    const titleText = evs.length ? evs.map((e) => e.label).join(' · ') : `Día ${day}`;
+    const dateObj = new Date(year, month, day);
+    const dateLabel = dateObj.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    const interactive = evs.length
+      ? ` role="button" tabindex="0" onclick="openGrowCalendarDay('${key}','${escapeCalendarAttrText(dateLabel)}')" onkeydown="onGrowCalendarDayKey(event,'${key}','${escapeCalendarAttrText(dateLabel)}')"`
+      : '';
+    cells += `<div class="cal-cell ${isToday ? 'cal-cell--today' : ''} ${evs.length ? 'cal-cell--busy cal-cell--interactive' : ''}"${interactive}>
       <div class="cal-day-top"><span class="cal-day-num">${day}</span><span class="cal-dots">${marks}</span></div>
-      ${evList}
+      <div class="cal-day-body" title="${escapeCalendarAttrText(titleText)}">${miniIcons}</div>
     </div>`;
   }
   return `
@@ -102,6 +123,7 @@ function renderMonthGrid(year, month, eventMap) {
 
 function renderGrowCalendarSection(grow) {
   const eventMap = collectGrowCalendarEvents(grow);
+  window.__growCalendarEventMap = eventMap;
   const start = new Date(grow.startDate);
   let y = start.getFullYear();
   let m = start.getMonth();
@@ -120,7 +142,48 @@ function renderGrowCalendarSection(grow) {
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar-event"></i>Calendario de tareas e hitos</div></div>
       <p class="body-prose">Fechas calculadas desde el <strong>inicio del cultivo</strong> y la duración de <strong>${grow.strain.name}</strong>. Ajusta en la práctica según observación. Leyenda: <span class="cal-dot cal-dot--milestone"></span> hito <span class="cal-dot cal-dot--task"></span> tarea <span class="cal-dot cal-dot--maint"></span> mantenimiento</p>
       <div class="cal-months-row">${months.join('')}</div>
+      <div class="cal-day-modal" id="growCalDayModal" aria-hidden="true">
+        <div class="cal-day-modal__scrim" onclick="closeGrowCalendarDay()"></div>
+        <div class="cal-day-modal__panel" role="dialog" aria-labelledby="growCalDayTitle">
+          <div class="cal-day-modal__head">
+            <div id="growCalDayTitle" class="cal-day-modal__title">Detalle del día</div>
+            <button type="button" class="cal-day-modal__close" onclick="closeGrowCalendarDay()" aria-label="Cerrar"><i class="ti ti-x"></i></button>
+          </div>
+          <div id="growCalDayBody" class="cal-day-modal__body"></div>
+        </div>
+      </div>
     </div>`;
+}
+
+function onGrowCalendarDayKey(ev, dayKey, dayLabel) {
+  if (ev.key === 'Enter' || ev.key === ' ') {
+    ev.preventDefault();
+    openGrowCalendarDay(dayKey, dayLabel);
+  }
+}
+
+function openGrowCalendarDay(dayKey, dayLabel) {
+  const modal = document.getElementById('growCalDayModal');
+  const title = document.getElementById('growCalDayTitle');
+  const body = document.getElementById('growCalDayBody');
+  if (!modal || !title || !body) return;
+  const map = window.__growCalendarEventMap || {};
+  const events = Array.isArray(map[dayKey]) ? map[dayKey] : [];
+  title.textContent = dayLabel || 'Detalle del día';
+  body.innerHTML = events.length
+    ? `<ul class="cal-day-modal__list">${events
+        .map((e) => `<li><i class="ti ti-${e.icon}"></i><span>${e.label}</span></li>`)
+        .join('')}</ul>`
+    : `<p class="text-muted">Sin tareas programadas.</p>`;
+  modal.classList.add('cal-day-modal--open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeGrowCalendarDay() {
+  const modal = document.getElementById('growCalDayModal');
+  if (!modal) return;
+  modal.classList.remove('cal-day-modal--open');
+  modal.setAttribute('aria-hidden', 'true');
 }
 
 function renderSemanas() {
@@ -259,3 +322,7 @@ function renderSemanas() {
     <div class="alert info"><i class="ti ti-info-circle"></i><p>Dosis nutriente de referencia: <strong>${n.name}</strong>. Rangos EC/pH de la tabla se cruzan con tu <strong>variedad</strong> en Medir y Consejos.</p></div>
   `;
 }
+
+window.openGrowCalendarDay = openGrowCalendarDay;
+window.closeGrowCalendarDay = closeGrowCalendarDay;
+window.onGrowCalendarDayKey = onGrowCalendarDayKey;

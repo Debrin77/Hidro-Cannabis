@@ -79,6 +79,7 @@ function saveGrowState() {
       localStorage.removeItem(STORAGE_KEY);
       return;
     }
+    if (typeof syncCurrentSystemWorkspaceState === 'function') syncCurrentSystemWorkspaceState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeGrow(myGrow)));
   } catch (error) {
     console.warn('No se pudo guardar el cultivo localmente.', error);
@@ -95,6 +96,8 @@ function loadGrowState() {
       Array.isArray(parsed.measurements) &&
       parsed.measurements.some((m) => !Number.isFinite(m.plantId) || m.plantId !== 0);
     myGrow = restoreGrow(parsed);
+    if (myGrow && typeof ensureSystemWorkspaces === 'function') ensureSystemWorkspaces(myGrow);
+    if (myGrow && typeof syncCurrentSystemWorkspaceState === 'function') syncCurrentSystemWorkspaceState();
     if (myGrow && hadLegacyRdwcIds) saveGrowState();
   } catch (error) {
     console.warn('No se pudo recuperar el cultivo guardado.', error);

@@ -975,6 +975,36 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 .plant-site-modal__actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)}
 .form-static-text{margin:0;font-size:0.875rem;color:var(--text2);line-height:1.45}
 
+/* WORK SYSTEM MODAL */
+.work-system-modal{position:fixed;inset:0;z-index:335;pointer-events:none;opacity:0;transition:opacity .2s ease}
+.work-system-modal--open{pointer-events:auto;opacity:1}
+.work-system-modal__scrim{position:absolute;inset:0;background:rgba(0,0,0,0.45)}
+.work-system-modal__panel{
+  position:absolute;left:50%;bottom:0;transform:translate(-50%,110%);
+  width:min(430px,100%);max-height:80vh;overflow:auto;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2) var(--radius2) 0 0;
+  padding:1rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom));
+  box-shadow:0 -12px 40px rgba(0,0,0,0.35);transition:transform .25s ease;
+}
+.work-system-modal--open .work-system-modal__panel{transform:translate(-50%,0)}
+.work-system-modal__head{display:flex;align-items:center;justify-content:space-between;gap:0.7rem;margin-bottom:0.5rem}
+.work-system-modal__title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text)}
+.work-system-modal__close{border:none;background:transparent;color:var(--text2);cursor:pointer;padding:0.35rem;border-radius:8px}
+.work-system-modal__close:hover{background:var(--surface2);color:var(--text)}
+.work-system-modal__list{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.65rem}
+.work-system-item{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;
+  border:1px solid var(--border2);border-radius:12px;background:var(--surface2);cursor:pointer;
+  padding:11px 12px;color:var(--text);font-family:inherit;text-align:left;
+}
+.work-system-item__name{font-size:13px;font-weight:600}
+.work-system-item__code{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.work-system-item:hover{border-color:rgba(52,211,153,0.4)}
+.work-system-item--active{border-color:rgba(52,211,153,0.5);background:rgba(52,211,153,0.08)}
+.work-system-modal__actions{
+  display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);
+}
+
 /* PLANT TREND SVG */
 .monitor-measure-intro{margin-bottom:0.35rem}
 .monitor-clima-link{margin-bottom:0.85rem}
@@ -1181,7 +1211,13 @@ details.card.onboarding-acc[open] .onboarding-acc__chev{transform:rotate(180deg)
 .cal-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .cal-wd{text-align:center;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.cal-cell{min-height:72px;border:1px solid var(--border2);border-radius:8px;padding:4px 5px;background:var(--surface);font-size:11px}
+.cal-cell{
+  height:72px;min-height:72px;
+  border:1px solid var(--border2);border-radius:8px;padding:4px 5px;background:var(--surface);font-size:11px;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.cal-cell--interactive{cursor:pointer}
+.cal-cell--interactive:hover{border-color:rgba(52,211,153,0.38)}
 .cal-cell--empty{background:transparent;border:none;min-height:0}
 .cal-cell--today{outline:2px solid var(--hydro-teal);outline-offset:-1px}
 .cal-cell--busy{border-color:rgba(52,211,153,0.35)}
@@ -1189,12 +1225,38 @@ details.card.onboarding-acc[open] .onboarding-acc__chev{transform:rotate(180deg)
 .cal-day-num{font-weight:600;font-family:'DM Mono',monospace;color:var(--text)}
 .cal-dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .cal-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+.cal-day-body{flex:1;display:flex;align-items:flex-end}
+.cal-mini-icons{display:flex;gap:4px;align-items:center}
+.cal-mini-icons .ti{font-size:12px;color:var(--hydro-teal);opacity:0.92}
 .cal-dot--milestone{background:var(--a200)}
 .cal-dot--task{background:var(--b400)}
 .cal-dot--maint{background:var(--text3)}
 .cal-day-events{list-style:none;margin:4px 0 0;padding:0;font-size:10px;color:var(--text2);line-height:1.35}
 .cal-day-events li{display:flex;gap:4px;align-items:flex-start;margin-bottom:3px}
 .cal-day-events .ti{font-size:12px;flex-shrink:0;color:var(--hydro-teal)}
+.cal-day-modal{
+  position:fixed;inset:0;z-index:340;pointer-events:none;opacity:0;transition:opacity .2s ease;
+}
+.cal-day-modal--open{pointer-events:auto;opacity:1}
+.cal-day-modal__scrim{position:absolute;inset:0;background:rgba(0,0,0,0.45)}
+.cal-day-modal__panel{
+  position:absolute;left:50%;bottom:0;transform:translate(-50%,110%);
+  width:min(420px,100%);max-height:78vh;overflow:auto;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2) var(--radius2) 0 0;
+  padding:1rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom));
+  box-shadow:0 -12px 40px rgba(0,0,0,0.35);transition:transform .25s ease;
+}
+.cal-day-modal--open .cal-day-modal__panel{transform:translate(-50%,0)}
+.cal-day-modal__head{display:flex;align-items:center;justify-content:space-between;gap:0.65rem;margin-bottom:0.65rem}
+.cal-day-modal__title{font-family:'Syne',sans-serif;font-weight:600;font-size:1.02rem;color:var(--text)}
+.cal-day-modal__close{border:none;background:transparent;color:var(--text2);cursor:pointer;padding:0.35rem;border-radius:8px}
+.cal-day-modal__close:hover{background:var(--surface2);color:var(--text)}
+.cal-day-modal__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.5rem}
+.cal-day-modal__list li{
+  display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--border2);
+  border-radius:10px;background:var(--surface2);font-size:13px;color:var(--text2);line-height:1.4;
+}
+.cal-day-modal__list .ti{color:var(--hydro-teal);font-size:15px;margin-top:1px}
 
 .trend-watertemp-band{fill:rgba(167,139,250,0.12)}
 .trend-watertemp-line{stroke:#a78bfa;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}

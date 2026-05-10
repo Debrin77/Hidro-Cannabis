@@ -361,20 +361,11 @@ function renderMonitor(){
   const vpdLive = computeVpdKpa(latestCircuit?.airTemp, latestCircuit?.humidity);
   const dliLive = computeDliMolM2d(latestCircuit?.ppfd, latestCircuit?.lightHours);
   const ppfdLive = latestCircuit && Number.isFinite(latestCircuit.ppfd) ? latestCircuit.ppfd : null;
+  const greenhouseCard = renderGreenhouseMonitoringCard(myGrow, latestCircuit, phaseRefQuick);
   const waterPct =
     waterLive != null ? Math.min(100, Math.max(0, ((waterLive - 15) / (24 - 15)) * 100)) : 50;
-  const climateCard = myGrow.climate
-    ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>${myGrow.location || 'Ubicación'} (${myGrow.placement})</strong> · ${myGrow.climate.summary} · ${myGrow.climate.temperature}°C · HR ${myGrow.climate.humidity}% · Viento ${myGrow.climate.wind} km/h · Fuente: ${myGrow.climate.source}</p></div>`
-    : '';
-  const rdwcSamplingNote = rdwc
-    ? `<div class="alert info"><i class="ti ti-flask-2"></i><p><strong>RDWC:</strong> la solución es <strong>común a todo el circuito</strong>. El pH y la EC se miden en el <strong>depósito de control</strong> (o en el mismo volumen recirculado), no en cada cubo por separado. Aquí guardas una lectura representativa del circuito.</p></div>`
-    : '';
-
   mc.innerHTML=`
-    ${climateCard}
-    ${rdwcSamplingNote}
-    <div class="alert info monitor-measure-intro"><i class="ti ti-gauge"></i><p><strong>Medición resolutiva:</strong> además de pH/EC y temperatura de agua, registra <strong>aire, humedad</strong> (para VPD), <strong>CO₂</strong> y, si puedes, <strong>PPFD + horas de luz</strong> (DLI). Las alertas usan la última lectura y la fase actual (${phaseRefQuick.phase}). En exterior, cruza con la pestaña <strong>Climatología</strong>.</p></div>
-    <button type="button" class="btn btn-ghost btn--compact monitor-clima-link" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología del emplazamiento</button>
+    <button type="button" class="btn btn-ghost btn--compact monitor-clima-link" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Ver Clima del emplazamiento</button>
 
     <div class="grid4 monitor-metrics">
       <div class="metric"><div class="metric-label">pH ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-blue">${phLive != null ? phLive.toFixed(1) : '—'}</div><div class="metric-unit">${phaseRefQuick.phMin.toFixed(1)}–${phaseRefQuick.phMax.toFixed(1)} (${phaseRefQuick.phase})</div><div class="metric-bar"><div class="metric-fill metric-fill--ph" style="--fill-pct:${phPct.toFixed(0)}%"></div></div></div>
@@ -409,6 +400,7 @@ function renderMonitor(){
         ${smartAlerts.length?smartAlerts.map(a=>`<div class="alert ${a.level==='danger'?'danger':a.level==='warn'?'warn':'info'}"><i class="ti ti-${a.icon}"></i><p>${a.message}</p></div>`).join(''):`<div class="alert info"><i class="ti ti-check"></i><p>Sin alertas críticas en la última medición registrada.</p></div>`}
       </div>
     </div>
+    ${greenhouseCard}
 
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-flask"></i>Nutriente activo: ${n.name}</div></div>
@@ -466,6 +458,48 @@ function renderMonitor(){
     </div>
   `;
   requestAnimationFrame(() => initMonitorLiveValidation());
+}
+
+function renderGreenhouseMonitoringCard(grow, latestCircuit, phaseRefQuick) {
+  const c =
+    typeof normalizeHardwareComplements === 'function'
+      ? normalizeHardwareComplements(grow?.hardwareComplements)
+      : null;
+  if (!c) return '';
+  const tags = [];
+  if (c.greenhouseReflectiveInterior) tags.push('<span class="pill-tag">Interior reflectante</span>');
+  if (c.greenhouseAerationControl) tags.push('<span class="pill-tag">Aireación controlada</span>');
+  if (c.greenhouseHumidityControl) tags.push('<span class="pill-tag">Control de humedad</span>');
+  if (c.greenhouseLedMode !== 'none') {
+    const ledLabel =
+      c.greenhouseLedMode === 'full'
+        ? 'LED espectro completo'
+        : c.greenhouseLedMode === 'veg_bloom'
+          ? 'LED canales Veg/Bloom'
+          : 'LED suplementario';
+    tags.push(`<span class="pill-tag">${ledLabel}${Number.isFinite(c.greenhouseLedPowerW) ? ` · ${c.greenhouseLedPowerW}W` : ''}</span>`);
+  }
+  if (!tags.length) return '';
+  const warns = [];
+  if (!c.greenhouseAerationControl && Number.isFinite(latestCircuit?.airTemp) && latestCircuit.airTemp >= 29) {
+    warns.push('Sin aireación activa y Tª aire alta: riesgo de estrés térmico.');
+  }
+  if (!c.greenhouseHumidityControl && Number.isFinite(latestCircuit?.humidity) && latestCircuit.humidity >= 75) {
+    warns.push('Sin control de humedad y HR elevada: incrementa riesgo fúngico.');
+  }
+  if (
+    c.greenhouseLedMode !== 'none' &&
+    !c.meterPpfd &&
+    !Number.isFinite(latestCircuit?.ppfd)
+  ) {
+    warns.push('Hay LED declarado sin seguimiento PPFD; conviene medir para ajustar DLI.');
+  }
+  return `<div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-building"></i>Monitor de invernadero</div></div>
+      <div class="pill-tag-row">${tags.join('')}</div>
+      <p class="text-muted mt-8">Objetivo fase ${phaseRefQuick.phase}: HR ${phaseRefQuick.humidityMin}-${phaseRefQuick.humidityMax}% y VPD estable según tabla.</p>
+      ${warns.length ? warns.map((msg) => `<div class="alert warn"><i class="ti ti-alert-triangle"></i><p>${msg}</p></div>`).join('') : '<div class="alert info"><i class="ti ti-check"></i><p>Variables de invernadero registradas y disponibles para seguimiento.</p></div>'}
+    </div>`;
 }
 
 function addLog(){

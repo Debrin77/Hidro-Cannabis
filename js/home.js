@@ -111,10 +111,25 @@ function goToHistorial() {
   navTo('historial');
 }
 
+function escapeHomeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function renderConsejosPage() {
   const host = document.getElementById('consejosStrainSpecs');
   if (!host || typeof renderStrainSpecsTableHtml !== 'function') return;
-  host.innerHTML = renderStrainSpecsTableHtml();
+  host.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i>Consejos operativos (movidos desde Medir)</div></div>
+      <div class="alert info"><i class="ti ti-flask-2"></i><p><strong>RDWC:</strong> la solución es común a todo el circuito. El pH y la EC se miden en el depósito de control (o en el mismo volumen recirculado), no en cada cubo por separado.</p></div>
+      <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Medición resolutiva:</strong> además de pH/EC y temperatura de agua, registra aire, humedad (VPD), CO₂ y, si puedes, PPFD + horas de luz (DLI). Ajusta siempre en pasos pequeños y vuelve a medir.</p></div>
+    </div>
+    ${renderStrainSpecsTableHtml()}
+  `;
 }
 
 function renderInicio() {
@@ -133,7 +148,7 @@ function renderInicio() {
   let statusLabel = 'Configura tu instalación';
   let statusDetail = 'Pulsa Sistema y completa el checklist con datos reales de bomba, aire y depósitos.';
   if (hasGrow) {
-    statusLabel = myGrow.strain.name;
+    statusLabel = 'Cultivo activo';
     statusDetail = `Semana activa en curso · Barra inferior: Medir, Sistema, Calendario, Historial, Clima.`;
   } else if (appDone || skipWelcome) {
     statusLabel = 'Listo para arrancar';
@@ -157,6 +172,26 @@ function renderInicio() {
     )
     .join('');
 
+  const weatherLabel = myGrow?.climate
+    ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>${escapeHomeHtml(myGrow.location || 'Ubicación')} (${escapeHomeHtml(myGrow.placement || 'interior')})</strong> · ${escapeHomeHtml(myGrow.climate.summary || 'Clima')} · ${escapeHomeHtml(myGrow.climate.temperature)}°C · HR ${escapeHomeHtml(myGrow.climate.humidity)}% · Viento ${escapeHomeHtml(myGrow.climate.wind)} km/h</p></div>`
+    : '';
+
+  const weatherAlerts = (() => {
+    if (!myGrow || myGrow.placement !== 'exterior') return '';
+    if (typeof buildExteriorHydroSolutions !== 'function') return '';
+    const snap = myGrow.siteWeather;
+    const plan = buildExteriorHydroSolutions(myGrow, snap);
+    const risky = (plan.blocks || []).filter((b) => b.level === 'danger' || b.level === 'warn');
+    if (!risky.length) return '';
+    return risky
+      .slice(0, 2)
+      .map((b) => {
+        const text = Array.isArray(b.actions) && b.actions.length ? b.actions[0] : b.title;
+        return `<div class="alert ${b.level === 'danger' ? 'danger' : 'warn'}"><i class="ti ti-alert-triangle"></i><p><strong>${escapeHomeHtml(b.title)}</strong> · ${escapeHomeHtml(text)}</p></div>`;
+      })
+      .join('');
+  })();
+
   host.innerHTML = `
     <section class="dash-hero">
       <div class="dash-hero-bg"></div>
@@ -174,6 +209,9 @@ function renderInicio() {
         <p class="dash-status-text">${statusDetail}</p>
       </div>
     </section>
+
+    ${weatherLabel}
+    ${weatherAlerts}
 
     <section class="dash-actions">
       <button type="button" class="dash-tile dash-tile--primary" onclick="navTo('cultivo')">
