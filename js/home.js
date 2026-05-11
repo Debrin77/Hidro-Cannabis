@@ -210,22 +210,37 @@ function renderInicio() {
     : '';
 
   const weatherAlerts = (() => {
-    if (!myGrow || myGrow.placement !== 'exterior') return '';
-    if (typeof buildExteriorHydroSolutions !== 'function') return '';
-    const snap = myGrow.siteWeather;
-    const plan = buildExteriorHydroSolutions(myGrow, snap);
-    const risky = (plan.blocks || []).filter((b) => b.level === 'danger' || b.level === 'warn');
-    if (!risky.length) return '';
-    return risky
-      .slice(0, 2)
-      .map((b) => {
-        const text = Array.isArray(b.actions) && b.actions.length ? b.actions[0] : b.title;
-        return `<div class="alert ${b.level === 'danger' ? 'danger' : 'warn'}"><i class="ti ti-alert-triangle"></i><p><strong>${escapeHomeHtml(b.title)}</strong> · ${escapeHomeHtml(text)}</p></div>`;
-      })
-      .join('');
+    try {
+      if (!myGrow || myGrow.placement !== 'exterior') return '';
+      if (typeof buildExteriorHydroSolutions !== 'function') return '';
+      const snap = myGrow.siteWeather;
+      const plan = buildExteriorHydroSolutions(myGrow, snap);
+      const risky = (plan.blocks || []).filter((b) => b.level === 'danger' || b.level === 'warn');
+      if (!risky.length) return '';
+      return risky
+        .slice(0, 2)
+        .map((b) => {
+          const text = Array.isArray(b.actions) && b.actions.length ? b.actions[0] : b.title;
+          return `<div class="alert ${b.level === 'danger' ? 'danger' : 'warn'}"><i class="ti ti-alert-triangle"></i><p><strong>${escapeHomeHtml(b.title)}</strong> · ${escapeHomeHtml(text)}</p></div>`;
+        })
+        .join('');
+    } catch (e) {
+      console.warn('Inicio: alertas de clima exterior omitidas.', e);
+      return '';
+    }
   })();
 
-  host.innerHTML = `
+  let growAlertsHtml = '';
+  try {
+    if (hasGrow && typeof renderGrowAlertsCardHtml === 'function') {
+      growAlertsHtml = renderGrowAlertsCardHtml(myGrow);
+    }
+  } catch (e) {
+    console.warn('Inicio: tarjeta de alertas omitida.', e);
+  }
+
+  try {
+    host.innerHTML = `
     <section class="dash-hero">
       <div class="dash-hero-bg"></div>
       <div class="dash-hero-inner">
@@ -245,7 +260,7 @@ function renderInicio() {
 
     ${weatherLabel}
     ${weatherAlerts}
-    ${hasGrow && typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
+    ${growAlertsHtml}
 
     <details class="dash-check-section">
       <summary class="dash-check-summary">
@@ -274,6 +289,14 @@ function renderInicio() {
       </button>
     </section>
   `;
+  } catch (e) {
+    console.error('renderInicio', e);
+    host.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Inicio</div></div>
+      <p class="body-prose">No se pudo cargar la pantalla de inicio. Prueba a recargar (F5). Si abres la app desde archivo local, usa un servidor local (p. ej. Live Server) en lugar de <code>file://</code>.</p>
+    </div>`;
+  }
 }
 
 window.toggleExpertChecklistItem = toggleExpertChecklistItem;

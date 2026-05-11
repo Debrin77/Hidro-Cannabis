@@ -305,6 +305,19 @@ function buildExteriorHydroSolutions(grow, snap) {
     };
   }
 
+  if (!snap?.current) {
+    return {
+      match,
+      blocks: [
+        {
+          level: 'warn',
+          title: 'Sin datos meteorológicos actuales',
+          actions: ['Abre Climatología y descarga el pronóstico para esta ubicación.'],
+        },
+      ],
+    };
+  }
+
   const sysKey = grow.system || 'DWC';
   const sysLabel = typeof getSystemProfile === 'function' ? getSystemProfile(sysKey).label : sysKey;
   const lines = getExteriorSystemLines(sysKey);
