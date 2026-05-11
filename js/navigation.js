@@ -7,7 +7,6 @@ const MORE_VIEWS = [
   'ambiental',
   'legal',
   'accesibilidad',
-  'climatologia',
 ];
 
 function closeMoreMenu() {
@@ -49,8 +48,13 @@ function openAccesibilidadFromMore() {
   navTo('accesibilidad');
 }
 
-function closeAccesibilidadView() {
+/** Vuelve a Inicio desde pantallas de referencia (Más) o Apariencia. */
+function closeMoreHubView() {
   navTo('inicio');
+}
+
+function closeAccesibilidadView() {
+  closeMoreHubView();
 }
 
 function renderAccesibilidad() {
@@ -162,4 +166,5 @@ window.initNavigationFromHash = initNavigationFromHash;
 window.applyNavView = applyNavView;
 window.openAccesibilidadFromMore = openAccesibilidadFromMore;
 window.closeAccesibilidadView = closeAccesibilidadView;
+window.closeMoreHubView = closeMoreHubView;
 window.renderAccesibilidad = renderAccesibilidad;

@@ -214,7 +214,7 @@ function siteWeatherMatchesGrow(grow, snap) {
     return {
       ok: false,
       code: 'stale',
-      message: `El tiempo cargado es para «${snap.query}» y tu cultivo está en «${loc}». Abre Climatología (menú Más) para actualizar con la ubicación correcta.`,
+      message: `El tiempo cargado es para «${snap.query}» y tu cultivo está en «${loc}». Abre Climatología para actualizar con la ubicación correcta.`,
     };
   }
   return { ok: true };
@@ -293,7 +293,7 @@ function buildExteriorHydroSolutions(grow, snap) {
   if (!match.ok) {
     const actions = [];
     if (match.code === 'no-data') {
-      actions.push('Abre Climatología (menú Más inferior): se descargará el pronóstico para la ubicación configurada en este cultivo.');
+      actions.push('Abre la pestaña Climatología: se descargará el pronóstico para la ubicación configurada en este cultivo.');
     } else if (match.message) {
       actions.push(match.message);
     } else {
@@ -312,7 +312,7 @@ function buildExteriorHydroSolutions(grow, snap) {
         {
           level: 'warn',
           title: 'Sin datos meteorológicos actuales',
-          actions: ['Abre Climatología desde el menú Más y descarga el pronóstico para esta ubicación.'],
+          actions: ['Abre Climatología y descarga el pronóstico para esta ubicación.'],
         },
       ],
     };
@@ -706,7 +706,7 @@ function renderClimatologia() {
           <div class="metric"><div class="metric-label">Racha / dirección</div><div class="metric-val metric-val--compact">${cur0.wind_gusts_10m != null ? Number(cur0.wind_gusts_10m).toFixed(0) + ' km/h' : '—'} · ${windDirLabel(cur0.wind_direction_10m)}</div></div>
           <div class="metric"><div class="metric-label">Índice UV</div><div class="metric-val">${cur0.uv_index != null ? Number(cur0.uv_index).toFixed(1) : '—'}</div></div>
         </div>`
-      : `<div class="alert info"><i class="ti ti-cloud-off"></i><p>Con ubicación configurada, los datos se cargan <strong>al abrir Climatología</strong> (menú Más inferior: geocodificación + pronóstico en dos rejillas del modelo + elevación). También puedes usar <strong>Actualizar pronóstico</strong> para forzar una nueva consulta.</p></div>`;
+      : `<div class="alert info"><i class="ti ti-cloud-off"></i><p>Con ubicación configurada, los datos se cargan <strong>al abrir esta pestaña</strong> (geocodificación + pronóstico en dos rejillas del modelo + elevación). También puedes usar <strong>Actualizar pronóstico</strong> para forzar una nueva consulta.</p></div>`;
 
   const gridPrimary = snap?.gridPrimary;
   const gridRows =
@@ -753,7 +753,7 @@ function renderClimatologia() {
         <div class="card-title"><i class="ti ti-map-pin"></i>Ubicación del cultivo</div>
         <button type="button" class="btn btn-primary btn--compact" id="climaRefreshBtn" onclick="refreshClimatologiaFromUi()"><i class="ti ti-refresh"></i> Actualizar pronóstico</button>
       </div>
-      <p class="body-prose">Los datos se obtienen para <strong>${label || '— (sin ubicación)'}</strong> (misma cadena que en checklist o cultivo activo). Con ubicación definida, <strong>al abrir Climatología</strong> (menú Más inferior) se consulta la API (geocodificación Open-Meteo, pronóstico en <strong>dos rejillas</strong> del modelo: tierra y «nearest», y elevación DEM). Los valores son salidas de modelos numéricos, no lecturas en tiempo real de una estación concreta.</p>
+      <p class="body-prose">Los datos se obtienen para <strong>${label || '— (sin ubicación)'}</strong> (misma cadena que en checklist o cultivo activo). Con ubicación definida, <strong>al entrar en esta pestaña</strong> se consulta la API (geocodificación Open-Meteo, pronóstico en <strong>dos rejillas</strong> del modelo: tierra y «nearest», y elevación DEM). Los valores son salidas de modelos numéricos, no lecturas en tiempo real de una estación concreta.</p>
       <div class="form-group clima-manual-loc">
         <label for="climaManualLocation">Ubicación manual</label>
         <p class="text-muted clima-manual-loc-hint">Si borraste la zona o el checklist quedó vacío, escribe el lugar aquí. El pronóstico se recalcula <strong>solo al pulsar Aplicar</strong> (o Enter), no mientras escribes.</p>

@@ -129,6 +129,7 @@ body{
 }
 .page-header-close-btn i{font-size:22px;line-height:1;opacity:0.95}
 [data-theme='light'] .page-header-close-btn:hover{border-color:rgba(5,150,105,0.35)}
+.page-header--compact.page-header--with-close .page-header-close-btn{margin-top:0;align-self:flex-start}
 
 /* CARDS */
 .card{

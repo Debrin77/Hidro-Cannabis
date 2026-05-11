@@ -178,8 +178,8 @@ function saveGrowLocationAndPlacement() {
       date: new Date().toISOString(),
       text:
         newLoc !== prevLoc
-          ? `Ubicación actualizada («${prevLoc || '—'}» → «${newLoc || '—'}»). Pronóstico guardado invalidado: abre Climatología desde el menú Más para cargar la nueva zona.`
-          : `Instalación ${prevPlace === 'exterior' ? 'exterior' : 'interior'} → ${newPlace === 'exterior' ? 'exterior' : 'interior'}. Pronóstico guardado invalidado: abre Climatología (menú Más) si usas tiempo exterior.`,
+          ? `Ubicación actualizada («${prevLoc || '—'}» → «${newLoc || '—'}»). Pronóstico guardado invalidado: abre Climatología para cargar la nueva zona.`
+          : `Instalación ${prevPlace === 'exterior' ? 'exterior' : 'interior'} → ${newPlace === 'exterior' ? 'exterior' : 'interior'}. Pronóstico guardado invalidado: abre Climatología si usas tiempo exterior.`,
       type: 'info',
     });
   }
@@ -1494,7 +1494,7 @@ function renderActiveGrow(){
         <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
       </summary>
       <div class="cultivo-fold-card__body">
-      <p class="body-prose cultivo-site-lead"><strong>Climatología</strong> (menú inferior <strong>Más</strong>) y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
+      <p class="body-prose cultivo-site-lead">La pestaña <strong>Climatología</strong> y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
       <div class="grid2 cultivo-site-grid">
         <div class="form-group">
           <label>Ubicación del sistema</label>

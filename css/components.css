@@ -834,6 +834,27 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 }
 .more-menu-close i{font-size:22px;line-height:1;opacity:0.95}
 [data-theme='light'] .more-menu-close:hover{border-color:rgba(5,150,105,0.35)}
+.more-menu-item{
+  display:flex;align-items:stretch;gap:0;margin-bottom:8px;border-radius:var(--radius2);
+  border:1px solid var(--border);overflow:hidden;background:var(--surface2);
+}
+.more-menu-item .more-menu-row{
+  flex:1;min-width:0;margin-bottom:0;border:none;border-radius:0;
+  transform:none;
+}
+.more-menu-item .more-menu-row:hover{transform:none}
+.more-menu-item__x{
+  flex-shrink:0;width:48px;border:none;border-left:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;padding:0;
+  font:inherit;transition:background .15s,color .15s,border-color .15s;
+}
+.more-menu-item__x:hover{
+  color:var(--text);background:linear-gradient(135deg,var(--surface2),rgba(52,211,153,0.08));
+  border-left-color:rgba(52,211,153,0.35);
+}
+.more-menu-item__x i{font-size:20px;line-height:1;opacity:0.9}
+[data-theme='light'] .more-menu-item__x:hover{border-left-color:rgba(5,150,105,0.35)}
 .more-menu-title{
   font-family:'Syne',sans-serif;font-size:11px;font-weight:600;
   letter-spacing:0.12em;text-transform:uppercase;

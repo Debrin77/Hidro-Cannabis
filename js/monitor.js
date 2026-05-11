@@ -489,7 +489,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
       level: 'info',
       icon: 'cloud-search',
       paramKey: 'exterior',
-      message: 'Abre Climatología desde el menú Más inferior: se consulta la API para tu ubicación; puedes repetir con «Actualizar pronóstico» si hace falta.',
+      message: 'Abre la pestaña Climatología: se consulta la API para tu ubicación; puedes repetir con «Actualizar pronóstico» si hace falta.',
     });
   }
 

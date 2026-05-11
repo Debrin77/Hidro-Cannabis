@@ -47,10 +47,13 @@
 
 <!-- ══════════════ VARIEDADES ══════════════ -->
 <div class="view" id="view-variedades">
-  <div class="page-header">
-    <div class="breadcrumb">Hydro Cannabis / Variedades</div>
-    <h1>Variedades para hidropónico</h1>
-    <p>8 cepas seleccionadas por rendimiento, adaptación al sistema RDWC/DWC y facilidad de cultivo en autoconsumo.</p>
+  <div class="page-header page-header--with-close">
+    <div class="page-header__col">
+      <div class="breadcrumb">Hydro Cannabis / Variedades</div>
+      <h1>Variedades para hidropónico</h1>
+      <p>8 cepas seleccionadas por rendimiento, adaptación al sistema RDWC/DWC y facilidad de cultivo en autoconsumo.</p>
+    </div>
+    <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
 
   <div class="tabs" id="strainTabs">
@@ -67,10 +70,13 @@
 
 <!-- ══════════════ NUTRIENTES ══════════════ -->
 <div class="view" id="view-nutrientes">
-  <div class="page-header">
-    <div class="breadcrumb">Hydro Cannabis / Nutrientes</div>
-    <h1>Top 10 Nutrientes Hidropónico</h1>
-    <p>Clasificados por eficacia contrastada en cultivos de cannabis en DWC/RDWC. Haz clic en cada uno para ver dosis y detalles completos.</p>
+  <div class="page-header page-header--with-close">
+    <div class="page-header__col">
+      <div class="breadcrumb">Hydro Cannabis / Nutrientes</div>
+      <h1>Top 10 Nutrientes Hidropónico</h1>
+      <p>Clasificados por eficacia contrastada en cultivos de cannabis en DWC/RDWC. Haz clic en cada uno para ver dosis y detalles completos.</p>
+    </div>
+    <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
 
   <div class="nutri-rank" id="nutriList"></div>
@@ -121,16 +127,19 @@
   <div class="page-header">
     <div class="breadcrumb">Hydro Cannabis / Climatología</div>
     <h1>Climatología del emplazamiento</h1>
-    <p>Pronóstico y riesgos orientativos para la <strong>ubicación del cultivo</strong>. Cruza con el microclima que registras en <strong>Historial</strong>. Acceso rápido: menú inferior <strong>Más</strong> → Climatología.</p>
+    <p>Pronóstico y riesgos orientativos para la <strong>ubicación del cultivo</strong>. Cruza con el microclima que registras en <strong>Historial</strong>.</p>
   </div>
   <div id="climatologiaContent"></div>
 </div>
 
 <!-- ══════════════ CONSEJOS ══════════════ -->
 <div class="view" id="view-consejos">
-  <div class="page-header page-header--compact">
-    <h1>Cómo usar la app</h1>
-    <p>Flujo recomendado en pocos pasos.</p>
+  <div class="page-header page-header--compact page-header--with-close">
+    <div class="page-header__col">
+      <h1>Cómo usar la app</h1>
+      <p>Flujo recomendado en pocos pasos.</p>
+    </div>
+    <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div class="consejos-stack">
     <div class="consejo-card">
@@ -157,8 +166,8 @@
     <div class="consejo-card">
       <span class="consejo-num">4</span>
       <div>
-        <strong>Más (referencia y clima)</strong>
-        <p>Variedades, nutrientes, legal, apariencia y <strong>Climatología</strong> con pronóstico para la ubicación del cultivo.</p>
+        <strong>Más (referencia)</strong>
+        <p>Variedades, nutrientes, legal y apariencia. El tiempo de tu zona está en la pestaña <strong>Clima</strong> de la barra inferior.</p>
       </div>
     </div>
     <div class="alert info"><i class="ti ti-info-circle"></i><p>Los cálculos y tablas son <strong>guías</strong>. Ajusta siempre según tus mediciones y el fabricante de nutrientes.</p></div>
@@ -168,10 +177,13 @@
 
 <!-- ══════════════ AMBIENTAL ══════════════ -->
 <div class="view" id="view-ambiental">
-  <div class="page-header">
-    <div class="breadcrumb">Hydro Cannabis / Parámetros Ambientales</div>
-    <h1>Parámetros completos</h1>
-    <p>Todas las variables que debes controlar en cada fase: temperatura, humedad, VPD, CO₂, luz, agua y aire.</p>
+  <div class="page-header page-header--with-close">
+    <div class="page-header__col">
+      <div class="breadcrumb">Hydro Cannabis / Parámetros Ambientales</div>
+      <h1>Parámetros completos</h1>
+      <p>Todas las variables que debes controlar en cada fase: temperatura, humedad, VPD, CO₂, luz, agua y aire.</p>
+    </div>
+    <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
 
   <div class="card">
@@ -288,17 +300,20 @@
       <h1>Apariencia y accesibilidad</h1>
       <p>Elige el esquema de color de la interfaz. La preferencia se guarda en este dispositivo.</p>
     </div>
-    <button type="button" class="page-header-close-btn" onclick="closeAccesibilidadView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
+    <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div id="accesibilidadContent"></div>
 </div>
 
 <!-- ══════════════ LEGAL ══════════════ -->
 <div class="view" id="view-legal">
-  <div class="page-header">
-    <div class="breadcrumb">Hydro Cannabis / Legal España</div>
-    <h1>Marco legal en España</h1>
-    <p>Situación legal del autocultivo de cannabis a mayo de 2025. Esta información es orientativa — consulta siempre un abogado especialista.</p>
+  <div class="page-header page-header--with-close">
+    <div class="page-header__col">
+      <div class="breadcrumb">Hydro Cannabis / Legal España</div>
+      <h1>Marco legal en España</h1>
+      <p>Situación legal del autocultivo de cannabis a mayo de 2025. Esta información es orientativa — consulta siempre un abogado especialista.</p>
+    </div>
+    <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
 
   <div class="legal-section">
@@ -374,6 +389,9 @@
   <button type="button" class="bottom-nav-item" data-nav-view="historial" onclick="navTo('historial')">
     <i class="ti ti-chart-line" aria-hidden="true"></i><span>Historial</span>
   </button>
+  <button type="button" class="bottom-nav-item" data-nav-view="climatologia" onclick="navTo('climatologia')">
+    <i class="ti ti-cloud-storm" aria-hidden="true"></i><span>Clima</span>
+  </button>
   <button type="button" class="bottom-nav-item" data-nav-view="more" onclick="toggleMoreMenu()" aria-expanded="false" id="moreNavBtn">
     <i class="ti ti-layout-grid" aria-hidden="true"></i><span>Más</span>
   </button>
@@ -387,13 +405,30 @@
       <div class="more-menu-title">Más opciones</div>
       <button type="button" class="more-menu-close" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
-    <button type="button" class="more-menu-row" onclick="navTo('consejos')"><i class="ti ti-bulb"></i> Consejos de uso</button>
-    <button type="button" class="more-menu-row" onclick="navTo('variedades')"><i class="ti ti-seedling"></i> Variedades</button>
-    <button type="button" class="more-menu-row" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes top 10</button>
-    <button type="button" class="more-menu-row" onclick="navTo('ambiental')"><i class="ti ti-temperature"></i> Parámetros ambientales</button>
-    <button type="button" class="more-menu-row" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología</button>
-    <button type="button" class="more-menu-row" onclick="navTo('legal')"><i class="ti ti-shield-check"></i> Legal España</button>
-    <button type="button" class="more-menu-row" onclick="openAccesibilidadFromMore()"><i class="ti ti-palette"></i> Apariencia y accesibilidad</button>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navTo('consejos')"><i class="ti ti-bulb"></i> Consejos de uso</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navTo('variedades')"><i class="ti ti-seedling"></i> Variedades</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes top 10</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navTo('ambiental')"><i class="ti ti-temperature"></i> Parámetros ambientales</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navTo('legal')"><i class="ti ti-shield-check"></i> Legal España</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="openAccesibilidadFromMore()"><i class="ti ti-palette"></i> Apariencia y accesibilidad</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
   </div>
 </div>
 
