@@ -1,4 +1,4 @@
-// Gráficos de tendencia según modo (por sistema hidropónico).
+// Gráficos de tendencia según modo (por tipo de cultivo hidropónico).
 
 function _vpdRow(r) {
   if (typeof computeVpdKpa !== 'function') return null;

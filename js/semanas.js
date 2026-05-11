@@ -241,7 +241,7 @@ function renderSemanas() {
       temp = '24–28°C';
       accion =
         w === 2
-          ? 'Trasplantar a sistema hidro. Iniciar nutrientes. Primeros LST.'
+          ? 'Trasplantar al cultivo hidropónico. Iniciar nutrientes. Primeros LST.'
           : w === 3
             ? 'Topping (si procede). ScrOG: guiar ramas por la malla.'
             : w <= 5

@@ -25,7 +25,7 @@ function escapeMonitorHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-/** Alertas que en Sistema se muestran junto al medidor (no duplicar en la tarjeta resumen). */
+/** Alertas que en Cultivo se muestran junto al medidor (no duplicar en la tarjeta resumen). */
 const GROW_ALERT_INLINE_PARAM_KEYS = new Set([
   'ph',
   'ec',
@@ -45,7 +45,7 @@ function renderGrowInlineAlertRowHtml(a) {
   return `<div class="grow-alert-inline grow-alert-inline--${cls}" role="status"><i class="ti ti-${a.icon}" aria-hidden="true"></i><span class="grow-alert-inline__text">${escapeMonitorHtml(a.message)}</span></div>`;
 }
 
-/** Agrupa alertas para anclajes en la pestaña Sistema (cuadrícula y emplazamiento). */
+/** Agrupa alertas para anclajes en la pestaña Cultivo (cuadrícula y emplazamiento). */
 function partitionGrowAlertsForSistemaSlots(grow) {
   const slots = {
     ec: [],
@@ -514,7 +514,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
   return out;
 }
 
-/** Tarjeta de alertas (última medición + exterior + fase) para Inicio y Sistema. En Sistema, `hideInlineDupes` evita repetir lo ya anclado bajo medidores. */
+/** Tarjeta de alertas (última medición + exterior + fase) para Inicio y Cultivo. En Cultivo, `hideInlineDupes` evita repetir lo ya anclado bajo medidores. */
 function renderGrowAlertsCardHtml(grow, options) {
   if (!grow || !grow.strain) return '';
   const hideInlineDupes = options && options.hideInlineDupes;
@@ -550,7 +550,7 @@ function renderGrowAlertsCardHtml(grow, options) {
     </div>`;
 }
 
-/** Franja superior en Medir: nombre guardado, tipo técnico, selector multi-sistema y edición de etiqueta. */
+/** Franja superior en Medir: nombre guardado, tipo técnico, selector multi-instalación y edición de etiqueta. */
 function renderMonitorActiveSystemStripHtml() {
   if (!myGrow) return '';
   const code = myGrow.system || 'RDWC';
@@ -1485,7 +1485,7 @@ function renderHistoryChecklistSection(grow) {
   const pct = rows.length ? Math.round((done / rows.length) * 100) : 0;
   return `<div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-checklist"></i> Checklist operativo</div></div>
-      <p class="historial-quick-ref__hint">Control rápido de mantenimiento y revisión del sistema.</p>
+      <p class="historial-quick-ref__hint">Control rápido de mantenimiento y revisión del cultivo hidropónico.</p>
       <div class="dash-mini-bar historial-check-bar" style="--dash-pct:${pct}%"><span></span></div>
       <p class="form-hint">Completado: ${done}/${rows.length}</p>
       <div class="expert-checklist">
@@ -1551,7 +1551,7 @@ function renderHistoryDiarySection(grow) {
       <div class="form-group">
         <label>Fotos (máx 6)</label>
         <input id="histDiaryPhotos" type="file" accept="image/*" multiple onchange="onHistoryDiaryPhotosChange(event)">
-        <span class="form-hint">Sirve para guardar imágenes del sistema y de cada planta para comparar evolución.</span>
+        <span class="form-hint">Sirve para guardar imágenes del cultivo hidropónico y de cada planta para comparar evolución.</span>
       </div>
       ${pending ? `<div class="hist-diary-photo-grid hist-diary-photo-grid--pending">${pending}</div>` : ''}
       <button type="button" class="btn btn-primary" onclick="saveHistoryDiaryEntry()"><i class="ti ti-device-floppy"></i> Guardar entrada de diario</button>

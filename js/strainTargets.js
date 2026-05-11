@@ -251,7 +251,7 @@ function renderStrainSpecsTableHtml() {
         <td data-label="EC flor / pico" class="ec-val">${s.ecFlower}–${s.ecPeak}</td>
         <td data-label="pH veg / flor">${pV.min.toFixed(1)}–${pV.max.toFixed(1)} / ${pF.min.toFixed(1)}–${pF.max.toFixed(1)}</td>
         <td data-label="Tª agua">${s.tempWater}–${s.tempWater + 2}°C</td>
-        <td data-label="Sistema ideal">${s.system}</td>
+        <td data-label="Ideal hidro">${s.system}</td>
         <td data-label="Notas" class="table-cell-note">${extras || s.ambNotes.slice(0, 90)}${s.ambNotes.length > 90 ? '…' : ''}</td>
       </tr>`;
     })
@@ -269,7 +269,7 @@ function renderStrainSpecsTableHtml() {
               <th>EC flor / pico</th>
               <th>pH veg / flor</th>
               <th>Tª agua</th>
-              <th>Sistema ideal</th>
+              <th>Ideal cultivo hidropónico</th>
               <th>Notas / límites</th>
             </tr>
           </thead>

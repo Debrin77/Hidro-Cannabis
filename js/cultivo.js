@@ -543,12 +543,12 @@ function openSystemWorkspaceSelector() {
         <div class="work-system-modal__scrim" onclick="closeSystemWorkspaceSelector()"></div>
         <div class="work-system-modal__panel" role="dialog" aria-labelledby="workSystemTitle">
           <div class="work-system-modal__head">
-            <div id="workSystemTitle" class="work-system-modal__title">Seleccionar sistema activo</div>
+            <div id="workSystemTitle" class="work-system-modal__title">Seleccionar cultivo hidropónico activo</div>
             <button type="button" class="work-system-modal__close" onclick="closeSystemWorkspaceSelector()" aria-label="Cerrar"><i class="ti ti-x"></i></button>
           </div>
-          <p class="form-hint">Elige con claridad el sistema/cultivo sobre el que vas a trabajar ahora.</p>
+          <p class="form-hint">Elige con claridad el cultivo hidropónico sobre el que vas a trabajar ahora.</p>
           <div id="workSystemList" class="work-system-modal__list"></div>
-          <p id="workSystemPendingLabel" class="form-hint">Selecciona un sistema y confirma el cambio.</p>
+          <p id="workSystemPendingLabel" class="form-hint">Selecciona un cultivo hidropónico y confirma el cambio.</p>
           <div class="work-system-modal__actions">
             <button type="button" class="btn btn-ghost btn--compact" onclick="closeSystemWorkspaceSelector()">Cancelar</button>
             <button type="button" id="workSystemConfirmBtn" class="btn btn-primary btn--compact" onclick="confirmWorkSystemSelection()" disabled>Confirmar cambio</button>
@@ -671,9 +671,9 @@ function renderInitialOnboarding() {
   document.getElementById('cultivoContent').innerHTML = `
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-rocket"></i>Checklist experto · Primer inicio</div></div>
-      <p class="body-prose cultivo-intro"><strong>Hydro Cannabis</strong> centraliza sistema hidropónico, clima, nutrición (según tipo de agua) y monitorización diaria, alineado con buenas prácticas de cultivo en RDWC/DWC.</p>
+      <p class="body-prose cultivo-intro"><strong>Hydro Cannabis</strong> centraliza tu cultivo hidropónico, clima, nutrición (según tipo de agua) y monitorización diaria, alineado con buenas prácticas en RDWC/DWC.</p>
       <div class="grid3 cultivo-highlights">
-        <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Checklist guiado de sistema</p></div>
+        <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Checklist guiado del cultivo hidropónico</p></div>
         <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Cálculo de mezcla por tipo de agua</p></div>
         <div class="card-sm"><div class="metric-label">Ventaja</div><p class="body-prose">Alertas inteligentes por planta</p></div>
       </div>
@@ -705,7 +705,7 @@ function renderInitialOnboarding() {
       ${errorBox}
       <div class="grid2">
         <div class="form-group">
-          <label>Sistemas disponibles (elige uno o varios)</label>
+          <label>Tipos de cultivo hidropónico disponibles (elige uno o varios)</label>
           <div class="pill-tag-row pill-tag-row--install-chips">
             ${['RDWC', 'DWC', 'NFT', 'FLOAT', 'AERO']
               .map((s) => {
@@ -723,7 +723,7 @@ function renderInitialOnboarding() {
           <p class="form-hint">Varias instalaciones del mismo tipo reciben nombres distintos (p. ej. «RDWC (2)»). Puedes renombrarlas en <strong>Medir</strong>.</p>
         </div>
         <div class="form-group">
-          <label>Sistema activo inicial</label>
+          <label>Cultivo hidropónico activo al inicio</label>
           <select id="onbSystem" onchange="onOnboardingSystemTypeChange()"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option><option value="FLOAT" ${cfg.system==='FLOAT'?'selected':''}>Mesa flotante</option><option value="AERO" ${cfg.system==='AERO'?'selected':''}>Aeroponía</option></select>
         </div>
         <div class="form-group">
@@ -758,7 +758,7 @@ function renderInitialOnboarding() {
     <details class="card onboarding-acc" id="onbEngineeringCard" open>
       <summary class="onboarding-acc__summary">
         <span class="onboarding-acc__step-num" aria-hidden="true">2</span>
-        <span class="onboarding-acc__summary-title"><i class="ti ti-tool"></i> Ingeniería del sistema · datos de montaje</span>
+        <span class="onboarding-acc__summary-title"><i class="ti ti-tool"></i> Ingeniería del cultivo hidropónico · datos de montaje</span>
         <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
       </summary>
       <div class="onboarding-acc__body">
@@ -786,7 +786,7 @@ function renderInitialOnboarding() {
           <span class="form-hint">Solo cambia el dibujo cenital; el cálculo de caudales sigue igual. Útil si tu kit lleva el depósito de control integrado al fondo del circuito.</span>
         </div>
         <div class="form-group">
-          <label>Origen del sistema</label>
+          <label>Tipo de montaje (DIY o kit)</label>
           <select id="onbBuildType" onchange="onOnboardingBuildTypeChange()">
             <option value="diy" ${buildType === 'diy' ? 'selected' : ''}>Montaje propio (DIY) — validar caudales</option>
             <option value="commercial" ${buildType === 'commercial' ? 'selected' : ''}>Kit comercial / tienda</option>
@@ -918,7 +918,7 @@ function renderInitialOnboarding() {
         <div class="form-group"><label>Variedad</label><select id="onbStrain">${strains.map(s=>`<option value="${s.id}" ${(cfg.strainId||'ww')===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
         <div class="form-group"><label>Edad (días)</label><input id="onbAge" type="number" min="0" max="120" inputmode="numeric" value="${Number.isFinite(cfg.ageDays)?cfg.ageDays:0}"></div>
         <div class="form-group"><label>Origen (semilla/esqueje/proveedor)</label><input id="onbOrigin" type="text" value="${cfg.origin||''}" placeholder="Ej: Esqueje propio"></div>
-        <div class="form-group"><label>Fecha trasplante al sistema</label><input id="onbTransplantDate" type="date" value="${cfg.transplantDate||new Date().toISOString().split('T')[0]}"></div>
+        <div class="form-group"><label>Fecha trasplante al cultivo hidropónico</label><input id="onbTransplantDate" type="date" value="${cfg.transplantDate||new Date().toISOString().split('T')[0]}"></div>
         <div class="form-group">
           <label>Nutriente principal (dosificación en la app)</label>
           <select id="onbNutri" onchange="updateOnboardingNutrientHint()">${nutrients.map(n=>`<option value="${n.rank}" ${(cfg.nutri||1)===n.rank?'selected':''}>${n.rank}. ${n.name}</option>`).join('')}</select>
@@ -1113,7 +1113,7 @@ function completeInitialSetup() {
   if (!Array.isArray(appConfig.systems) || !appConfig.systems.length) appConfig.systems = [appConfig.system];
 
   if (!appConfig.location) {
-    appConfig.error = 'Debes indicar ubicación del sistema.';
+    appConfig.error = 'Debes indicar la ubicación del cultivo hidropónico.';
     saveAppConfig();
     renderInitialOnboarding();
     return;
@@ -1191,12 +1191,12 @@ function renderWizStep(){
         <button type="button" class="btn btn-primary" onclick="goStep2()">Siguiente <i class="ti ti-arrow-right"></i></button>
       </div>
     </div>`,
-    // 2 sistema
+    // 2 cultivo
     `<div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-settings-2"></i>Paso 2 · Instalación y espacio</div></div>
       ${errorBox}
       <div class="grid2">
-        <div class="form-group"><label>Sistema hidropónico</label>
+        <div class="form-group"><label>Tipo de cultivo hidropónico</label>
           <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'selected':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${wizData.system==='NFT'?'selected':''}>NFT</option><option value="FLOAT" ${wizData.system==='FLOAT'?'selected':''}>Mesa flotante</option><option value="AERO" ${wizData.system==='AERO'?'selected':''}>Aeroponía</option></select>
         </div>
         <div class="form-group"><label>Metros cuadrados</label>
@@ -1273,10 +1273,10 @@ function buildConfirmSummary(){
     <div class="confirm-summary-box">
       <div class="grid2 confirm-summary-grid">
         <div>
-          <div class="section-label section-label--block">Variedad y sistema</div>
+          <div class="section-label section-label--block">Variedad y tipo de cultivo hidropónico</div>
           <div class="param-row"><span class="param-key">Variedad</span><span class="param-val">${s.name}</span></div>
           <div class="param-row"><span class="param-key">Plantas</span><span class="param-val">${wizData.plants||2}</span></div>
-          <div class="param-row"><span class="param-key">Sistema</span><span class="param-val">${wizData.system||'RDWC'}</span></div>
+          <div class="param-row"><span class="param-key">Tipo hidropónico</span><span class="param-val">${wizData.system||'RDWC'}</span></div>
           <div class="param-row"><span class="param-key">Técnica</span><span class="param-val">${wizData.technique||'ScrOG'}</span></div>
           <div class="param-row"><span class="param-key">Espacio</span><span class="param-val">${wizData.m2||1.2} m²</span></div>
           <div class="param-row"><span class="param-key">Iluminación</span><span class="param-val">~${watts}W ${wizData.light||'LED'}</span></div>
@@ -1440,7 +1440,7 @@ function renderActiveGrow(){
     sz && !sz.nft
       ? `<details class="card cultivo-fold-card">
         <summary class="cultivo-fold-card__summary">
-          <span class="cultivo-fold-card__summary-title"><i class="ti ti-tool" aria-hidden="true"></i> Dimensionado del sistema (desde checklist)</span>
+          <span class="cultivo-fold-card__summary-title"><i class="ti ti-tool" aria-hidden="true"></i> Dimensionado del cultivo hidropónico (desde checklist)</span>
           <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
         </summary>
         <div class="cultivo-fold-card__body cultivo-sizing-body">${sizingBodyNonNft}
@@ -1497,7 +1497,7 @@ function renderActiveGrow(){
       <p class="body-prose cultivo-site-lead">La pestaña <strong>Climatología</strong> y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
       <div class="grid2 cultivo-site-grid">
         <div class="form-group">
-          <label>Ubicación del sistema</label>
+          <label>Ubicación del cultivo hidropónico</label>
           <input id="cfgGrowLocation" type="text" value="${escapeHtmlAttr(myGrow.location || '')}" placeholder="Ej: Madrid, Vigo, Castelló de la Plana" autocomplete="address-level2">
           <span class="form-hint">Misma cadena que se geocodifica en Climatología.</span>
         </div>
@@ -1556,7 +1556,7 @@ function renderActiveGrow(){
 
     <div class="grid2">
       <div class="card">
-        <div class="card-header"><div class="card-title"><i class="ti ti-adjustments"></i>Configuración manual del sistema</div></div>
+        <div class="card-header"><div class="card-title"><i class="ti ti-adjustments"></i>Configuración manual del cultivo hidropónico</div></div>
         <div class="grid2">
           <div class="form-group">
             <label>Tipo de agua</label>
@@ -1677,13 +1677,13 @@ function renderActiveGrow(){
 
     <div class="card">
       <div class="card-header card-header--split">
-        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (<button type="button" class="btn btn-ghost btn--tiny" ${getAvailableWorkSystems().length > 1 ? 'onclick="openSystemWorkspaceSelector()"' : 'disabled'}>${activeSystemButtonLabel}</button>)</div>
+        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del cultivo hidropónico (<button type="button" class="btn btn-ghost btn--tiny" ${getAvailableWorkSystems().length > 1 ? 'onclick="openSystemWorkspaceSelector()"' : 'disabled'}>${activeSystemButtonLabel}</button>)</div>
         <button type="button" class="btn btn-ghost btn--compact" onclick="exportSystemSvg()"><i class="ti ti-download"></i> Exportar SVG</button>
       </div>
       <div class="system-svg-wrap">${systemSvg}</div>
       <div class="svg-panel-grid svg-panel-grid--single">
         <div class="card-sm plant-system-summary-card">
-          <div class="section-label">Plantas del sistema</div>
+          <div class="section-label">Plantas del cultivo hidropónico</div>
           ${allPlantsSummaryHtml}
         </div>
       </div>
@@ -2549,7 +2549,7 @@ function renderPlantSiteMarker(node, grow, weekNum, yOffset = -40) {
   const age = getEffectivePlantAgeDays(grow, node.index);
   const isYoung = weekNum <= 1 || age < 18;
   const cls = `plant-site-marker${custom ? ' plant-site-marker--custom' : ''}${isYoung ? ' plant-site-marker--young' : ''}`;
-  const labelHint = isYoung ? 'Plántula / recién en sistema' : 'Planta en sitio';
+  const labelHint = isYoung ? 'Plántula / recién en cultivo hidropónico' : 'Planta en sitio';
   const inner = renderPlantSiteMarkerSvgInner(isYoung);
   return `
     <g transform="translate(${node.x},${node.y + yOffset})">
@@ -2625,7 +2625,7 @@ function exportSystemSvg() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `hydro-cannabis-${(myGrow?.system||'sistema').toLowerCase()}-${new Date().toISOString().slice(0,10)}.svg`;
+  a.download = `hydro-cannabis-${(myGrow?.system||'cultivo-hidro').toLowerCase()}-${new Date().toISOString().slice(0,10)}.svg`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

@@ -588,7 +588,7 @@ function renderSystemSizingHtml(result) {
     const ventExtra = result?.ventilation ? renderVentilationSizingHtml(result.ventilation) : '';
     return `
       <div class="sizing-result">
-        <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>${label}</strong><p>${result ? result.disclaimer : 'Selecciona sistema y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
+        <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>${label}</strong><p>${result ? result.disclaimer : 'Selecciona el tipo de cultivo hidropónico y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
         ${ventExtra}
         ${geomExtra}
         ${pumpExtra ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Equipo declarado</div>${pumpExtra}</div>` : ''}

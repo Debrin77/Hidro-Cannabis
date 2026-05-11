@@ -1,4 +1,4 @@
-// Climatología — datos en la ubicación del sistema (cultivo activo o checklist).
+// Climatología — datos en la ubicación del cultivo hidropónico (cultivo activo o checklist).
 
 let climaApiErrorMessage = '';
 

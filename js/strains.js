@@ -18,7 +18,7 @@ function renderStrains(filter='all'){
         <div class="sstat"><span class="sstat-label">THC</span><span class="sstat-val hi">${s.thc}</span></div>
         <div class="sstat"><span class="sstat-label">Floración</span><span class="sstat-val">${s.flower}</span></div>
         <div class="sstat"><span class="sstat-label">Rendimiento</span><span class="sstat-val">${s.yieldIn} g/m²</span></div>
-        <div class="sstat"><span class="sstat-label">Sistema</span><span class="sstat-val sstat-val--sm">${s.system.split('/')[0].trim()}</span></div>
+        <div class="sstat"><span class="sstat-label">Hidro</span><span class="sstat-val sstat-val--sm">${s.system.split('/')[0].trim()}</span></div>
         <div class="sstat"><span class="sstat-label">EC floración</span><span class="sstat-val hi">${s.ecFlower}–${s.ecPeak}</span></div>
       </div>
     </div>
@@ -54,7 +54,7 @@ function selectStrain(id){
           <div class="param-row"><span class="param-key">pH vegetación</span><span class="param-val blue">${s.ph}</span></div>
           <div class="param-row"><span class="param-key">pH floración</span><span class="param-val blue">${s.phFlower}</span></div>
           <div class="param-row"><span class="param-key">Temp. agua óptima</span><span class="param-val purple">${s.tempWater}–${s.tempWater+2}°C</span></div>
-          <div class="param-row"><span class="param-key">Sistema óptimo</span><span class="param-val">${s.system}</span></div>
+          <div class="param-row"><span class="param-key">Ideal cultivo hidropónico</span><span class="param-val">${s.system}</span></div>
           <div class="param-row"><span class="param-key">Técnica recomendada</span><span class="param-val">${s.technique}</span></div>
         </div>
       </div>

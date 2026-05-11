@@ -91,7 +91,7 @@ function resetExpertChecklist() {
 
 function requestFullSystemReset() {
   const step1 =
-    'Se borrarán en este dispositivo: cultivo e historial de medidas, configuración del sistema (checklist inicial), checklist de buenas prácticas de Inicio y preferencias de gráficos. No se borra el tema claro/oscuro.\n\n¿Quieres continuar?';
+    'Se borrarán en este dispositivo: cultivo e historial de medidas, configuración del cultivo hidropónico (checklist inicial), checklist de buenas prácticas de Inicio y preferencias de gráficos. No se borra el tema claro/oscuro.\n\n¿Quieres continuar?';
   if (!window.confirm(step1)) return;
   const step2 =
     'Confirmación final: no hay deshacer. ¿Eliminar todos estos datos locales ahora?';
@@ -158,7 +158,7 @@ function renderConsejosPage() {
   host.innerHTML = `
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i>Consejos de uso</div></div>
-      <p class="body-prose consejos-lead">La app está pensada para quien cultiva en <strong>hidroponía en casa</strong>: eliges el sistema que ofrece la app, la variedad, el nutriente y el emplazamiento. Según lo que marques de <strong>medidores y equipo</strong>, verás sugerencias de mezcla y rangos acordes; en exterior se tiene en cuenta la <strong>meteorología de tu zona</strong>. Los detalles difíciles quedan en segundo plano: lo importante son pasos claros y poder anotar qué hiciste tras cada lectura.</p>
+      <p class="body-prose consejos-lead">La app está pensada para quien cultiva en <strong>hidroponía en casa</strong>: eliges el tipo de cultivo hidropónico que ofrece la app, la variedad, el nutriente y el emplazamiento. Según lo que marques de <strong>medidores y equipo</strong>, verás sugerencias de mezcla y rangos acordes; en exterior se tiene en cuenta la <strong>meteorología de tu zona</strong>. Los detalles difíciles quedan en segundo plano: lo importante son pasos claros y poder anotar qué hiciste tras cada lectura.</p>
       <div class="alert info"><i class="ti ti-flask-2"></i><p><strong>Circuito RDWC:</strong> toda la planta comparte el mismo agua con abono. Mide pH y sales (EC) en el depósito de control o donde indique tu kit: no hace falta repetir en cada cubo.</p></div>
       <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Qué conviene medir:</strong> pH y EC del líquido y, si puedes, temperatura del agua. En el aire, temperatura y humedad cerca de las plantas. El CO₂ solo aporta en espacio cerrado; la luz (lux o PAR) ayuda a regular la lámpara. Marca en <strong>Cultivo</strong> solo lo que de verdad tienes: así las pantallas no te abruman.</p></div>
       <div class="alert info"><i class="ti ti-wind"></i><p><strong>Dos “aires” distintos:</strong> la bomba de burbujas oxigena el <strong>nutriente</strong>; el extractor renueva el <strong>aire del cuarto o armario</strong>. En <strong>Cultivo</strong> verás referencias para ambos. Los kits de tienda se rellenan como un montaje casero: caudales y litros según la ficha o la placa del equipo.</p></div>
@@ -302,7 +302,7 @@ function renderInicio() {
       <div class="dash-hero-inner">
         <p class="dash-eyebrow">Cannabis · Hidrocultivo</p>
         <h1 class="dash-headline">Hydro Cannabis</h1>
-        <p class="dash-tagline">Guía para cultivar en hidroponía en casa: tú indicas sistema, variedad, nutriente y si está dentro o fuera; la app orienta recargas, valores razonables y qué vigilar según tus medidores, con el tiempo local cuando cultivas fuera. Puedes registrar cada medida y corrección sin liarte con tecnicismos.</p>
+        <p class="dash-tagline">Guía para cultivar en hidroponía en casa: tú indicas tipo de cultivo hidropónico, variedad, nutriente y si está dentro o fuera; la app orienta recargas, valores razonables y qué vigilar según tus medidores, con el tiempo local cuando cultivas fuera. Puedes registrar cada medida y corrección sin liarte con tecnicismos.</p>
       </div>
     </section>
 
@@ -341,7 +341,7 @@ function renderInicio() {
 
     <section class="inicio-system-reset" id="inicio-system-reset" aria-labelledby="inicio-reset-heading">
       <h2 id="inicio-reset-heading" class="inicio-system-reset__title">Zona sensible</h2>
-      <p class="inicio-system-reset__text">Reinicia la app en este navegador como si fuera la primera vez (cultivo, sistema, registros y checklist de inicio). El tema elegido en Apariencia se mantiene.</p>
+      <p class="inicio-system-reset__text">Reinicia la app en este navegador como si fuera la primera vez (cultivo hidropónico, registros y checklist de inicio). El tema elegido en Apariencia se mantiene.</p>
       <button type="button" class="btn btn-ghost inicio-system-reset__btn" onclick="requestFullSystemReset()">
         <i class="ti ti-refresh" aria-hidden="true"></i> RESET SISTEMA
       </button>
