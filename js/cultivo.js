@@ -1411,6 +1411,8 @@ function renderActiveGrow(){
     typeof getResolvedSystemDisplayName === 'function'
       ? escapeHtmlText(getResolvedSystemDisplayName(myGrow, myGrow.system))
       : escapeHtmlText(myGrow.system);
+  const growAlertSlot =
+    typeof renderGrowAlertSlotHtml === 'function' ? (slot) => renderGrowAlertSlotHtml(myGrow, slot) : () => '';
   const sz = myGrow.systemSizing;
   const ventLine =
     sz?.ventilation && Number.isFinite(sz.ventilation.extractorM3hComfort)
@@ -1515,18 +1517,20 @@ function renderActiveGrow(){
       <div class="cultivo-site-actions">
         <button type="button" class="btn btn-primary btn--compact" onclick="saveGrowLocationAndPlacement()"><i class="ti ti-device-floppy"></i> Guardar emplazamiento</button>
       </div>
+      ${growAlertSlot('placement')}
     </div>
 
-    ${typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
+    ${typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow, { hideInlineDupes: true }) : ''}
 
+    ${growAlertSlot('measurement')}
     <div class="gauge-grid">
-      <div class="gauge"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span></div>
-      <div class="gauge"><div class="gauge-label">pH objetivo</div><div class="gauge-value c-blue">${currentPH.split('–')[0]}</div><div class="gauge-range">${currentPH}</div><span class="gauge-status status-ok">En rango</span></div>
-      <div class="gauge"><div class="gauge-label">Fotoperiodo</div><div class="gauge-value gauge-value--compact">${lightSched}</div><div class="gauge-range">h luz/oscuridad</div></div>
-      <div class="gauge"><div class="gauge-label">Temp. agua</div><div class="gauge-value c-purple">${s.tempWater}</div><div class="gauge-range">°C objetivo</div><span class="gauge-status ${myGrow.ambTemp>28?'status-warn':'status-ok'}">${myGrow.ambTemp>28?'Vigilar':'OK'}</span></div>
-      <div class="gauge"><div class="gauge-label">Humedad (HR)</div><div class="gauge-value gauge-value--compact">${humidity}</div></div>
-      <div class="gauge"><div class="gauge-label">Temp. aire día</div><div class="gauge-value gauge-value--compact">${tempRange}</div></div>
-      <div class="gauge"><div class="gauge-label">CO₂</div><div class="gauge-value gauge-value--compact">${myGrow.co2==='si'?'1200':'400'}</div><div class="gauge-range">ppm</div></div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span>${growAlertSlot('ec')}</div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">pH objetivo</div><div class="gauge-value c-blue">${currentPH.split('–')[0]}</div><div class="gauge-range">${currentPH}</div><span class="gauge-status status-ok">En rango</span>${growAlertSlot('ph')}</div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Fotoperiodo</div><div class="gauge-value gauge-value--compact">${lightSched}</div><div class="gauge-range">h luz/oscuridad</div>${growAlertSlot('light')}</div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Temp. agua</div><div class="gauge-value c-purple">${s.tempWater}</div><div class="gauge-range">°C objetivo</div><span class="gauge-status ${myGrow.ambTemp>28?'status-warn':'status-ok'}">${myGrow.ambTemp>28?'Vigilar':'OK'}</span>${growAlertSlot('water')}</div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Humedad (HR)</div><div class="gauge-value gauge-value--compact">${humidity}</div>${growAlertSlot('humidity')}</div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Temp. aire día</div><div class="gauge-value gauge-value--compact">${tempRange}</div>${growAlertSlot('air')}</div>
+      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">CO₂</div><div class="gauge-value gauge-value--compact">${myGrow.co2==='si'?'1200':'400'}</div><div class="gauge-range">ppm</div>${growAlertSlot('co2')}</div>
       <div class="gauge"><div class="gauge-label">Rendimiento est.</div><div class="gauge-value c-amber gauge-value--yield">${Math.round(myGrow.m2*parseInt(s.yieldIn)*0.85)}</div><div class="gauge-range">g total</div></div>
     </div>
 

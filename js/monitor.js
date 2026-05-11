@@ -25,6 +25,94 @@ function escapeMonitorHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+/** Alertas que en Sistema se muestran junto al medidor (no duplicar en la tarjeta resumen). */
+const GROW_ALERT_INLINE_PARAM_KEYS = new Set([
+  'ph',
+  'ec',
+  'waterTemp',
+  'humidity',
+  'airTemp',
+  'vpd',
+  'co2',
+  'ppfd',
+  'flush',
+  'ambTemp',
+  'exterior',
+]);
+
+function renderGrowInlineAlertRowHtml(a) {
+  const cls = a.level === 'danger' ? 'danger' : a.level === 'warn' ? 'warn' : 'info';
+  return `<div class="grow-alert-inline grow-alert-inline--${cls}" role="status"><i class="ti ti-${a.icon}" aria-hidden="true"></i><span class="grow-alert-inline__text">${escapeMonitorHtml(a.message)}</span></div>`;
+}
+
+/** Agrupa alertas para anclajes en la pestaña Sistema (cuadrícula y emplazamiento). */
+function partitionGrowAlertsForSistemaSlots(grow) {
+  const slots = {
+    ec: [],
+    ph: [],
+    water: [],
+    humidity: [],
+    air: [],
+    co2: [],
+    light: [],
+    placement: [],
+    measurement: [],
+  };
+  const all = collectAllGrowAlerts(grow);
+  for (const a of all) {
+    const pk = a.paramKey;
+    if (pk === 'ec') slots.ec.push(a);
+    else if (pk === 'ph') slots.ph.push(a);
+    else if (pk === 'waterTemp') slots.water.push(a);
+    else if (pk === 'humidity') slots.humidity.push(a);
+    else if (pk === 'airTemp' || pk === 'ambTemp') slots.air.push(a);
+    else if (pk === 'vpd') slots.humidity.push(a);
+    else if (pk === 'co2') slots.co2.push(a);
+    else if (pk === 'ppfd') slots.light.push(a);
+    else if (pk === 'flush') {
+      slots.ec.push(a);
+      slots.ph.push(a);
+    } else if (pk === 'exterior') slots.placement.push(a);
+    else if (pk === 'measurement') slots.measurement.push(a);
+  }
+  return slots;
+}
+
+/** HTML compacto de avisos para un anclaje (`ec`, `ph`, `measurement`, `placement`, …). */
+function renderGrowAlertSlotHtml(grow, slot) {
+  if (!grow) return '';
+  const slots = partitionGrowAlertsForSistemaSlots(grow);
+  const arr = slots[slot] || [];
+  if (!arr.length) return '';
+  return `<div class="grow-alert-slot" data-grow-alert-slot="${slot}">${arr.map(renderGrowInlineAlertRowHtml).join('')}</div>`;
+}
+
+function collectAllGrowAlerts(grow) {
+  if (!grow || !grow.strain) return [];
+  const s = grow.strain;
+  const daysSince = Math.floor((new Date() - grow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const items = [];
+  if (grow.ambTemp > 28) {
+    items.push({
+      level: 'warn',
+      icon: 'thermometer',
+      paramKey: 'ambTemp',
+      message: `Temperatura ambiente ${grow.ambTemp}°C detectada. Riesgo de solución caliente. Monitorear agua — no superar 23°C.`,
+    });
+  }
+  if (weekNum >= grow.strain.vegW + grow.strain.flowerW - 2) {
+    items.push({
+      level: 'warn',
+      icon: 'scissors',
+      paramKey: 'flush',
+      message: 'Inicio del periodo de Flush recomendado. Cambiar a agua RO · EC 0.1–0.3 · pH 6.0',
+    });
+  }
+  items.push(...buildSmartAlerts(grow, s, weekNum));
+  return items;
+}
+
 function escapeHtmlAttr(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -247,6 +335,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'warn',
       icon: 'refresh',
+      paramKey: 'exterior',
       message: match.message,
     });
     return out;
@@ -255,6 +344,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'warn',
       icon: 'map-pin',
+      paramKey: 'exterior',
       message: match.message,
     });
     return out;
@@ -279,12 +369,14 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'danger',
       icon: 'sun-high',
+      paramKey: 'exterior',
       message: `Exterior: temperatura actual muy alta (${tAir.toFixed(1)}°C). Riesgo de estrés y parada de transpiración; sombreo temporal y revisa solución.`,
     });
   } else if (tAir != null && tAir >= 32) {
     out.push({
       level: 'warn',
       icon: 'sun',
+      paramKey: 'exterior',
       message: `Exterior: calor (${tAir.toFixed(1)}°C). Vigila temperatura de agua y HR foliar.`,
     });
   }
@@ -292,6 +384,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'danger',
       icon: 'snowflake',
+      paramKey: 'exterior',
       message: `Exterior: frío intenso (${tAir.toFixed(1)}°C). Protección antiheladas o retirada temporal si aplica.`,
     });
   }
@@ -299,6 +392,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'warn',
       icon: 'wind',
+      paramKey: 'exterior',
       message: `Exterior: viento fuerte (~${wind.toFixed(0)} km/h). Refuerza amarres y evita daño mecánico al follaje.`,
     });
   }
@@ -309,12 +403,14 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'warn',
       icon: 'cloud-rain',
+      paramKey: 'exterior',
       message: `Pronóstico: lluvia considerable hoy (~${rain0.toFixed(1)} mm) en floración exterior — riesgo de botrytis; mejora ventilación al secar.`,
     });
   } else if (useSnap && inFlower && Number.isFinite(prob0) && prob0 >= 75) {
     out.push({
       level: 'info',
       icon: 'cloud-fog',
+      paramKey: 'exterior',
       message: `Alta probabilidad de lluvia (${prob0}%). Prepara cubierta o retirada temporal si el espacio lo permite.`,
     });
   }
@@ -322,6 +418,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
     out.push({
       level: 'info',
       icon: 'cloud-search',
+      paramKey: 'exterior',
       message: 'Abre la pestaña Climatología: se consulta sola la API para tu ubicación; puedes repetir con «Actualizar pronóstico» si hace falta.',
     });
   }
@@ -338,6 +435,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
       out.push({
         level: top.level === 'danger' ? 'danger' : 'warn',
         icon: 'tool',
+        paramKey: 'exterior',
         message: `${top.title}: ${preview} Ver plan completo en Climatología.`,
       });
     }
@@ -346,31 +444,38 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
   return out;
 }
 
-/** Tarjeta de alertas (última medición + exterior + fase) para Inicio y Sistema. Mantenimiento por fechas: Calendario. */
-function renderGrowAlertsCardHtml(grow) {
+/** Tarjeta de alertas (última medición + exterior + fase) para Inicio y Sistema. En Sistema, `hideInlineDupes` evita repetir lo ya anclado bajo medidores. */
+function renderGrowAlertsCardHtml(grow, options) {
   if (!grow || !grow.strain) return '';
-  const s = grow.strain;
-  const daysSince = Math.floor((new Date() - grow.startDate) / 86400000);
-  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
-  const smartAlerts = buildSmartAlerts(grow, s, weekNum);
+  const hideInlineDupes = options && options.hideInlineDupes;
+  const all = collectAllGrowAlerts(grow);
+  const cardAlerts = hideInlineDupes
+    ? all.filter((a) => !a.paramKey || !GROW_ALERT_INLINE_PARAM_KEYS.has(a.paramKey))
+    : all;
+  const hasInline = hideInlineDupes && all.some((a) => a.paramKey && GROW_ALERT_INLINE_PARAM_KEYS.has(a.paramKey));
+  const hint =
+    hideInlineDupes && hasInline && cardAlerts.length
+      ? `<p class="form-hint grow-alerts-card-hint">Parte de los avisos aparecen también junto al <strong>indicador correspondiente</strong> (pH, EC, agua, clima…).</p>`
+      : hideInlineDupes && hasInline && !cardAlerts.length
+        ? `<p class="form-hint grow-alerts-card-hint">Los avisos de medición y clima se muestran junto a cada <strong>indicador</strong> y en <strong>Emplazamiento</strong>.</p>`
+        : '';
   return `
-    <div class="card">
+    <div class="card grow-alerts-card">
       <div class="card-header"><div class="card-title"><i class="ti ti-alert-triangle"></i>Alertas activas</div></div>
-      ${grow.ambTemp > 28 ? `<div class="alert warn"><i class="ti ti-thermometer"></i><p>Temperatura ambiente ${grow.ambTemp}°C detectada. Riesgo de solución caliente. Monitorear agua — no superar 23°C.</p></div>` : ''}
+      ${hint}
       ${
-        weekNum >= grow.strain.vegW + grow.strain.flowerW - 2
-          ? `<div class="alert warn"><i class="ti ti-scissors"></i><p>Inicio del periodo de Flush recomendado. Cambiar a agua RO · EC 0.1–0.3 · pH 6.0</p></div>`
-          : ''
-      }
-      ${
-        smartAlerts.length
-          ? smartAlerts
+        cardAlerts.length
+          ? cardAlerts
               .map(
                 (a) =>
-                  `<div class="alert ${a.level === 'danger' ? 'danger' : a.level === 'warn' ? 'warn' : 'info'}"><i class="ti ti-${a.icon}"></i><p>${a.message}</p></div>`,
+                  `<div class="alert ${a.level === 'danger' ? 'danger' : a.level === 'warn' ? 'warn' : 'info'}"><i class="ti ti-${a.icon}"></i><p>${escapeMonitorHtml(a.message)}</p></div>`,
               )
               .join('')
-          : `<div class="alert info"><i class="ti ti-check"></i><p>Sin alertas críticas en la última medición registrada.</p></div>`
+          : `<div class="alert info"><i class="ti ti-check"></i><p>${
+              hasInline
+                ? 'Sin avisos adicionales en el resumen; revisa la cuadrícula y Emplazamiento.'
+                : 'Sin alertas críticas en la última medición registrada.'
+            }</p></div>`
       }
     </div>`;
 }
@@ -865,6 +970,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'info',
       icon: 'clipboard-text',
+      paramKey: 'measurement',
       message: rdwc
         ? 'Registra una medición del depósito en Medir (asistente de mediciones) para alertas sobre la solución común del RDWC.'
         : `Registra una medición en Medir (asistente de mediciones) para alertas inteligentes en P${plantId}.`,
@@ -880,6 +986,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'beaker',
+      paramKey: 'ph',
       message: `${tag}: pH fuera de banda (${strain.name}): ${latest.ph.toFixed(1)} (orientativo ~${targets.phMin.toFixed(2)}–${targets.phMax.toFixed(2)}).`,
     });
   }
@@ -888,6 +995,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'battery-2',
+      paramKey: 'ec',
       message: `${tag}: EC baja (${strain.name}): ${latest.ec.toFixed(2)} mS/cm (banda orientativa ~${targets.ecMin.toFixed(2)}–${targets.ecMax.toFixed(2)} mS/cm).`,
     });
   }
@@ -895,6 +1003,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'danger',
       icon: 'flame',
+      paramKey: 'ec',
       message: `${tag}: EC alta (${strain.name}): ${latest.ec.toFixed(2)} mS/cm (banda orientativa ~${targets.ecMin.toFixed(2)}–${targets.ecMax.toFixed(2)} mS/cm).`,
     });
   }
@@ -907,6 +1016,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'danger',
       icon: 'temperature',
+      paramKey: 'waterTemp',
       message: `${tag}: Temperatura de agua elevada (${latest.waterTemp.toFixed(1)}°C). Banda cómoda orientativa ~${targets.waterTempMin.toFixed(0)}–${targets.waterTempMax.toFixed(0)}°C para ${strain.name}; riesgo de bajo O₂ disuelto y estrés radicular.`,
     });
   } else if (
@@ -917,6 +1027,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'temperature',
+      paramKey: 'waterTemp',
       message: `${tag}: Tª agua alta (${latest.waterTemp.toFixed(1)}°C). Objetivo orientativo ~${targets.waterTempMin.toFixed(0)}–${targets.waterTempMax.toFixed(0)}°C.`,
     });
   }
@@ -928,6 +1039,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'temperature',
+      paramKey: 'waterTemp',
       message: `${tag}: Tª agua baja (${latest.waterTemp.toFixed(1)}°C). Banda orientativa ~${targets.waterTempMin.toFixed(0)}–${targets.waterTempMax.toFixed(0)}°C; raíces muy frías frenan asimilación.`,
     });
   }
@@ -936,6 +1048,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'droplet-filled',
+      paramKey: 'humidity',
       message: `${tag}: Humedad alta (${latest.humidity.toFixed(0)}%) — banda orientativa ~${phaseRef.humidityMin}–${rhCeil}% (${phaseRef.phase}${weekNum > strain.vegW + 2 ? ', cogollos' : ''}).`,
     });
   }
@@ -943,6 +1056,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'wind',
+      paramKey: 'humidity',
       message: `${tag}: Humedad baja (${latest.humidity.toFixed(0)}%). Banda orientativa ~${phaseRef.humidityMin}–${phaseRef.humidityMax}% en ${phaseRef.phase}.`,
     });
   }
@@ -956,12 +1070,14 @@ function buildSmartAlerts(grow, strain, weekNum) {
       alerts.push({
         level: 'warn',
         icon: 'thermometer',
+        paramKey: 'airTemp',
         message: `${tag}: Tª copa baja (${latest.airTemp.toFixed(1)}°C). Banda orientativa ~${targets.airTempMin}–${targets.airTempMax}°C en ${phaseRef.phase}.`,
       });
     } else if (latest.airTemp > targets.airTempMax + 1.5) {
       alerts.push({
         level: 'warn',
         icon: 'thermometer',
+        paramKey: 'airTemp',
         message: `${tag}: Tª copa alta (${latest.airTemp.toFixed(1)}°C). Banda orientativa ~${targets.airTempMin}–${targets.airTempMax}°C en ${phaseRef.phase}.`,
       });
     }
@@ -972,6 +1088,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'droplet',
+      paramKey: 'vpd',
       message: `${tag}: VPD bajo (${vpd.toFixed(2)} kPa) para ${phaseRef.phase}. Transpiración lenta; vigilar enfermedades foliares si persiste.`,
     });
   }
@@ -979,6 +1096,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
     alerts.push({
       level: 'warn',
       icon: 'flame',
+      paramKey: 'vpd',
       message: `${tag}: VPD alto (${vpd.toFixed(2)} kPa) para ${phaseRef.phase}. Mayor demanda transpirativa; revisa riego de raíz y punta de hojas.`,
     });
   }
@@ -988,11 +1106,17 @@ function buildSmartAlerts(grow, strain, weekNum) {
       alerts.push({
         level: 'info',
         icon: 'molecule',
+        paramKey: 'co2',
         message: `${tag}: CO₂ ${latest.co2.toFixed(0)} ppm por debajo del rango orientativo ~${targets.co2Min}–${targets.co2Max} ppm (${phaseRef.phase}, enriquecimiento).`,
       });
     }
     if (latest.co2 < 350) {
-      alerts.push({ level: 'warn', icon: 'alert-circle', message: `${tag}: CO₂ muy bajo (${latest.co2.toFixed(0)} ppm). Comprueba ventilación o medición.` });
+      alerts.push({
+        level: 'warn',
+        icon: 'alert-circle',
+        paramKey: 'co2',
+        message: `${tag}: CO₂ muy bajo (${latest.co2.toFixed(0)} ppm). Comprueba ventilación o medición.`,
+      });
     }
   }
 
@@ -1001,6 +1125,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
       alerts.push({
         level: 'warn',
         icon: 'bulb',
+        paramKey: 'ppfd',
         message: `${tag}: PPFD bajo (${latest.ppfd.toFixed(0)} µmol/m²/s). Banda orientativa ~${targets.ppfdMin}–${targets.ppfdMax} µmol/m²/s en ${phaseRef.phase}.`,
       });
     }
@@ -1008,6 +1133,7 @@ function buildSmartAlerts(grow, strain, weekNum) {
       alerts.push({
         level: 'danger',
         icon: 'sun',
+        paramKey: 'ppfd',
         message: `${tag}: PPFD muy alto (${latest.ppfd.toFixed(0)} µmol/m²/s). Banda orientativa ~${targets.ppfdMin}–${targets.ppfdMax} µmol/m²/s en ${phaseRef.phase}.`,
       });
     }
@@ -1552,5 +1678,6 @@ window.removeHistoryDiaryPendingPhoto = removeHistoryDiaryPendingPhoto;
 window.saveHistoryDiaryEntry = saveHistoryDiaryEntry;
 window.renderHistorial = renderHistorial;
 window.renderGrowAlertsCardHtml = renderGrowAlertsCardHtml;
+window.renderGrowAlertSlotHtml = renderGrowAlertSlotHtml;
 window.onMonitorWorkSystemSelectChange = onMonitorWorkSystemSelectChange;
 window.saveMonitorActiveSystemDisplayName = saveMonitorActiveSystemDisplayName;

@@ -341,6 +341,29 @@
 .status-warn{background:rgba(245,184,0,0.18);color:var(--a200)}
 .status-bad{background:rgba(226,75,74,0.18);color:#e88}
 
+.grow-alerts-card-hint{margin:0 0 10px;font-size:12px;color:var(--text3);line-height:1.45}
+.gauge--with-inline-alerts{display:flex;flex-direction:column;align-items:stretch}
+.gauge--with-inline-alerts > .gauge-label,
+.gauge--with-inline-alerts > .gauge-value,
+.gauge--with-inline-alerts > .gauge-range,
+.gauge--with-inline-alerts > .gauge-status{align-self:center;text-align:center}
+.grow-alert-slot{margin-top:10px;width:100%;text-align:left}
+.grow-alert-inline{
+  display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:8px;margin-bottom:6px;
+  font-size:11px;line-height:1.45;border:1px solid transparent;
+}
+.grow-alert-inline:last-child{margin-bottom:0}
+.grow-alert-inline .ti{flex-shrink:0;margin-top:1px;font-size:14px;opacity:0.9}
+.grow-alert-inline__text{color:var(--text2)}
+.grow-alert-inline--info{background:rgba(34,211,238,0.08);border-color:rgba(52,211,153,0.2)}
+.grow-alert-inline--info .ti{color:var(--hydro-teal)}
+.grow-alert-inline--warn{background:rgba(245,184,0,0.1);border-color:rgba(245,184,0,0.25)}
+.grow-alert-inline--warn .ti{color:var(--a400)}
+.grow-alert-inline--danger{background:rgba(226,75,74,0.1);border-color:rgba(226,75,74,0.22)}
+.grow-alert-inline--danger .ti{color:#e88}
+[data-theme='light'] .grow-alert-inline--info{background:rgba(5,150,105,0.06)}
+.cultivo-site-card .grow-alert-slot{margin-top:12px}
+
 /* LOG */
 .log-list{display:flex;flex-direction:column;gap:0}
 .log-entry{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}

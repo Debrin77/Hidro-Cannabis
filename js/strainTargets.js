@@ -7,7 +7,15 @@ function parsePhRangeStr(str) {
   if (m) {
     const a = parseFloat(m[1]);
     const b = parseFloat(m[2]);
-    return { min: Math.min(a, b), max: Math.max(a, b) };
+    let lo = Math.min(a, b);
+    let hi = Math.max(a, b);
+    /* Catálogo tipo «5.8-5.8»: sin margen la UI y las alertas quedan inútiles. */
+    if (hi - lo < 0.05) {
+      const pad = 0.16;
+      lo -= pad;
+      hi += pad;
+    }
+    return { min: Math.max(4.5, lo), max: Math.min(7.0, hi) };
   }
   const single = parseFloat(norm);
   if (Number.isFinite(single)) return { min: single - 0.25, max: single + 0.25 };
@@ -37,6 +45,39 @@ function getStrainTargetsForWeek(strain, weekNum, phaseRef) {
   }
   if (!Number.isFinite(phRange.min) || !Number.isFinite(phRange.max) || phRange.min > phRange.max) {
     phRange = { min: phaseRef.phMin, max: phaseRef.phMax };
+  }
+
+  /* Banda mínima ~0,2 pH para medición/alertas; evita «5,8–5,8» tras cruce fase × cepa. */
+  const MIN_PH_BAND = 0.2;
+  if (phRange.max - phRange.min < MIN_PH_BAND - 1e-9) {
+    const centre = (phRange.min + phRange.max) / 2;
+    let lo = centre - MIN_PH_BAND / 2;
+    let hi = centre + MIN_PH_BAND / 2;
+    if (lo < phaseRef.phMin) {
+      const sh = phaseRef.phMin - lo;
+      lo += sh;
+      hi += sh;
+    }
+    if (hi > phaseRef.phMax) {
+      const sh = hi - phaseRef.phMax;
+      hi -= sh;
+      lo -= sh;
+    }
+    if (hi - lo < MIN_PH_BAND - 1e-9) {
+      lo = phaseRef.phMin;
+      hi = Math.max(phaseRef.phMax, phaseRef.phMin + MIN_PH_BAND);
+    }
+    phRange = {
+      min: Math.round(Math.max(4.5, lo) * 100) / 100,
+      max: Math.round(Math.min(7.0, hi) * 100) / 100,
+    };
+    if (phRange.max - phRange.min < MIN_PH_BAND - 1e-9) {
+      const c = (phRange.min + phRange.max) / 2;
+      phRange = {
+        min: Math.round(Math.max(4.5, c - MIN_PH_BAND / 2) * 100) / 100,
+        max: Math.round(Math.min(7.0, c + MIN_PH_BAND / 2) * 100) / 100,
+      };
+    }
   }
 
   let ecMin = phaseRef.ecMin;
