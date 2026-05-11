@@ -383,7 +383,10 @@
 <div class="more-menu" id="moreMenu" aria-hidden="true">
   <div class="more-menu-scrim" onclick="closeMoreMenu()"></div>
   <div class="more-menu-panel">
-    <div class="more-menu-title">Más opciones</div>
+    <div class="more-menu-header">
+      <div class="more-menu-title">Más opciones</div>
+      <button type="button" class="more-menu-close" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
     <button type="button" class="more-menu-row" onclick="navTo('consejos')"><i class="ti ti-bulb"></i> Consejos de uso</button>
     <button type="button" class="more-menu-row" onclick="navTo('variedades')"><i class="ti ti-seedling"></i> Variedades</button>
     <button type="button" class="more-menu-row" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes top 10</button>

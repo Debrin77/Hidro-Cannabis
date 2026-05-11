@@ -154,6 +154,20 @@ function collectMonitorFormReading() {
   return reading;
 }
 
+/** Campo del formulario Medir asociado a cada paso del plan de cepa (avisos junto al input). */
+const MONITOR_LIVE_STEP_FIELD = {
+  'ph-low': 'mPH',
+  'ph-high': 'mPH',
+  'ec-low': 'mEC',
+  'ec-high': 'mEC',
+  'water-hot': 'mWaterTemp',
+  'water-cold': 'mWaterTemp',
+  'rh-flower': 'mHumidity',
+  'night-cold': 'mAirTemp',
+  'vpd-high': 'mHumidity',
+  'vpd-low': 'mHumidity',
+};
+
 /** Avisos y soluciones calculadas mientras se rellena el formulario (sin guardar). */
 function buildLiveMeasureHints(reading, grow) {
   const out = [];
@@ -171,6 +185,7 @@ function buildLiveMeasureHints(reading, grow) {
     out.push({
       level: 'danger',
       icon: 'alert-circle',
+      fieldId: 'mPH',
       title: 'pH fuera del rango permitido',
       text: `El valor ${reading.ph.toFixed(2)} no se puede guardar (límites 4,5–8,5). Corrige antes de guardar la medición.`,
     });
@@ -179,6 +194,7 @@ function buildLiveMeasureHints(reading, grow) {
     out.push({
       level: 'danger',
       icon: 'alert-circle',
+      fieldId: 'mEC',
       title: 'EC fuera del rango permitido',
       text: `El valor ${reading.ec.toFixed(2)} mS/cm no se puede guardar (límites 0–4).`,
     });
@@ -194,6 +210,7 @@ function buildLiveMeasureHints(reading, grow) {
       out.push({
         level,
         icon: 'tool',
+        fieldId: MONITOR_LIVE_STEP_FIELD[step.key],
         title: step.title,
         text: step.detail,
       });
@@ -205,6 +222,7 @@ function buildLiveMeasureHints(reading, grow) {
       out.push({
         level: 'warn',
         icon: 'molecule',
+        fieldId: 'mCO2',
         title: 'CO₂ muy bajo',
         text: `Lectura ~${reading.co2.toFixed(0)} ppm. Comprueba ventilación o calibración del sensor.`,
       });
@@ -223,6 +241,7 @@ function buildLiveMeasureHints(reading, grow) {
       out.push({
         level: 'warn',
         icon: 'bulb',
+        fieldId: 'mPPFD',
         title: 'PPFD bajo',
         text: `~${reading.ppfd.toFixed(0)} µmol/m²/s · banda orientativa ~${targets.ppfdMin}–${targets.ppfdMax} µmol/m²/s en ${phaseRef.phase}. Revisa altura o potencia.`,
       });
@@ -231,6 +250,7 @@ function buildLiveMeasureHints(reading, grow) {
       out.push({
         level: 'danger',
         icon: 'sun',
+        fieldId: 'mPPFD',
         title: 'PPFD muy alto',
         text: `~${reading.ppfd.toFixed(0)} µmol/m²/s supera la banda alta (~${targets.ppfdMin}–${targets.ppfdMax} µmol/m²/s en ${phaseRef.phase}). Riesgo de estrés luminoso.`,
       });
@@ -244,29 +264,79 @@ function buildLiveMeasureHints(reading, grow) {
 
 let monitorLiveValidationTimer = null;
 
+function clearMonitorLiveFieldSlots() {
+  document.querySelectorAll('.monitor-live-field-slot[data-monitor-live-field]').forEach((el) => {
+    el.innerHTML = '';
+    el.hidden = true;
+  });
+}
+
+function updateMonitorLiveFieldSlots(serious) {
+  clearMonitorLiveFieldSlots();
+  const ord = { danger: 0, warn: 1, info: 2 };
+  const byField = new Map();
+  for (const p of serious) {
+    if (!p.fieldId) continue;
+    if (!byField.has(p.fieldId)) byField.set(p.fieldId, []);
+    byField.get(p.fieldId).push(p);
+  }
+  for (const list of byField.values()) {
+    list.sort((a, b) => (ord[a.level] ?? 3) - (ord[b.level] ?? 3));
+  }
+  for (const [fid, list] of byField) {
+    const slot = document.querySelector(`.monitor-live-field-slot[data-monitor-live-field="${fid}"]`);
+    if (!slot || !list.length) continue;
+    slot.innerHTML = list
+      .map(
+        (p) =>
+          `<div class="monitor-live-inline monitor-live-inline--${p.level}"><i class="ti ti-${p.icon}" aria-hidden="true"></i><div><strong class="monitor-live-inline__title">${escapeMonitorHtml(p.title)}</strong><p class="monitor-live-inline__text">${escapeMonitorHtml(p.text)}</p></div></div>`,
+      )
+      .join('');
+    slot.hidden = false;
+  }
+}
+
 function updateMonitorLiveCorrection() {
   const host = document.getElementById('monitorLiveCorrectionHost');
-  if (!host || !myGrow) return;
+  if (!myGrow) {
+    if (host) {
+      host.innerHTML = '';
+      host.hidden = true;
+    }
+    clearMonitorLiveFieldSlots();
+    return;
+  }
+  if (!host) {
+    clearMonitorLiveFieldSlots();
+    return;
+  }
   const reading = collectMonitorFormReading();
   if (Object.keys(reading).length === 0) {
     host.innerHTML = '';
     host.hidden = true;
+    clearMonitorLiveFieldSlots();
     return;
   }
   const parts = buildLiveMeasureHints(reading, myGrow);
   const serious = parts.filter((p) => p.level === 'danger' || p.level === 'warn');
+  updateMonitorLiveFieldSlots(serious);
   if (!serious.length) {
     host.innerHTML = '';
     host.hidden = true;
     return;
   }
-  host.innerHTML = serious
-    .map(
-      (p) =>
-        `<div class="alert ${p.level === 'danger' ? 'danger' : 'warn'} monitor-live-alert"><i class="ti ti-${p.icon}"></i><div class="monitor-live-alert__body"><strong class="monitor-live-alert__title">${escapeMonitorHtml(p.title)}</strong><p class="monitor-live-alert__text">${escapeMonitorHtml(p.text)}</p></div></div>`,
-    )
-    .join('');
-  host.hidden = false;
+  if (serious.length > 1) {
+    host.innerHTML = serious
+      .map(
+        (p) =>
+          `<div class="alert ${p.level === 'danger' ? 'danger' : 'warn'} monitor-live-alert"><i class="ti ti-${p.icon}"></i><div class="monitor-live-alert__body"><strong class="monitor-live-alert__title">${escapeMonitorHtml(p.title)}</strong><p class="monitor-live-alert__text">${escapeMonitorHtml(p.text)}</p></div></div>`,
+      )
+      .join('');
+    host.hidden = false;
+  } else {
+    host.innerHTML = '';
+    host.hidden = true;
+  }
 }
 
 function scheduleMonitorLiveCorrection() {
@@ -1563,23 +1633,23 @@ function renderMeasurementAssistantFormInnerHtml() {
     : `<span class="form-hint">Sin sonda de líquido declarada; opcional si mides con otro instrumento.</span>`;
 
   const thermoFields = m.meterThermoHygro
-    ? `<div class="form-group"><label>Temp. aire en copa (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"></div>
-        <div class="form-group"><label>Humedad relativa (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"></div>`
+    ? `<div class="form-group"><label>Temp. aire en copa (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mAirTemp" hidden></div></div>
+        <div class="form-group"><label>Humedad relativa (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mHumidity" hidden></div></div>`
     : `<div class="form-group" style="grid-column:1/-1"><div class="alert warn"><i class="ti ti-info-circle"></i><p>Para registrar <strong>Tª aire</strong> y <strong>HR</strong> aquí, marca el <strong>termohigrómetro</strong> en <strong>Sistema → Configuración manual → Complementos</strong>.</p></div></div>`;
 
   const co2Block =
     m.meterCo2
-      ? `<div class="form-group"><label>CO₂ (ppm)</label><input id="mCO2" type="number" step="10" min="300" max="2000" placeholder="${myGrow.co2 === 'si' ? '1200' : '400'}"><span class="form-hint">${myGrow.co2 === 'si' ? 'Recinto con CO₂ activado: orientativo más alto.' : 'Ambiente sin enriquecimiento: ~400 ppm referencia.'}</span></div>`
+      ? `<div class="form-group"><label>CO₂ (ppm)</label><input id="mCO2" type="number" step="10" min="300" max="2000" placeholder="${myGrow.co2 === 'si' ? '1200' : '400'}"><span class="form-hint">${myGrow.co2 === 'si' ? 'Recinto con CO₂ activado: orientativo más alto.' : 'Ambiente sin enriquecimiento: ~400 ppm referencia.'}</span><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mCO2" hidden></div></div>`
       : myGrow.placement === 'exterior'
         ? ''
         : `<div class="form-group" style="grid-column:1/-1"><div class="alert info"><i class="ti ti-molecule"></i><p>CO₂ no aparece porque no marcaste <strong>medidor de CO₂</strong> en Sistema. Actívalo si mides ppm en interior.</p></div></div>`;
 
   const luxBlock = m.meterPpfd
-    ? `<div class="form-group"><label>Lux (opcional)</label><input id="mLux" type="number" step="100" min="0" max="200000" placeholder="35000"></div>`
+    ? `<div class="form-group"><label>Lux (opcional)</label><input id="mLux" type="number" step="100" min="0" max="200000" placeholder="35000"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mLux" hidden></div></div>`
     : '';
 
   const ppfdBlock = m.meterPpfd
-    ? `<div class="form-group"><label>PPFD medio (µmol/m²/s)</label><input id="mPPFD" type="number" step="10" min="0" max="2500" placeholder="600"><span class="form-hint">Sensor cuántico / PAR</span></div>`
+    ? `<div class="form-group"><label>PPFD medio (µmol/m²/s)</label><input id="mPPFD" type="number" step="10" min="0" max="2500" placeholder="600"><span class="form-hint">Sensor cuántico / PAR</span><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mPPFD" hidden></div></div>`
     : `<div class="form-group" style="grid-column:1/-1"><div class="alert info"><i class="ti ti-sun"></i><p>PPFD / lux no se muestran sin <strong>medidor de luz</strong> en Sistema. Las <strong>horas de luz</strong> siguen disponibles (fotoperiodo).</p></div></div>`;
 
   return `
@@ -1591,10 +1661,10 @@ function renderMeasurementAssistantFormInnerHtml() {
             ${Array.from({ length: getPlantCount(myGrow) }, (_, i) => `<option value="${i + 1}" ${selectedPlant === i + 1 ? 'selected' : ''}>P${i + 1}</option>`).join('')}
           </select>`}
         </div>
-        <div class="form-group"><label>pH</label><input id="mPH" type="number" step="0.1" min="4.5" max="8.5" placeholder="6.0"></div>
-        <div class="form-group"><label>EC (mS/cm)</label><input id="mEC" type="number" step="0.01" min="0" max="4" placeholder="1.85"></div>
+        <div class="form-group"><label>pH</label><input id="mPH" type="number" step="0.1" min="4.5" max="8.5" placeholder="6.0"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mPH" hidden></div></div>
+        <div class="form-group"><label>EC (mS/cm)</label><input id="mEC" type="number" step="0.01" min="0" max="4" placeholder="1.85"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mEC" hidden></div></div>
         <div class="form-group"><label>Volumen (L)</label><input id="mVolume" type="number" step="0.1" min="1" max="2000" placeholder="${myGrow.reservoirL || 60}"></div>
-        <div class="form-group"><label>Temp. agua (°C)</label><input id="mWaterTemp" type="number" step="0.1" min="10" max="35" placeholder="19.0">${waterHint}</div>
+        <div class="form-group"><label>Temp. agua (°C)</label><input id="mWaterTemp" type="number" step="0.1" min="10" max="35" placeholder="19.0">${waterHint}<div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mWaterTemp" hidden></div></div>
       </div>
 
       <div class="section-label section-label--block">${escapeMonitorHtml(microTitle)}</div>
@@ -1607,7 +1677,7 @@ function renderMeasurementAssistantFormInnerHtml() {
       <div class="section-label section-label--block">Luz (horas encendido → DLI; PPFD si tienes sensor)</div>
       <div class="grid4">
         ${ppfdBlock}
-        <div class="form-group"><label>Horas luz encendida</label><input id="mLightHours" type="number" step="0.5" min="0" max="24" placeholder="${weekNum <= s.vegW ? '18' : '12'}"><span class="form-hint">Fotoperiodo hoy (útil aunque no midas PAR)</span></div>
+        <div class="form-group"><label>Horas luz encendida</label><input id="mLightHours" type="number" step="0.5" min="0" max="24" placeholder="${weekNum <= s.vegW ? '18' : '12'}"><span class="form-hint">Fotoperiodo hoy (útil aunque no midas PAR)</span><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mLightHours" hidden></div></div>
       </div>
 
       <div class="grid2">
