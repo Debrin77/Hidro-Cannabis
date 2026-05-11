@@ -83,6 +83,29 @@ function resetExpertChecklist() {
   renderInicio();
 }
 
+function requestFullSystemReset() {
+  const step1 =
+    'Se borrarán en este dispositivo: cultivo e historial de medidas, configuración del sistema (checklist inicial), checklist de buenas prácticas de Inicio y preferencias de gráficos. No se borra el tema claro/oscuro.\n\n¿Quieres continuar?';
+  if (!window.confirm(step1)) return;
+  const step2 =
+    'Confirmación final: no hay deshacer. ¿Eliminar todos estos datos locales ahora?';
+  if (!window.confirm(step2)) return;
+  purgeAllLocalAppDataExceptTheme();
+  if (typeof resetWizardAndSessionChrome === 'function') resetWizardAndSessionChrome();
+  const strainDetail = document.getElementById('strainDetail');
+  if (strainDetail) strainDetail.innerHTML = '';
+  if (typeof renderStrains === 'function') renderStrains('all');
+  if (typeof renderNutrientes === 'function') renderNutrientes();
+  renderInicio();
+  if (typeof renderCultivo === 'function') renderCultivo();
+  if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderSemanas === 'function') renderSemanas();
+  if (typeof renderHistorial === 'function') renderHistorial();
+  if (typeof renderClimatologia === 'function') renderClimatologia();
+  if (typeof renderConsejosPage === 'function') renderConsejosPage();
+  if (typeof navTo === 'function') navTo('inicio');
+}
+
 function goToInicio() {
   navTo('inicio');
 }
@@ -242,11 +265,20 @@ function renderInicio() {
       </div>
       <div class="dash-check-section__body expert-checklist expert-checklist--inset">${checklistRows}</div>
     </details>
+
+    <section class="inicio-system-reset" aria-labelledby="inicio-reset-heading">
+      <h2 id="inicio-reset-heading" class="inicio-system-reset__title">Zona sensible</h2>
+      <p class="inicio-system-reset__text">Reinicia la app en este navegador como si fuera la primera vez (cultivo, sistema, registros y checklist de inicio). El tema elegido en Apariencia se mantiene.</p>
+      <button type="button" class="btn btn-ghost inicio-system-reset__btn" onclick="requestFullSystemReset()">
+        <i class="ti ti-refresh" aria-hidden="true"></i> RESET SISTEMA
+      </button>
+    </section>
   `;
 }
 
 window.toggleExpertChecklistItem = toggleExpertChecklistItem;
 window.resetExpertChecklist = resetExpertChecklist;
+window.requestFullSystemReset = requestFullSystemReset;
 window.goToInicio = goToInicio;
 window.goToConfigChecklist = goToConfigChecklist;
 window.goToVariedades = goToVariedades;

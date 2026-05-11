@@ -110,6 +110,24 @@ function clearGrowState() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
+/** Cultivo, checklist inicial, appConfig, checklist experto, modos de gráfico. No borra el tema ni otras claves ajenas al prefijo. */
+function purgeAllLocalAppDataExceptTheme() {
+  clearGrowState();
+  appConfig = null;
+  selectedStrain = null;
+  try {
+    localStorage.removeItem(APP_CONFIG_KEY);
+    localStorage.removeItem(SKIP_INITIAL_WELCOME_KEY);
+    localStorage.removeItem('hydrogrow-pro.v1.expertChecklist');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('hydrogrow-pro.v1.trendMode.') === 0) localStorage.removeItem(k);
+    }
+  } catch (err) {
+    console.warn('No se pudo limpiar almacenamiento local.', err);
+  }
+}
+
 function loadAppConfig() {
   try {
     const raw = localStorage.getItem(APP_CONFIG_KEY);
@@ -160,3 +178,19 @@ function toggleTheme() {
     console.warn('No se pudo guardar el tema.', error);
   }
 }
+
+/** Tema explícito (pantalla Apariencia y accesibilidad). */
+function setAppTheme(theme) {
+  const t = theme === 'light' ? 'light' : 'dark';
+  applyTheme(t);
+  try {
+    localStorage.setItem(THEME_KEY, t);
+  } catch (error) {
+    console.warn('No se pudo guardar el tema.', error);
+  }
+  if (typeof renderAccesibilidad === 'function') {
+    const v = location.hash.slice(1) || 'inicio';
+    if (v === 'accesibilidad') renderAccesibilidad();
+  }
+}
+window.setAppTheme = setAppTheme;

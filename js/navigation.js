@@ -1,6 +1,6 @@
-// Navegación — barra inferior tipo app + hash (botón atrás del sistema)
+// Navegación — barra inferior tipo app + hash
 
-const MORE_VIEWS = ['consejos', 'variedades', 'nutrientes', 'ambiental', 'legal'];
+const MORE_VIEWS = ['consejos', 'variedades', 'nutrientes', 'ambiental', 'legal', 'accesibilidad'];
 
 function closeMoreMenu() {
   const m = document.getElementById('moreMenu');
@@ -36,18 +36,32 @@ function scrollBottomNavToActive(view) {
   });
 }
 
-function updateTopbarBackVisibility() {
-  const btn = document.getElementById('topbarBackBtn');
-  if (!btn) return;
-  const raw = location.hash.slice(1);
-  const show = raw !== '' && raw !== 'inicio';
-  btn.hidden = !show;
-  btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+function openAccesibilidadFromMore() {
+  closeMoreMenu();
+  navTo('accesibilidad');
 }
 
-function toggleThemeFromMenu() {
-  closeMoreMenu();
-  if (typeof toggleTheme === 'function') toggleTheme();
+function renderAccesibilidad() {
+  const host = document.getElementById('accesibilidadContent');
+  if (!host) return;
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  host.innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-contrast"></i> Esquema de color</div></div>
+      <p class="body-prose body-prose--tight">Modo oscuro reduce el brillo en ambientes con poca luz; modo claro mejora la lectura bajo luz intensa.</p>
+      <div class="a11y-theme-seg" role="radiogroup" aria-label="Tema de la interfaz">
+        <button type="button" role="radio" aria-checked="${current === 'dark' ? 'true' : 'false'}" class="a11y-theme-btn ${current === 'dark' ? 'is-active' : ''}" onclick="setAppTheme('dark')">
+          <i class="ti ti-moon" aria-hidden="true"></i> Oscuro
+        </button>
+        <button type="button" role="radio" aria-checked="${current === 'light' ? 'true' : 'false'}" class="a11y-theme-btn ${current === 'light' ? 'is-active' : ''}" onclick="setAppTheme('light')">
+          <i class="ti ti-sun" aria-hidden="true"></i> Claro
+        </button>
+      </div>
+    </div>`;
+}
+
+function updateTopbarBackVisibility() {
+  /* Barra superior retirada: sin cromo de «atrás» propio. */
 }
 
 function applyNavView(view) {
@@ -78,6 +92,7 @@ function applyNavView(view) {
     });
   }
   if (view === 'consejos' && typeof renderConsejosPage === 'function') renderConsejosPage();
+  if (view === 'accesibilidad' && typeof renderAccesibilidad === 'function') renderAccesibilidad();
 }
 
 function navTo(view) {
@@ -120,4 +135,5 @@ window.toggleMoreMenu = toggleMoreMenu;
 window.closeMoreMenu = closeMoreMenu;
 window.initNavigationFromHash = initNavigationFromHash;
 window.applyNavView = applyNavView;
-window.toggleThemeFromMenu = toggleThemeFromMenu;
+window.openAccesibilidadFromMore = openAccesibilidadFromMore;
+window.renderAccesibilidad = renderAccesibilidad;

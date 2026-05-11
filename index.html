@@ -33,23 +33,10 @@
 </div>
 <div class="app-frame">
 
-<header class="app-topbar">
-  <div class="topbar-brand">
-    <button type="button" class="topbar-back" id="topbarBackBtn" onclick="history.back()" hidden aria-hidden="true" aria-label="Volver a la pantalla anterior"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
-    <img src="assets/icons/hydro-cannabis-logo.svg" alt="" class="topbar-logo" width="36" height="36">
-    <div class="topbar-titles">
-      <span class="topbar-name">Hydro Cannabis</span>
-      <span class="topbar-tag">Hidrocultivo</span>
-    </div>
-  </div>
-  <div class="topbar-actions">
-    <span class="topbar-status" id="sideStatus">Sin cultivo</span>
-    <button class="topbar-theme" id="themeToggleBtn" onclick="toggleTheme()" type="button" aria-label="Cambiar tema claro u oscuro">
-      <i class="ti ti-sun-moon" aria-hidden="true"></i>
-      <span id="themeToggleText">Tema</span>
-    </button>
-  </div>
-</header>
+<div class="sr-only">
+  <span id="sideStatus" role="status" aria-live="polite">Sin cultivo</span>
+  <span id="themeToggleText" aria-hidden="true">Tema</span>
+</div>
 
 <main class="main" id="mainContent" tabindex="-1">
 
@@ -293,6 +280,16 @@
   <div class="alert warn"><i class="ti ti-thermometer"></i><div>En <strong>Castelló de la Plana</strong> los veranos superan habitualmente 35°C. La temperatura de la solución nutritiva debe monitorizarse especialmente en julio–agosto. Por encima de 24°C el DO cae por debajo de los 6 mg/L necesarios, causando raíces anóxicas. Se recomienda un chiller o congelar botellas de agua RO para la solución en meses de calor.</div></div>
 </div>
 
+<!-- ══════════════ APARIENCIA Y ACCESIBILIDAD ══════════════ -->
+<div class="view" id="view-accesibilidad">
+  <div class="page-header page-header--compact">
+    <div class="breadcrumb">Hydro Cannabis / Apariencia</div>
+    <h1>Apariencia y accesibilidad</h1>
+    <p>Elige el esquema de color de la interfaz. La preferencia se guarda en este dispositivo.</p>
+  </div>
+  <div id="accesibilidadContent"></div>
+</div>
+
 <!-- ══════════════ LEGAL ══════════════ -->
 <div class="view" id="view-legal">
   <div class="page-header">
@@ -392,7 +389,7 @@
     <button type="button" class="more-menu-row" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes top 10</button>
     <button type="button" class="more-menu-row" onclick="navTo('ambiental')"><i class="ti ti-temperature"></i> Parámetros ambientales</button>
     <button type="button" class="more-menu-row" onclick="navTo('legal')"><i class="ti ti-shield-check"></i> Legal España</button>
-    <button type="button" class="more-menu-row" onclick="toggleThemeFromMenu()"><i class="ti ti-sun-moon"></i> Tema claro / oscuro</button>
+    <button type="button" class="more-menu-row" onclick="openAccesibilidadFromMore()"><i class="ti ti-palette"></i> Apariencia y accesibilidad</button>
   </div>
 </div>
 

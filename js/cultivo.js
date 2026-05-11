@@ -192,13 +192,12 @@ function getAvailableWorkSystems() {
 function updateSystemSwitchTriggerState() {
   const el = document.getElementById('sideStatus');
   if (!el) return;
-  const available = getAvailableWorkSystems();
-  const canSwitch = !!myGrow && available.length > 1;
-  el.classList.toggle('topbar-status--switchable', canSwitch);
-  el.setAttribute('aria-label', canSwitch ? 'Cambiar sistema activo de trabajo' : 'Estado del cultivo');
-  el.setAttribute('title', canSwitch ? 'Pulsa para elegir el sistema activo' : 'Estado del cultivo');
-  el.setAttribute('role', canSwitch ? 'button' : 'status');
-  el.tabIndex = canSwitch ? 0 : -1;
+  el.classList.remove('topbar-status--switchable');
+  el.removeAttribute('title');
+  el.setAttribute('role', 'status');
+  el.tabIndex = -1;
+  const t = (el.textContent || '').trim();
+  el.setAttribute('aria-label', t ? `Estado del cultivo: ${t}` : 'Estado del cultivo');
 }
 
 function closeSystemWorkspaceSelector() {
@@ -312,15 +311,6 @@ function openSystemWorkspaceSelector() {
   if (confirmBtn) confirmBtn.disabled = true;
   m.classList.add('work-system-modal--open');
   m.setAttribute('aria-hidden', 'false');
-}
-
-function onSideStatusInteraction(ev) {
-  if (!myGrow) return;
-  const available = getAvailableWorkSystems();
-  if (available.length <= 1) return;
-  if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
-  if (ev.type === 'keydown') ev.preventDefault();
-  openSystemWorkspaceSelector();
 }
 
 window.openSystemWorkspaceSelector = openSystemWorkspaceSelector;
@@ -992,7 +982,7 @@ function activateGrow(){
   }
   syncCurrentSystemWorkspaceState();
   saveGrowState();
-  document.getElementById('sideStatus').textContent = s.name + ' · S1';
+  document.getElementById('sideStatus')?.textContent = s.name + ' · S1';
   renderActiveGrow();
   renderMonitor();
   renderSemanas();
@@ -1006,13 +996,7 @@ function renderActiveGrow(){
   const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const totalW = s.vegW+s.flowerW+2;
-  document.getElementById('sideStatus').textContent = s.name+' · S'+weekNum;
-  const sideStatus = document.getElementById('sideStatus');
-  if (sideStatus && !sideStatus._workSystemBound) {
-    sideStatus._workSystemBound = true;
-    sideStatus.addEventListener('click', onSideStatusInteraction);
-    sideStatus.addEventListener('keydown', onSideStatusInteraction);
-  }
+  document.getElementById('sideStatus')?.textContent = s.name+' · S'+weekNum;
   updateSystemSwitchTriggerState();
 
   let phase='Germinación',phClass='ph-germ',currentEC=0.4,currentPH='5.5–5.8',lightSched='18/6',humidity='70–90%',tempRange='22–26°C',co2='400 ppm';
@@ -1277,12 +1261,18 @@ function renderActiveGrow(){
   `;
 }
 
-function resetGrow() {
-  clearGrowState();
+function resetWizardAndSessionChrome() {
   wizStep = 0;
   wizData = { error: '' };
-  document.getElementById('sideStatus').textContent = 'Sin cultivo activo';
+  pendingWorkSystemTarget = null;
+  closeSystemWorkspaceSelector();
+  document.getElementById('sideStatus')?.textContent = 'Sin cultivo activo';
   updateSystemSwitchTriggerState();
+}
+
+function resetGrow() {
+  clearGrowState();
+  resetWizardAndSessionChrome();
   renderCultivo();
   renderMonitor();
   renderSemanas();
