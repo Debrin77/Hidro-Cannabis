@@ -22,6 +22,11 @@ function escapeHtmlAttr(s) {
     .replace(/</g, '&lt;');
 }
 
+function setSideStatusText(text) {
+  const el = document.getElementById('sideStatus');
+  if (el) el.textContent = text;
+}
+
 /** Elimina pronóstico y clima de API al cambiar ubicación o interior/exterior. */
 function invalidateGrowWeatherSnapshot() {
   if (!myGrow) return;
@@ -982,7 +987,7 @@ function activateGrow(){
   }
   syncCurrentSystemWorkspaceState();
   saveGrowState();
-  document.getElementById('sideStatus')?.textContent = s.name + ' · S1';
+  setSideStatusText(s.name + ' · S1');
   renderActiveGrow();
   renderMonitor();
   renderSemanas();
@@ -996,7 +1001,7 @@ function renderActiveGrow(){
   const daysSince = Math.floor((new Date()-myGrow.startDate)/86400000);
   const weekNum = Math.max(1,Math.ceil((daysSince+1)/7));
   const totalW = s.vegW+s.flowerW+2;
-  document.getElementById('sideStatus')?.textContent = s.name+' · S'+weekNum;
+  setSideStatusText(s.name+' · S'+weekNum);
   updateSystemSwitchTriggerState();
 
   let phase='Germinación',phClass='ph-germ',currentEC=0.4,currentPH='5.5–5.8',lightSched='18/6',humidity='70–90%',tempRange='22–26°C',co2='400 ppm';
@@ -1266,7 +1271,7 @@ function resetWizardAndSessionChrome() {
   wizData = { error: '' };
   pendingWorkSystemTarget = null;
   closeSystemWorkspaceSelector();
-  document.getElementById('sideStatus')?.textContent = 'Sin cultivo activo';
+  setSideStatusText('Sin cultivo activo');
   updateSystemSwitchTriggerState();
 }
 
