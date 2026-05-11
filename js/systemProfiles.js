@@ -82,6 +82,29 @@ function getSystemProfile(system) {
   return HYDRO_SYSTEM_PROFILES[system] || HYDRO_SYSTEM_PROFILES.DWC;
 }
 
+/** Nombre visible del tipo de sistema (p. ej. «Depósito A»); si no hay etiqueta guardada, el del catálogo. */
+function getResolvedSystemDisplayName(grow, systemCode) {
+  const raw = systemCode || (grow && grow.system) || 'DWC';
+  const code = HYDRO_SYSTEM_PROFILES[raw] ? raw : 'DWC';
+  if (grow && typeof findInstallationById === 'function' && grow.activeInstallationId) {
+    const inst = findInstallationById(grow.activeInstallationId);
+    if (inst && inst.type === code) {
+      const n = String(inst.name || '').trim();
+      if (n) return n;
+    }
+  }
+  const map = grow && grow.systemDisplayNames;
+  if (map && typeof map === 'object') {
+    const v = map[code];
+    if (typeof v === 'string') {
+      const t = v.trim();
+      if (t) return t;
+    }
+  }
+  const p = getSystemProfile(code);
+  return (p && p.label) || code;
+}
+
 /** Instrumentación y complementos (checklist / Sistema). Legacy: null = todo disponible. */
 function normalizeHardwareComplements(raw) {
   if (!raw || typeof raw !== 'object') {
@@ -145,5 +168,6 @@ function getFilteredChartModes(grow) {
 
 window.HYDRO_SYSTEM_PROFILES = HYDRO_SYSTEM_PROFILES;
 window.getSystemProfile = getSystemProfile;
+window.getResolvedSystemDisplayName = getResolvedSystemDisplayName;
 window.normalizeHardwareComplements = normalizeHardwareComplements;
 window.getFilteredChartModes = getFilteredChartModes;

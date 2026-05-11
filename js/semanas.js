@@ -315,13 +315,19 @@ function renderSemanas() {
     </tr>`);
   }
   const sysProf = typeof getSystemProfile === 'function' ? getSystemProfile(myGrow.system) : null;
+  const sysTitle =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? getResolvedSystemDisplayName(myGrow, myGrow.system)
+      : sysProf
+        ? sysProf.label
+        : myGrow.system;
   sc.innerHTML = `
     ${renderGrowCalendarSection(myGrow)}
     <div class="card card--table">
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar"></i>${s.name} — Plan semanal (${totalW} sem) · ${n.name.split(' ').slice(0, 2).join(' ')}</div></div>
       ${
         sysProf
-          ? `<div class="alert info alert--mt-sm"><i class="ti ti-bucket"></i><p><strong>${sysProf.label}:</strong> ${sysProf.optimalHint}</p></div>`
+          ? `<div class="alert info alert--mt-sm"><i class="ti ti-bucket"></i><p><strong>${escapeCalendarAttrText(sysTitle)}:</strong> ${sysProf.optimalHint}</p></div>`
           : ''
       }
       <div class="table-scroll">

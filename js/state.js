@@ -62,6 +62,16 @@ function restoreGrow(payload) {
     plantProfiles:
       payload.plantProfiles && typeof payload.plantProfiles === 'object' ? payload.plantProfiles : {},
     selectedPlant: Number.isFinite(payload.selectedPlant) ? payload.selectedPlant : 1,
+    systemDisplayNames:
+      payload.systemDisplayNames &&
+      typeof payload.systemDisplayNames === 'object' &&
+      !Array.isArray(payload.systemDisplayNames)
+        ? { ...payload.systemDisplayNames }
+        : {},
+    activeInstallationId:
+      typeof payload.activeInstallationId === 'string' && payload.activeInstallationId.trim()
+        ? payload.activeInstallationId.trim()
+        : undefined,
     water: payload.water || 'RO',
     reservoirL: Number.isFinite(payload.reservoirL) ? payload.reservoirL : 60,
     sourceEC: Number.isFinite(payload.sourceEC) ? payload.sourceEC : 0.1,
@@ -96,6 +106,9 @@ function loadGrowState() {
       Array.isArray(parsed.measurements) &&
       parsed.measurements.some((m) => !Number.isFinite(m.plantId) || m.plantId !== 0);
     myGrow = restoreGrow(parsed);
+    if (myGrow && typeof migrateGrowWorkspacesAndActiveInstall === 'function') {
+      migrateGrowWorkspacesAndActiveInstall(myGrow);
+    }
     if (myGrow && typeof ensureSystemWorkspaces === 'function') ensureSystemWorkspaces(myGrow);
     if (myGrow && typeof syncCurrentSystemWorkspaceState === 'function') syncCurrentSystemWorkspaceState();
     if (myGrow && hadLegacyRdwcIds) saveGrowState();

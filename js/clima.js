@@ -674,11 +674,13 @@ function renderClimatologia() {
     myGrow && placement === 'exterior' ? buildExteriorHydroSolutions(myGrow, snap) : { match: growMatch, blocks: [] };
 
   const sysPlanLabel =
-    myGrow && typeof getSystemProfile === 'function'
-      ? escapeHtmlClima(getSystemProfile(myGrow.system || 'DWC').label)
-      : myGrow
-        ? escapeHtmlClima(myGrow.system || '')
-        : '';
+    myGrow && typeof getResolvedSystemDisplayName === 'function'
+      ? escapeHtmlClima(getResolvedSystemDisplayName(myGrow, myGrow.system || 'DWC'))
+      : myGrow && typeof getSystemProfile === 'function'
+        ? escapeHtmlClima(getSystemProfile(myGrow.system || 'DWC').label)
+        : myGrow
+          ? escapeHtmlClima(myGrow.system || '')
+          : '';
   const locPlanEsc = escapeHtmlClima((myGrow?.location || label || '').trim() || 'tu zona');
 
   const forecast7 = renderDailyForecastIconStrip(snap);

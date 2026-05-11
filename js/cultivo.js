@@ -2,6 +2,8 @@
 
 /** Máximo de sitios de cultivo (cubos) alineado con el checklist `onbSites`. */
 const MAX_HYDRO_SITE_COUNT = 48;
+const WORK_SYSTEM_OPTIONS = ['RDWC', 'DWC', 'NFT', 'FLOAT', 'AERO'];
+let pendingWorkSystemTarget = null;
 
 /**
  * Cubos / sitios configurados: prioriza `systemHardware.sites` en RDWC, si no `plants`.
@@ -20,6 +22,14 @@ function escapeHtmlAttr(s) {
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;');
+}
+
+function escapeHtmlText(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function setSideStatusText(text) {
@@ -97,9 +107,120 @@ function renderCultivo(){
   renderWizStep();
 }
 
-const WORK_SYSTEM_OPTIONS = ['RDWC', 'DWC', 'NFT', 'FLOAT', 'AERO'];
-let pendingWorkSystemTarget = null;
-const SYSTEM_WORKSPACE_EXCLUDED_KEYS = new Set(['strain', 'startDate', 'system', 'systemWorkspaces']);
+const SYSTEM_WORKSPACE_EXCLUDED_KEYS = new Set([
+  'strain',
+  'startDate',
+  'system',
+  'systemWorkspaces',
+  'systemDisplayNames',
+  'activeInstallationId',
+]);
+
+function genInstallationId() {
+  return 'ins_' + Math.random().toString(36).slice(2, 11);
+}
+
+function ensureAppConfigInstallations() {
+  if (!appConfig) return [];
+  if (Array.isArray(appConfig.systemInstallations) && appConfig.systemInstallations.length) {
+    syncSystemsArrayFromInstallations();
+    return appConfig.systemInstallations;
+  }
+  const types =
+    Array.isArray(appConfig.systems) && appConfig.systems.length
+      ? [...new Set(appConfig.systems)]
+      : [appConfig.system || 'RDWC'];
+  const counts = {};
+  appConfig.systemInstallations = types.map((type) => {
+    counts[type] = (counts[type] || 0) + 1;
+    const base = typeof getSystemProfile === 'function' ? getSystemProfile(type).label : type;
+    const name = counts[type] > 1 ? `${base} (${counts[type]})` : base;
+    return { id: genInstallationId(), type, name: String(name) };
+  });
+  syncSystemsArrayFromInstallations();
+  saveAppConfig();
+  return appConfig.systemInstallations;
+}
+
+function syncSystemsArrayFromInstallations() {
+  if (!appConfig || !Array.isArray(appConfig.systemInstallations)) return;
+  appConfig.systems = [...new Set(appConfig.systemInstallations.map((i) => i.type))];
+}
+
+function findInstallationById(id) {
+  if (!id || !appConfig) return null;
+  ensureAppConfigInstallations();
+  return appConfig.systemInstallations.find((x) => x.id === id) || null;
+}
+
+function uniqueDefaultInstallationName(type) {
+  ensureAppConfigInstallations();
+  const base = typeof getSystemProfile === 'function' ? getSystemProfile(type).label || type : type;
+  const taken = new Set(
+    appConfig.systemInstallations.map((i) => String(i.name || '').trim().toLowerCase()).filter(Boolean),
+  );
+  let candidate = base;
+  let n = 2;
+  while (taken.has(candidate.trim().toLowerCase())) {
+    candidate = `${base} (${n})`;
+    n += 1;
+  }
+  return candidate;
+}
+
+function installationNameIsUnique(name, exceptId) {
+  if (!appConfig || !Array.isArray(appConfig.systemInstallations)) return true;
+  const t = String(name || '').trim().toLowerCase();
+  if (!t) return false;
+  return !appConfig.systemInstallations.some(
+    (i) => i.id !== exceptId && String(i.name || '').trim().toLowerCase() === t,
+  );
+}
+
+function getWorkspaceSnapshotKey(grow) {
+  if (!grow || !grow.systemWorkspaces) return null;
+  if (grow.activeInstallationId && grow.systemWorkspaces[grow.activeInstallationId]) {
+    return grow.activeInstallationId;
+  }
+  const t = grow.system;
+  if (t && grow.systemWorkspaces[t]) return t;
+  return grow.activeInstallationId || t || null;
+}
+
+function migrateGrowWorkspacesAndActiveInstall(grow) {
+  if (!grow || !appConfig) return;
+  ensureSystemWorkspaces(grow);
+  ensureAppConfigInstallations();
+  const insts = appConfig.systemInstallations;
+  const ws = grow.systemWorkspaces;
+  const keys = Object.keys(ws);
+  const legacyOnly = keys.length > 0 && keys.every((k) => WORK_SYSTEM_OPTIONS.includes(k));
+  if (legacyOnly && !grow.activeInstallationId) {
+    const newWs = {};
+    const consumed = new Set();
+    insts.forEach((inst) => {
+      if (ws[inst.id]) {
+        newWs[inst.id] = ws[inst.id];
+        return;
+      }
+      if (ws[inst.type] && !consumed.has(inst.type)) {
+        newWs[inst.id] = ws[inst.type];
+        consumed.add(inst.type);
+      } else {
+        newWs[inst.id] = buildDefaultWorkspaceForSystem(grow, inst.type);
+      }
+    });
+    grow.systemWorkspaces = newWs;
+  }
+  if (!grow.activeInstallationId && insts.length) {
+    const pick = insts.find((i) => i.type === grow.system) || insts[0];
+    grow.activeInstallationId = pick.id;
+    grow.system = pick.type;
+  } else if (grow.activeInstallationId) {
+    const cur = findInstallationById(grow.activeInstallationId);
+    if (cur) grow.system = cur.type;
+  }
+}
 
 function deepCloneWorkspaceValue(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
@@ -180,18 +301,17 @@ function buildDefaultWorkspaceForSystem(grow, systemName) {
 
 function syncCurrentSystemWorkspaceState() {
   if (!myGrow || !WORK_SYSTEM_OPTIONS.includes(myGrow.system)) return;
+  const key = getWorkspaceSnapshotKey(myGrow);
+  if (!key) return;
   ensureSystemWorkspaces(myGrow);
   const snapshot = buildSystemWorkspaceSnapshot(myGrow);
   if (!snapshot) return;
-  myGrow.systemWorkspaces[myGrow.system] = snapshot;
+  myGrow.systemWorkspaces[key] = snapshot;
 }
 
 function getAvailableWorkSystems() {
-  const cfgList = Array.isArray(appConfig?.systems) ? appConfig.systems : [];
-  const raw = cfgList.length ? cfgList : [myGrow?.system].filter(Boolean);
-  const uniq = Array.from(new Set(raw.filter((s) => WORK_SYSTEM_OPTIONS.includes(s))));
-  if (!uniq.length && myGrow?.system && WORK_SYSTEM_OPTIONS.includes(myGrow.system)) return [myGrow.system];
-  return uniq;
+  ensureAppConfigInstallations();
+  return appConfig.systemInstallations.map((i) => i.id);
 }
 
 function updateSystemSwitchTriggerState() {
@@ -213,50 +333,61 @@ function closeSystemWorkspaceSelector() {
   m.setAttribute('aria-hidden', 'true');
 }
 
-function applyWorkSystemSelection(systemName) {
-  if (!myGrow || !WORK_SYSTEM_OPTIONS.includes(systemName)) return;
-  pendingWorkSystemTarget = systemName;
+function applyWorkSystemSelection(installationId) {
+  if (!myGrow || !findInstallationById(installationId)) return;
+  pendingWorkSystemTarget = installationId;
   const list = document.getElementById('workSystemList');
   if (list) {
     list.querySelectorAll('.work-system-item').forEach((btn) => {
-      const code = btn.getAttribute('data-system');
-      btn.classList.toggle('work-system-item--active', code === pendingWorkSystemTarget);
+      const id = btn.getAttribute('data-installation');
+      btn.classList.toggle('work-system-item--active', id === pendingWorkSystemTarget);
     });
   }
+  const inst = findInstallationById(installationId);
   const helper = document.getElementById('workSystemPendingLabel');
-  if (helper) {
+  if (helper && inst) {
+    const lab = String(inst.name || '').trim() || inst.type;
     helper.textContent =
-      myGrow.system === systemName
-        ? `Sistema actual: ${systemName}.`
-        : `Seleccionado: ${systemName}. Pulsa «Confirmar cambio» para trabajar sobre ese sistema.`;
+      myGrow.activeInstallationId === installationId
+        ? `Instalación activa: ${lab} (${inst.type}).`
+        : `Seleccionada: ${lab} (${inst.type}). Pulsa «Confirmar cambio» para trabajar en ella.`;
   }
   const confirmBtn = document.getElementById('workSystemConfirmBtn');
-  if (confirmBtn) confirmBtn.disabled = myGrow.system === systemName;
+  if (confirmBtn) confirmBtn.disabled = myGrow.activeInstallationId === installationId;
 }
 
 function confirmWorkSystemSelection() {
-  const systemName = pendingWorkSystemTarget;
-  if (!myGrow || !WORK_SYSTEM_OPTIONS.includes(systemName)) return;
-  const prev = myGrow.system;
-  if (prev === systemName) {
+  const installationId = pendingWorkSystemTarget;
+  if (!myGrow || !installationId) return;
+  const inst = findInstallationById(installationId);
+  if (!inst || !WORK_SYSTEM_OPTIONS.includes(inst.type)) return;
+  if (myGrow.activeInstallationId === installationId) {
     closeSystemWorkspaceSelector();
     return;
   }
   syncCurrentSystemWorkspaceState();
   ensureSystemWorkspaces(myGrow);
-  myGrow.system = systemName;
-  const targetWorkspace = myGrow.systemWorkspaces[systemName] || buildDefaultWorkspaceForSystem(myGrow, systemName);
-  myGrow.systemWorkspaces[systemName] = targetWorkspace;
+  const prevInst = findInstallationById(myGrow.activeInstallationId);
+  const prevLabel =
+    prevInst && String(prevInst.name || '').trim()
+      ? prevInst.name.trim()
+      : prevInst
+        ? prevInst.type
+        : myGrow.system;
+  myGrow.activeInstallationId = installationId;
+  myGrow.system = inst.type;
+  const nextLabel = String(inst.name || '').trim() || inst.type;
+  const targetWorkspace =
+    myGrow.systemWorkspaces[installationId] || buildDefaultWorkspaceForSystem(myGrow, inst.type);
+  myGrow.systemWorkspaces[installationId] = targetWorkspace;
   applySystemWorkspaceSnapshot(myGrow, targetWorkspace);
   if (typeof ensureHistoryData === 'function') ensureHistoryData(myGrow);
-  if (appConfig && Array.isArray(appConfig.systems) && appConfig.systems.includes(systemName)) {
-    appConfig.system = systemName;
-    saveAppConfig();
-  }
+  appConfig.system = inst.type;
+  saveAppConfig();
   myGrow.log.unshift({
     date: new Date().toISOString(),
     type: 'info',
-    text: `Sistema activo cambiado: ${prev} → ${systemName}.`,
+    text: `Instalación activa: ${prevLabel} → ${nextLabel} (${inst.type}).`,
   });
   saveGrowState();
   closeSystemWorkspaceSelector();
@@ -298,22 +429,37 @@ function openSystemWorkspaceSelector() {
   const list = document.getElementById('workSystemList');
   if (list) {
     list.innerHTML = available
-      .map((sys) => {
-        const p = typeof getSystemProfile === 'function' ? getSystemProfile(sys) : null;
-        const label = p?.label || sys;
-        const active = myGrow.system === sys;
-        return `<button type="button" class="work-system-item ${active ? 'work-system-item--active' : ''}" data-system="${sys}" onclick="applyWorkSystemSelection('${sys}')">
-          <span class="work-system-item__name">${label}</span>
-          <span class="work-system-item__code">${sys}</span>
+      .map((id) => {
+        const inst = findInstallationById(id);
+        if (!inst) return '';
+        const label =
+          String(inst.name || '').trim() ||
+          (typeof getSystemProfile === 'function' ? getSystemProfile(inst.type).label : inst.type);
+        const active = myGrow.activeInstallationId === id;
+        return `<button type="button" class="work-system-item ${active ? 'work-system-item--active' : ''}" data-installation="${id}" onclick="applyWorkSystemSelection('${id}')">
+          <span class="work-system-item__name">${escapeHtmlText(label)}</span>
+          <span class="work-system-item__code">${inst.type}</span>
         </button>`;
       })
+      .filter(Boolean)
       .join('');
   }
-  pendingWorkSystemTarget = myGrow.system;
+  pendingWorkSystemTarget = myGrow.activeInstallationId;
   const helper = document.getElementById('workSystemPendingLabel');
-  if (helper) helper.textContent = `Sistema actual: ${myGrow.system}.`;
+  if (helper) {
+    const cur = findInstallationById(myGrow.activeInstallationId);
+    const curLab =
+      cur && String(cur.name || '').trim()
+        ? cur.name.trim()
+        : cur
+          ? cur.type
+          : myGrow.system;
+    helper.textContent = cur
+      ? `Instalación activa: ${curLab} (${cur.type}).`
+      : 'Selecciona una instalación y confirma el cambio.';
+  }
   const confirmBtn = document.getElementById('workSystemConfirmBtn');
-  if (confirmBtn) confirmBtn.disabled = true;
+  if (confirmBtn) confirmBtn.disabled = myGrow.activeInstallationId === pendingWorkSystemTarget;
   m.classList.add('work-system-modal--open');
   m.setAttribute('aria-hidden', 'false');
 }
@@ -323,8 +469,11 @@ window.closeSystemWorkspaceSelector = closeSystemWorkspaceSelector;
 window.applyWorkSystemSelection = applyWorkSystemSelection;
 window.confirmWorkSystemSelection = confirmWorkSystemSelection;
 window.syncCurrentSystemWorkspaceState = syncCurrentSystemWorkspaceState;
+window.migrateGrowWorkspacesAndActiveInstall = migrateGrowWorkspacesAndActiveInstall;
+window.addSystemInstallationOfType = addSystemInstallationOfType;
 
 function renderInitialOnboarding() {
+  if (appConfig) ensureAppConfigInstallations();
   const cfg = appConfig || {};
   const hw = cfg.systemHardware || {};
   const sysActive = cfg.system || 'RDWC';
@@ -407,9 +556,21 @@ function renderInitialOnboarding() {
       <div class="grid2">
         <div class="form-group">
           <label>Sistemas disponibles (elige uno o varios)</label>
-          <div class="pill-tag-row">
-            ${['RDWC','DWC','NFT','FLOAT','AERO'].map(s=>`<label class="nutri-tag tag-level chip-check"><input type="checkbox" value="${s}" ${Array.isArray(cfg.systems)&&cfg.systems.includes(s)?'checked':''} onchange="toggleSystemType('${s}',this.checked)">${s}</label>`).join('')}
+          <div class="pill-tag-row pill-tag-row--install-chips">
+            ${['RDWC', 'DWC', 'NFT', 'FLOAT', 'AERO']
+              .map((s) => {
+                const insts = Array.isArray(cfg.systemInstallations) ? cfg.systemInstallations : [];
+                const n = insts.filter((i) => i.type === s).length;
+                const checked = n > 0 ? 'checked' : '';
+                const addBtn =
+                  n > 0
+                    ? `<button type="button" class="btn btn-ghost btn--compact chip-add-install" onclick="event.preventDefault();addSystemInstallationOfType('${s}')" title="Añadir otra instalación ${s}">+</button>`
+                    : '';
+                return `<span class="chip-check-wrap"><label class="nutri-tag tag-level chip-check"><input type="checkbox" value="${s}" ${checked} onchange="toggleSystemType('${s}',this.checked)">${s}${n > 1 ? ` (${n})` : ''}</label>${addBtn}</span>`;
+              })
+              .join('')}
           </div>
+          <p class="form-hint">Varias instalaciones del mismo tipo reciben nombres distintos (p. ej. «RDWC (2)»). Puedes renombrarlas en <strong>Medir</strong>.</p>
         </div>
         <div class="form-group">
           <label>Sistema activo inicial</label>
@@ -656,12 +817,47 @@ function toggleSkipInitialWelcome(checked) {
 
 function toggleSystemType(systemName, enabled) {
   if (!appConfig) appConfig = {};
-  const list = Array.isArray(appConfig.systems) ? [...appConfig.systems] : [];
-  const exists = list.includes(systemName);
-  if (enabled && !exists) list.push(systemName);
-  if (!enabled && exists) list.splice(list.indexOf(systemName), 1);
-  appConfig.systems = list;
+  ensureAppConfigInstallations();
+  const count = appConfig.systemInstallations.filter((i) => i.type === systemName).length;
+  if (enabled) {
+    if (count === 0) {
+      appConfig.systemInstallations.push({
+        id: genInstallationId(),
+        type: systemName,
+        name: uniqueDefaultInstallationName(systemName),
+      });
+      syncSystemsArrayFromInstallations();
+    }
+  } else {
+    appConfig.systemInstallations = appConfig.systemInstallations.filter((i) => i.type !== systemName);
+    if (!appConfig.systemInstallations.length) {
+      const fallback = appConfig.system || 'RDWC';
+      appConfig.systemInstallations = [
+        {
+          id: genInstallationId(),
+          type: fallback,
+          name: uniqueDefaultInstallationName(fallback),
+        },
+      ];
+    }
+    syncSystemsArrayFromInstallations();
+  }
   saveAppConfig();
+  renderInitialOnboarding();
+}
+
+function addSystemInstallationOfType(systemName) {
+  if (!WORK_SYSTEM_OPTIONS.includes(systemName)) return;
+  if (!appConfig) appConfig = {};
+  ensureAppConfigInstallations();
+  appConfig.systemInstallations.push({
+    id: genInstallationId(),
+    type: systemName,
+    name: uniqueDefaultInstallationName(systemName),
+  });
+  syncSystemsArrayFromInstallations();
+  saveAppConfig();
+  renderInitialOnboarding();
 }
 
 function onOnboardingBuildTypeChange() {
@@ -767,6 +963,7 @@ function completeInitialSetup() {
     return;
   }
   appConfig.completed = true;
+  ensureAppConfigInstallations();
   const hardwareComplements = readOnboardingHardwareComplements();
   appConfig.hardwareComplements = hardwareComplements;
   saveAppConfig();
@@ -973,8 +1170,18 @@ function activateGrow(){
     log: [
       {date:new Date().toISOString(),text:'Cultivo activado: '+s.name+' en '+wizData.system,type:'ok'},
       {date:new Date().toISOString(),text:'Germinación iniciada. Solución EC 0.3 mS/cm · pH 5.5',type:'info'}
-    ]
+    ],
+    systemDisplayNames: {},
   };
+  ensureAppConfigInstallations();
+  const pickInst =
+    appConfig.systemInstallations.find((i) => i.type === myGrow.system) || appConfig.systemInstallations[0];
+  if (pickInst) {
+    myGrow.activeInstallationId = pickInst.id;
+    myGrow.system = pickInst.type;
+  }
+  ensureSystemWorkspaces(myGrow);
+  migrateGrowWorkspacesAndActiveInstall(myGrow);
   if (sizing && !sizing.nft && Number.isFinite(sizing.airPumpLpmRecommended)) {
     const recirc = sizing.waterPump
       ? ` Recirculación ~${sizing.waterPump.lphTarget} L/h.`
@@ -1020,6 +1227,10 @@ function renderActiveGrow(){
   const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
   const selectedPlantInfo = getSelectedPlantInfo(myGrow, s);
   const volumeDiagramPanel = renderVolumeDiagramPanel(myGrow);
+  const activeSystemButtonLabel =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? escapeHtmlText(getResolvedSystemDisplayName(myGrow, myGrow.system))
+      : escapeHtmlText(myGrow.system);
   const sz = myGrow.systemSizing;
   const sizingRecall =
     sz && !sz.nft
@@ -1243,7 +1454,7 @@ function renderActiveGrow(){
 
     <div class="card">
       <div class="card-header card-header--split">
-        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (<button type="button" class="btn btn-ghost btn--tiny" ${getAvailableWorkSystems().length > 1 ? 'onclick="openSystemWorkspaceSelector()"' : 'disabled'}>${myGrow.system}</button>)</div>
+        <div class="card-title"><i class="ti ti-vector"></i>Esquema cenital del sistema (<button type="button" class="btn btn-ghost btn--tiny" ${getAvailableWorkSystems().length > 1 ? 'onclick="openSystemWorkspaceSelector()"' : 'disabled'}>${activeSystemButtonLabel}</button>)</div>
         <button type="button" class="btn btn-ghost btn--compact" onclick="exportSystemSvg()"><i class="ti ti-download"></i> Exportar SVG</button>
       </div>
       <div class="system-svg-wrap">${systemSvg}</div>

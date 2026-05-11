@@ -25,6 +25,13 @@ function escapeMonitorHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function escapeHtmlAttr(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
 function parseMeasureInputFloat(id) {
   const el = document.getElementById(id);
   if (!el) return null;
@@ -366,29 +373,125 @@ function renderGrowAlertsCardHtml(grow) {
     </div>`;
 }
 
-/** Franja superior en Medir: sistema activo y acceso rápido al selector multi-sistema. */
+/** Franja superior en Medir: nombre guardado, tipo técnico, selector multi-sistema y edición de etiqueta. */
 function renderMonitorActiveSystemStripHtml() {
   if (!myGrow) return '';
   const code = myGrow.system || 'RDWC';
   const pr = typeof getSystemProfile === 'function' ? getSystemProfile(code) : null;
-  const name = escapeMonitorHtml(pr?.label || code);
+  const resolved =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? getResolvedSystemDisplayName(myGrow, code)
+      : pr?.label || code;
+  const name = escapeMonitorHtml(resolved);
   const sub = pr?.solutionSubtitle ? escapeMonitorHtml(pr.solutionSubtitle) : '';
+  const defPlace = escapeMonitorHtml(pr?.label || code);
+  const inst =
+    typeof findInstallationById === 'function' && myGrow.activeInstallationId
+      ? findInstallationById(myGrow.activeInstallationId)
+      : null;
+  const inputVal = escapeMonitorHtml(
+    inst && String(inst.name || '').trim()
+      ? String(inst.name).trim()
+      : myGrow.systemDisplayNames && typeof myGrow.systemDisplayNames === 'object'
+        ? String(myGrow.systemDisplayNames[code] ?? '').trim()
+        : '',
+  );
+
   const available =
-    typeof getAvailableWorkSystems === 'function' ? getAvailableWorkSystems() : [code];
+    typeof getAvailableWorkSystems === 'function' ? getAvailableWorkSystems() : [myGrow.activeInstallationId || code];
   const canSwitch = available.length > 1;
-  const switchBtn = canSwitch
-    ? `<button type="button" class="btn btn-ghost btn--compact monitor-active-system__btn" onclick="openSystemWorkspaceSelector()"><i class="ti ti-switch-horizontal" aria-hidden="true"></i> Cambiar</button>`
+  const selectOpts = available
+    .map((id) => {
+      const installation = typeof findInstallationById === 'function' ? findInstallationById(id) : null;
+      if (!installation) return '';
+      const lab =
+        String(installation.name || '').trim() ||
+        (typeof getSystemProfile === 'function'
+          ? getSystemProfile(installation.type).label || installation.type
+          : installation.type);
+      return `<option value="${escapeHtmlAttr(id)}" ${id === myGrow.activeInstallationId ? 'selected' : ''}>${escapeMonitorHtml(lab)} · ${escapeMonitorHtml(installation.type)}</option>`;
+    })
+    .filter(Boolean)
+    .join('');
+  const selectHtml = canSwitch
+    ? `<label class="monitor-active-system__select-label" for="monitorWorkSystemSelect">Instalación de trabajo</label>
+        <select id="monitorWorkSystemSelect" class="monitor-active-system__select" onchange="onMonitorWorkSystemSelectChange(this)">${selectOpts}</select>`
     : '';
-  return `<section class="monitor-active-system" aria-label="Sistema hidropónico activo">
+
+  return `<section class="monitor-active-system" aria-labelledby="monitorActiveSysEyebrow">
     <div class="monitor-active-system__row">
       <div class="monitor-active-system__copy">
-        <span class="monitor-active-system__eyebrow">Sistema activo</span>
+        <span id="monitorActiveSysEyebrow" class="monitor-active-system__eyebrow">Instalación activa</span>
         <span class="monitor-active-system__name">${name}</span>
-        ${sub ? `<span class="monitor-active-system__sub">${sub}</span>` : ''}
+        <div class="monitor-active-system__meta">
+          <span class="monitor-active-system__code">${escapeMonitorHtml(code)}</span>
+          ${sub ? `<span class="monitor-active-system__dot" aria-hidden="true">·</span><span class="monitor-active-system__sub-inline">${sub}</span>` : ''}
+        </div>
+        <div class="monitor-active-system__name-edit">
+          <label class="monitor-active-system__hint" for="monitorSystemNameInput">Nombre de esta instalación (único; se usa en Medir, Calendario, Climatología…)</label>
+          <div class="monitor-active-system__name-edit-row">
+            <input type="text" id="monitorSystemNameInput" class="monitor-active-system__input" maxlength="48" placeholder="${defPlace}" value="${inputVal}" autocomplete="off" />
+            <button type="button" class="btn btn-primary btn--compact" onclick="saveMonitorActiveSystemDisplayName()">Guardar</button>
+          </div>
+        </div>
       </div>
-      ${switchBtn}
+      <div class="monitor-active-system__controls">${selectHtml}</div>
     </div>
   </section>`;
+}
+
+function onMonitorWorkSystemSelectChange(sel) {
+  const v = sel && sel.value;
+  if (!myGrow || !v || v === myGrow.activeInstallationId) return;
+  if (typeof applyWorkSystemSelection === 'function') applyWorkSystemSelection(v);
+  if (typeof confirmWorkSystemSelection === 'function') confirmWorkSystemSelection();
+}
+
+function saveMonitorActiveSystemDisplayName() {
+  if (!myGrow || !appConfig) return;
+  const code = myGrow.system || 'RDWC';
+  const inp = document.getElementById('monitorSystemNameInput');
+  if (!inp) return;
+  let v = String(inp.value || '').trim();
+  if (v.length > 48) v = v.slice(0, 48);
+  const defLab =
+    typeof getSystemProfile === 'function' ? getSystemProfile(code).label || code : code;
+  const targetName = v || defLab;
+  if (typeof ensureAppConfigInstallations === 'function') ensureAppConfigInstallations();
+  const inst = typeof findInstallationById === 'function' ? findInstallationById(myGrow.activeInstallationId) : null;
+  if (inst && typeof installationNameIsUnique === 'function') {
+    if (!installationNameIsUnique(targetName, inst.id)) {
+      myGrow.log.unshift({
+        date: new Date().toISOString(),
+        text: 'Ese nombre ya lo usa otra instalación. Elige otro distintivo.',
+        type: 'warn',
+      });
+      saveGrowState();
+      renderMonitor();
+      return;
+    }
+    inst.name = targetName;
+    saveAppConfig();
+  } else {
+    myGrow.systemDisplayNames =
+      myGrow.systemDisplayNames &&
+      typeof myGrow.systemDisplayNames === 'object' &&
+      !Array.isArray(myGrow.systemDisplayNames)
+        ? { ...myGrow.systemDisplayNames }
+        : {};
+    if (!v || v === defLab) {
+      delete myGrow.systemDisplayNames[code];
+    } else {
+      myGrow.systemDisplayNames[code] = v;
+    }
+    if (!Object.keys(myGrow.systemDisplayNames).length) delete myGrow.systemDisplayNames;
+  }
+  saveGrowState();
+  renderMonitor();
+  if (typeof renderSemanas === 'function') renderSemanas();
+  if (typeof renderClimatologia === 'function') renderClimatologia();
+  if (typeof renderInicio === 'function') renderInicio();
+  if (typeof renderCultivo === 'function') renderCultivo();
 }
 
 function renderMonitor(){
@@ -422,7 +525,7 @@ function renderMonitor(){
     ${renderMonitorActiveSystemStripHtml()}
     <div class="card monitor-snapshot-card">
       <div class="card-header"><div class="card-title"><i class="ti ti-activity-heartbeat"></i>Resumen · última medición</div></div>
-      <p class="body-prose body-prose--tight monitor-snapshot-lead">Valores más recientes según planta o circuito seleccionado en <strong>Historial → registro</strong>. Sin datos aún, se muestran guías de fase.</p>
+      <p class="body-prose body-prose--tight monitor-snapshot-lead">Valores más recientes según planta o circuito seleccionado y las mediciones guardadas con el asistente de esta pestaña. Sin datos aún, se muestran guías de fase.</p>
       <div class="monitor-snapshot-inner">
     <div class="grid4 monitor-metrics">
       <div class="metric"><div class="metric-label">pH ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-blue">${phLive != null ? phLive.toFixed(1) : '—'}</div><div class="metric-unit">${phaseRefQuick.phMin.toFixed(1)}–${phaseRefQuick.phMax.toFixed(1)} (${phaseRefQuick.phase})</div><div class="metric-bar"><div class="metric-fill metric-fill--ph" style="--fill-pct:${phPct.toFixed(0)}%"></div></div></div>
@@ -462,12 +565,16 @@ function renderMonitor(){
       </div>
     </details>
 
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-history"></i>Registro de mediciones</div></div>
-      <p class="body-prose body-prose--tight">Las lecturas diarias y la tabla completa están en <strong>Historial</strong>. Desde aquí solo consultas el resumen y el nutriente.</p>
-      <button type="button" class="btn btn-primary" onclick="navTo('historial')"><i class="ti ti-clipboard-list"></i> Abrir Historial</button>
+    <div class="card monitor-measure-assistant-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-clipboard-data"></i> Asistente de mediciones</div></div>
+      <p class="body-prose body-prose--tight">Introduce las lecturas de solución, microclima y luz. Al guardar, la fila queda en <strong>Historial</strong> (tabla y bitácora) con la corrección orientativa si aplica.</p>
+      ${renderMeasurementAssistantFormInnerHtml()}
     </div>
+    ${renderPlantTrendCard()}
   `;
+  requestAnimationFrame(() => {
+    if (typeof initMonitorLiveValidation === 'function') initMonitorLiveValidation();
+  });
 }
 
 function renderGreenhouseMonitoringCard(grow, latestCircuit, phaseRefQuick) {
@@ -664,6 +771,10 @@ function renderPlantTrendCard() {
   const rdwc = isMonitorRdwc(myGrow);
   const scopeTitle = rdwc ? 'Circuito (solución común)' : `Planta P${plantId}`;
   const prof = typeof getSystemProfile === 'function' ? getSystemProfile(myGrow.system) : { chartModes: [], label: myGrow.system };
+  const resolvedSysLabel =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? getResolvedSystemDisplayName(myGrow, myGrow.system)
+      : prof.label || myGrow.system;
   const modesList =
     typeof getFilteredChartModes === 'function' ? getFilteredChartModes(myGrow) : prof.chartModes || [];
   let mode = typeof getStoredTrendMode === 'function' ? getStoredTrendMode(myGrow.system) : 'solution';
@@ -682,7 +793,7 @@ function renderPlantTrendCard() {
     <div class="card-sm trend-card">
       <div class="trend-card-head">
         <div class="section-label section-label--block trend-card-head__title">
-          Gráficos · ${prof.label || myGrow.system} · ${scopeTitle} · ${phaseRef.phase}
+          Gráficos · ${escapeMonitorHtml(resolvedSysLabel)} · ${scopeTitle} · ${phaseRef.phase}
         </div>
         <div class="form-group trend-mode-select">
           <label for="trendModeSel">Tipo de gráfico</label>
@@ -706,8 +817,8 @@ function buildSmartAlerts(grow, strain, weekNum) {
       level: 'info',
       icon: 'clipboard-text',
       message: rdwc
-        ? 'Registra una medición del depósito en Historial → registro para alertas sobre la solución común del RDWC.'
-        : `Registra una medición en Historial → registro para alertas inteligentes en P${plantId}.`,
+        ? 'Registra una medición del depósito en Medir (asistente de mediciones) para alertas sobre la solución común del RDWC.'
+        : `Registra una medición en Medir (asistente de mediciones) para alertas inteligentes en P${plantId}.`,
     });
     return alerts;
   }
@@ -920,7 +1031,7 @@ function renderHistorialMeasurementsTable() {
   meas.sort((a, b) => new Date(b.date) - new Date(a.date));
   const rows = meas.slice(0, 40);
   if (!rows.length) {
-    return `<div class="alert info"><i class="ti ti-info-circle"></i><p>No hay mediciones guardadas. Usa el formulario de <strong>Registro de cultivo</strong> arriba.</p></div>`;
+    return `<div class="alert info"><i class="ti ti-info-circle"></i><p>No hay mediciones guardadas. Regístralas en <strong>Medir</strong> con el asistente de mediciones.</p></div>`;
   }
   const rdwc = isMonitorRdwc(myGrow);
   return `
@@ -1139,7 +1250,7 @@ function renderHistoryDiarySection(grow) {
     </div>`;
 }
 
-function renderMeasurementRegistrationCardHtml() {
+function renderMeasurementAssistantFormInnerHtml() {
   if (!myGrow) return '';
   const s = myGrow.strain;
   const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
@@ -1147,9 +1258,6 @@ function renderMeasurementRegistrationCardHtml() {
   const rdwc = isMonitorRdwc(myGrow);
   const selectedPlant = myGrow.selectedPlant || 1;
   return `
-    <div class="card historial-measure-card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-report-analytics"></i>Registro de cultivo · mediciones</div></div>
-      <p class="body-prose body-prose--tight">Guarda lecturas de solución y microclima. En <strong>Calendario</strong> verás por fecha la renovación orientativa de solución y la revisión de medidores pH/EC. Si los valores se salen del rango orientativo, aparecen avisos con pasos de corrección; al guardar, ese texto queda en la tabla (columna <strong>Corrección</strong>).</p>
       <div class="section-label section-label--block">Solución y volumen</div>
       <div class="grid4">
         <div class="form-group">${rdwc ? `<label>Sitio de la lectura</label><p class="form-static-text">Circuito RDWC (depósito de control / solución común)</p><input type="hidden" id="mPlant" value="0">` : `<label>Planta</label>
@@ -1181,11 +1289,15 @@ function renderMeasurementRegistrationCardHtml() {
         <div class="form-group"><label>Notas</label><input id="mNote" type="text" placeholder="Observaciones del día"></div>
       </div>
       <div id="monitorLiveCorrectionHost" class="monitor-live-correction" hidden aria-live="polite" aria-atomic="true"></div>
-      <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
-      ${renderPlantTrendCard()}
-      <div class="section-label section-label--block historial-measure-table-title">Mediciones guardadas</div>
+      <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>`;
+}
+
+function renderHistorialMeasurementsCardHtml() {
+  if (!myGrow) return '';
+  return `<div class="card historial-measure-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-report-analytics"></i> Mediciones guardadas</div></div>
+      <p class="body-prose body-prose--tight">Lecturas registradas desde <strong>Medir</strong>. La columna <strong>Corrección</strong> recoge el texto orientativo cuando la app detecta desvíos al guardar.</p>
       ${renderHistorialMeasurementsTable()}
-      <button type="button" class="btn btn-ghost btn--compact historial-measure-to-monitor" onclick="navTo('monitor')"><i class="ti ti-gauge"></i> Ver resumen de última medición en Medir</button>
     </div>`;
 }
 
@@ -1221,7 +1333,7 @@ function renderHistorial() {
     .join('');
   const checklistCard = renderHistoryChecklistSection(myGrow);
   const diaryCard = renderHistoryDiarySection(myGrow);
-  const measureCard = renderMeasurementRegistrationCardHtml();
+  const measureCard = renderHistorialMeasurementsCardHtml();
   host.innerHTML = `${quickRef}
     ${measureCard}
     <div class="card">
@@ -1247,3 +1359,5 @@ window.removeHistoryDiaryPendingPhoto = removeHistoryDiaryPendingPhoto;
 window.saveHistoryDiaryEntry = saveHistoryDiaryEntry;
 window.renderHistorial = renderHistorial;
 window.renderGrowAlertsCardHtml = renderGrowAlertsCardHtml;
+window.onMonitorWorkSystemSelectChange = onMonitorWorkSystemSelectChange;
+window.saveMonitorActiveSystemDisplayName = saveMonitorActiveSystemDisplayName;
