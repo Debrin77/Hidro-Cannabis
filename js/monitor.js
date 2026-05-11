@@ -724,7 +724,6 @@ function renderMonitor(){
       ${renderMeasurementAssistantContextBanner()}
       ${renderMeasurementAssistantFormInnerHtml()}
     </div>
-    ${renderPlantTrendCard()}
   `;
   requestAnimationFrame(() => {
     if (typeof initMonitorLiveValidation === 'function') initMonitorLiveValidation();
@@ -912,6 +911,13 @@ function renderMeasurementsTable() {
       </table>
     </div>
   `;
+}
+
+/** Al menos una fila de medición para el gráfico (planta seleccionada o circuito RDWC). */
+function hasTrendChartRows(grow) {
+  if (!grow) return false;
+  const plantId = grow.selectedPlant || 1;
+  return getMeasurementsByPlant(grow, plantId).length > 0;
 }
 
 function renderPlantTrendCard() {
@@ -1653,8 +1659,21 @@ function renderHistorial() {
   const checklistCard = renderHistoryChecklistSection(myGrow);
   const diaryCard = renderHistoryDiarySection(myGrow);
   const measureCard = renderHistorialMeasurementsCardHtml();
+  const trendCardHtml = typeof renderPlantTrendCard === 'function' ? renderPlantTrendCard() : '';
+  const trendOpen = typeof hasTrendChartRows === 'function' && hasTrendChartRows(myGrow) ? ' open' : '';
+  const trendBody =
+    trendCardHtml ||
+    '<p class="text-muted historial-trends-empty">Sin mediciones suficientes para la gráfica. Registra lecturas en <strong>Medir</strong>.</p>';
+  const trendsSection = `<details class="card cultivo-fold-card historial-trends-details"${trendOpen}>
+      <summary class="cultivo-fold-card__summary">
+        <span class="cultivo-fold-card__summary-title"><i class="ti ti-chart-line" aria-hidden="true"></i> Gráficos de evolución</span>
+        <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="cultivo-fold-card__body historial-trends-details__body">${trendBody}</div>
+    </details>`;
   host.innerHTML = `${quickRef}
     ${measureCard}
+    ${trendsSection}
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Bitácora (${myGrow.strain.name})</div></div>
       <p class="body-prose body-prose--tight historial-bitacora-hint">Observaciones manuales y resumen de cada medición guardada.</p>
@@ -1677,6 +1696,8 @@ window.onHistoryDiaryPhotosChange = onHistoryDiaryPhotosChange;
 window.removeHistoryDiaryPendingPhoto = removeHistoryDiaryPendingPhoto;
 window.saveHistoryDiaryEntry = saveHistoryDiaryEntry;
 window.renderHistorial = renderHistorial;
+window.hasTrendChartRows = hasTrendChartRows;
+window.renderPlantTrendCard = renderPlantTrendCard;
 window.renderGrowAlertsCardHtml = renderGrowAlertsCardHtml;
 window.renderGrowAlertSlotHtml = renderGrowAlertSlotHtml;
 window.onMonitorWorkSystemSelectChange = onMonitorWorkSystemSelectChange;

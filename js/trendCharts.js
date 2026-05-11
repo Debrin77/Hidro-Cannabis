@@ -267,7 +267,8 @@ function setStoredTrendMode(system, modeId) {
 function onTrendModeChange(selectEl) {
   if (!myGrow || !selectEl) return;
   setStoredTrendMode(myGrow.system, selectEl.value);
-  renderMonitor();
+  if (typeof renderHistorial === 'function') renderHistorial();
+  if (typeof renderMonitor === 'function') renderMonitor();
 }
 
 window.renderTrendBySystemMode = renderTrendBySystemMode;

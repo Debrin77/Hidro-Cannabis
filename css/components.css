@@ -21,18 +21,14 @@
 .section-label--block{margin-bottom:10px}
 .mb-text-block{margin-bottom:1rem}
 .svg-panel-grid{margin-top:0.75rem}
-.volume-diagram-panel .volume-diagram-hint{font-size:12px;line-height:1.45;margin:0 0 0.65rem;color:var(--text2)}
-.volume-mono-display{margin-top:0.35rem}
-.volume-mono-row{display:flex;align-items:baseline;gap:6px}
-.volume-mono-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:700;color:var(--hydro-teal)}
-.volume-mono-unit{font-size:1rem;color:var(--text3)}
-.volume-mono-note{margin:0.5rem 0 0;font-size:12px}
-.volume-mini-svg{display:block;width:100%;max-width:280px;margin-top:0.35rem}
-.volume-mini-bg{fill:var(--surface2);stroke:var(--border2);stroke-width:1}
-.volume-mini-title{font-size:10px;fill:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase}
-.volume-mini-ref{stroke:var(--hydro-teal);stroke-dasharray:4 3;stroke-opacity:0.55;stroke-width:1}
-.volume-mini-line{stroke:var(--b400, #60a5fa);stroke-width:2;fill:none}
-.volume-mini-dot{fill:var(--b400, #60a5fa)}
+.svg-panel-grid--single{display:block}
+.plant-system-summary-card{text-align:left}
+.plant-system-summary-lead{font-size:12px;line-height:1.45;margin:0 0 0.75rem;color:var(--text2)}
+.plant-system-summary-list{display:flex;flex-direction:column;gap:8px;margin-bottom:0.75rem}
+.plant-system-summary-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px;font-size:13px}
+.plant-system-summary-pid{min-width:2.2rem}
+.plant-system-summary-name{flex:1;min-width:0}
+.plant-system-summary-meas{font-size:12px}
 .complements-section-label{margin-top:1rem}
 .complements-section-hint{font-size:12px;margin:0 0 0.65rem}
 .chip-check-line{align-items:flex-start;margin-bottom:0.65rem}
@@ -1203,6 +1199,45 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
   border:1px solid var(--border);
   background:var(--surface);
 }
+
+/* Sistema / Historial — desplegables tipo tarjeta */
+.cultivo-fold-card{margin-bottom:1rem;padding:0;border:none;background:transparent}
+.cultivo-fold-card::before{display:none}
+.cultivo-fold-card > summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:1rem 1.15rem;
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:linear-gradient(165deg,var(--surface) 0%,rgba(22,28,20,0.96) 100%);
+  box-shadow:0 6px 28px rgba(0,0,0,0.2),0 0 0 1px rgba(52,211,153,0.05);
+}
+[data-theme='light'] .cultivo-fold-card > summary{background:var(--surface);box-shadow:0 4px 24px rgba(30,45,26,0.07),0 0 0 1px rgba(5,150,105,0.06)}
+.cultivo-fold-card > summary::-webkit-details-marker{display:none}
+.cultivo-fold-card__summary-title{
+  font-size:12px;font-weight:600;color:var(--text);
+  display:flex;align-items:center;gap:9px;
+}
+.cultivo-fold-card__summary-title .ti{color:var(--hydro-teal);font-size:17px;opacity:0.92}
+.cultivo-fold-card__chev{flex-shrink:0;transition:transform .15s ease;opacity:0.85}
+.cultivo-fold-card[open] > summary .cultivo-fold-card__chev{transform:rotate(180deg)}
+.cultivo-fold-card__body{
+  margin-top:0.75rem;
+  padding:1rem 1.15rem 1.15rem;
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:var(--surface);
+}
+.cultivo-complements-details{margin-top:1rem;padding-top:0.75rem;border-top:1px dashed var(--border2)}
+.cultivo-complements-details > summary{background:var(--surface2)}
+.historial-trends-details .historial-trends-details__body{padding-top:0.25rem}
+.historial-trends-details .trend-card{margin-bottom:0}
+.historial-trends-empty{margin:0;padding:0.35rem 0;font-size:13px}
+.cultivo-site-card.cultivo-fold-card .cultivo-site-actions{margin-top:1rem}
 .meas-correction-cell{font-size:12px;vertical-align:top;max-width:10rem}
 .meas-correction-details{margin:0}
 .meas-correction-details > summary{

@@ -40,6 +40,12 @@ const expertChecklistItems = [
       'Germinación: EC baja; sube en vegetación; estabiliza en floración según tabla de la cepa.',
   },
   {
+    id: 'instrumentacion',
+    title: 'Instrumentación y recinto',
+    text:
+      'Marca medidores (pH/EC, Tª líquido, termohigrómetro…) y opciones del espacio en el checklist o en Sistema → desplegable «Complementos e instrumentación» si añades equipo después.',
+  },
+  {
     id: 'registro',
     title: 'Registro diario',
     text:

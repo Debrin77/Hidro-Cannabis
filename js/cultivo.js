@@ -1405,14 +1405,13 @@ function renderActiveGrow(){
         }</div></div>`
       : '';
   const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
-  const selectedPlantInfo = getSelectedPlantInfo(myGrow, s);
-  const volumeDiagramPanel = renderVolumeDiagramPanel(myGrow);
+  const allPlantsSummaryHtml = renderAllPlantsSystemSummaryHtml(myGrow, s, phase);
   const activeSystemButtonLabel =
     typeof getResolvedSystemDisplayName === 'function'
       ? escapeHtmlText(getResolvedSystemDisplayName(myGrow, myGrow.system))
       : escapeHtmlText(myGrow.system);
-  const growAlertSlot =
-    typeof renderGrowAlertSlotHtml === 'function' ? (slot) => renderGrowAlertSlotHtml(myGrow, slot) : () => '';
+  const placementAlertsHtml =
+    typeof renderGrowAlertSlotHtml === 'function' ? renderGrowAlertSlotHtml(myGrow, 'placement') : '';
   const sz = myGrow.systemSizing;
   const ventLine =
     sz?.ventilation && Number.isFinite(sz.ventilation.extractorM3hComfort)
@@ -1420,11 +1419,7 @@ function renderActiveGrow(){
         ? `<p><strong>Extractor (recinto, orientativo):</strong> ~${sz.ventilation.extractorM3hMin}–${sz.ventilation.extractorM3hComfort} m³/h, según los <strong>${sz.ventilation.spaceAssumedM3} m³</strong> que indicaste.</p><p class="form-hint cultivo-sizing-vent-note">Si cambias el volumen del recinto, guarda emplazamiento o instrumentación para actualizar esta fila.</p>`
         : `<p><strong>Extractor (recinto, orientativo):</strong> ~${sz.ventilation.extractorM3hMin}–${sz.ventilation.extractorM3hComfort} m³/h (~${sz.ventilation.cfmMin}–${sz.ventilation.cfmComfort} CFM).</p><p class="form-hint cultivo-sizing-vent-note">Estimación por sitios y volumen de solución; indica m³ del recinto en emplazamiento para afinar.</p>`
       : '';
-  const sizingRecall =
-    sz && !sz.nft
-      ? `<div class="card">
-        <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Dimensionado del sistema (desde checklist)</div></div>
-        <div class="cultivo-sizing-body">
+  const sizingBodyNonNft = `
           ${
             Number.isFinite(sz.airPumpLpmRecommended)
               ? `<p><strong>Bomba de aire (referencia):</strong> ≥ ${sz.airPumpLpmRecommended} L/min</p>`
@@ -1437,17 +1432,29 @@ function renderActiveGrow(){
           }
           ${Number.isFinite(sz.totalSolutionL) ? `<p><strong>Volumen útil estimado:</strong> ~${sz.totalSolutionL} L</p>` : ''}
           ${sz.mainPipeHint ? `<p class="cultivo-pipe-hint"><strong>Tubería:</strong> ${sz.mainPipeHint}</p>` : ''}
-          ${ventLine}
-        </div>
-      </div>`
-      : sz && sz.nft && (ventLine || Number.isFinite(sz.totalSolutionL))
-        ? `<div class="card">
-        <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Referencias de escala (${escapeHtmlText(sz.systemType || '')})</div></div>
-        <div class="cultivo-sizing-body">
+          ${ventLine}`;
+  const sizingBodyNft = `
           ${Number.isFinite(sz.totalSolutionL) ? `<p><strong>Volumen de solución orientativo:</strong> ~${sz.totalSolutionL} L</p>` : ''}
-          ${ventLine}
+          ${ventLine}`;
+  const sizingRecall =
+    sz && !sz.nft
+      ? `<details class="card cultivo-fold-card">
+        <summary class="cultivo-fold-card__summary">
+          <span class="cultivo-fold-card__summary-title"><i class="ti ti-tool" aria-hidden="true"></i> Dimensionado del sistema (desde checklist)</span>
+          <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
+        </summary>
+        <div class="cultivo-fold-card__body cultivo-sizing-body">${sizingBodyNonNft}
         </div>
-      </div>`
+      </details>`
+      : sz && sz.nft && (ventLine || Number.isFinite(sz.totalSolutionL))
+        ? `<details class="card cultivo-fold-card">
+        <summary class="cultivo-fold-card__summary">
+          <span class="cultivo-fold-card__summary-title"><i class="ti ti-tool" aria-hidden="true"></i> Referencias de escala (${escapeHtmlText(sz.systemType || '')})</span>
+          <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
+        </summary>
+        <div class="cultivo-fold-card__body cultivo-sizing-body">${sizingBodyNft}
+        </div>
+      </details>`
         : '';
 
   const segs = Array.from({length:totalW},(_,i)=>{
@@ -1481,8 +1488,12 @@ function renderActiveGrow(){
 
     ${sizingRecall}
 
-    <div class="card cultivo-site-card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-map-pin"></i>Emplazamiento y clima</div></div>
+    <details class="card cultivo-fold-card cultivo-site-card">
+      <summary class="cultivo-fold-card__summary">
+        <span class="cultivo-fold-card__summary-title"><i class="ti ti-map-pin" aria-hidden="true"></i> Emplazamiento y clima</span>
+        <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="cultivo-fold-card__body">
       <p class="body-prose cultivo-site-lead">La pestaña <strong>Climatología</strong> y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
       <div class="grid2 cultivo-site-grid">
         <div class="form-group">
@@ -1517,22 +1528,11 @@ function renderActiveGrow(){
       <div class="cultivo-site-actions">
         <button type="button" class="btn btn-primary btn--compact" onclick="saveGrowLocationAndPlacement()"><i class="ti ti-device-floppy"></i> Guardar emplazamiento</button>
       </div>
-      ${growAlertSlot('placement')}
-    </div>
+      ${placementAlertsHtml}
+      </div>
+    </details>
 
-    ${typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow, { hideInlineDupes: true }) : ''}
-
-    ${growAlertSlot('measurement')}
-    <div class="gauge-grid">
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">EC solución</div><div class="gauge-value c-green">${currentEC}</div><div class="gauge-range">mS/cm</div><span class="gauge-status status-ok">En rango</span>${growAlertSlot('ec')}</div>
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">pH objetivo</div><div class="gauge-value c-blue">${currentPH.split('–')[0]}</div><div class="gauge-range">${currentPH}</div><span class="gauge-status status-ok">En rango</span>${growAlertSlot('ph')}</div>
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Fotoperiodo</div><div class="gauge-value gauge-value--compact">${lightSched}</div><div class="gauge-range">h luz/oscuridad</div>${growAlertSlot('light')}</div>
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Temp. agua</div><div class="gauge-value c-purple">${s.tempWater}</div><div class="gauge-range">°C objetivo</div><span class="gauge-status ${myGrow.ambTemp>28?'status-warn':'status-ok'}">${myGrow.ambTemp>28?'Vigilar':'OK'}</span>${growAlertSlot('water')}</div>
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Humedad (HR)</div><div class="gauge-value gauge-value--compact">${humidity}</div>${growAlertSlot('humidity')}</div>
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">Temp. aire día</div><div class="gauge-value gauge-value--compact">${tempRange}</div>${growAlertSlot('air')}</div>
-      <div class="gauge gauge--with-inline-alerts"><div class="gauge-label">CO₂</div><div class="gauge-value gauge-value--compact">${myGrow.co2==='si'?'1200':'400'}</div><div class="gauge-range">ppm</div>${growAlertSlot('co2')}</div>
-      <div class="gauge"><div class="gauge-label">Rendimiento est.</div><div class="gauge-value c-amber gauge-value--yield">${Math.round(myGrow.m2*parseInt(s.yieldIn)*0.85)}</div><div class="gauge-range">g total</div></div>
-    </div>
+    ${typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
 
     <div class="grid2">
       <div class="card">
@@ -1596,8 +1596,13 @@ function renderActiveGrow(){
               : ''
           }
         </div>
-        <div class="section-label section-label--block complements-section-label">Complementos e instrumentación</div>
-        <p class="text-muted complements-section-hint">Define medidores y perfil de espacio; el <strong>asistente de mediciones</strong> en Medir solo muestra campos coherentes. Marca extractor, humedad o LED suplemento solo si los usas: alimentan alertas y textos, no implican montaje “semi profesional”.</p>
+        <details class="cultivo-complements-details">
+        <summary class="cultivo-fold-card__summary cultivo-complements-details__summary">
+          <span class="cultivo-fold-card__summary-title"><i class="ti ti-tools" aria-hidden="true"></i> Complementos e instrumentación</span>
+          <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
+        </summary>
+        <div class="cultivo-complements-details__body">
+        <p class="text-muted complements-section-hint">Lo mismo que en el <strong>checklist inicial</strong>; ábrelo si añades medidores o cambias el recinto. El <strong>asistente de Medir</strong> usa estas marcas.</p>
         ${minKitCfgBlock}
         <div class="grid2 onboarding-complements">
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompPhEc" ${compGrow.meterPhEc ? 'checked' : ''}><span>Medidor <strong>pH</strong> y <strong>EC</strong></span></label>
@@ -1649,6 +1654,8 @@ function renderActiveGrow(){
               : '<span class="text-muted">Sin LED suplementario declarado.</span>'
           }
         </div>
+        </div>
+        </details>
         <div class="alert info"><i class="ti ti-database"></i><p>Estos valores se guardan en memoria local para tus próximos cálculos.</p></div>
       </div>
       <div class="card">
@@ -1674,15 +1681,11 @@ function renderActiveGrow(){
         <button type="button" class="btn btn-ghost btn--compact" onclick="exportSystemSvg()"><i class="ti ti-download"></i> Exportar SVG</button>
       </div>
       <div class="system-svg-wrap">${systemSvg}</div>
-      <div class="grid2 svg-panel-grid">
-        <div class="card-sm">
-          <div class="section-label">Planta seleccionada</div>
-          <div class="param-row"><span class="param-key">ID planta</span><span class="param-val">${selectedPlantInfo.plantLabel}</span></div>
-          <div class="param-row"><span class="param-key">Cultivar</span><span class="param-val">${selectedPlantInfo.cultivar}</span></div>
-          <div class="param-row"><span class="param-key">Estado semanal</span><span class="param-val">${phase}</span></div>
-          <div class="param-row"><span class="param-key">Rendimiento estimado/planta</span><span class="param-val c-amber">${selectedPlantInfo.estimatedPlantYield} g</span></div>
+      <div class="svg-panel-grid svg-panel-grid--single">
+        <div class="card-sm plant-system-summary-card">
+          <div class="section-label">Plantas del sistema</div>
+          ${allPlantsSummaryHtml}
         </div>
-        ${volumeDiagramPanel}
       </div>
       <div class="alert info"><i class="ti ti-info-circle"></i><p>Vista cenital: cada sitio lleva un <strong>icono de planta</strong> (plántula si germinación o &lt;18 días; hoja tipo cannabis si planta establecida o esqueje de proveedor). Toca el <strong>cubo o cesta</strong> para seleccionar P1…Pn; toca el <strong>icono</strong> para la ficha (variedad, edad, procedencia). ${myGrow.system === 'RDWC' ? 'En RDWC, pH/EC son de la solución común (depósito de control).' : ''}</p></div>
     </div>
@@ -1926,6 +1929,7 @@ function saveGrowHardwareComplements() {
   saveGrowState();
   renderActiveGrow();
   if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderHistorial === 'function') renderHistorial();
 }
 
 function saveRdwcDiagramStyleFromUi() {
@@ -1948,60 +1952,8 @@ function saveGrowSiteCountFromUi() {
   saveGrowState();
   renderActiveGrow();
   if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderHistorial === 'function') renderHistorial();
   if (typeof renderInicio === 'function') renderInicio();
-}
-
-function renderVolumeDiagramPanel(grow) {
-  const vol = Number.isFinite(grow.reservoirL) ? grow.reservoirL : 60;
-  const plantId = isRdwcSharedSolution(grow) ? 0 : grow.selectedPlant || 1;
-  const rows = getMeasurementsByPlant(grow, plantId)
-    .filter((m) => Number.isFinite(m.volume))
-    .slice(0, 24)
-    .reverse();
-  const last = rows.length ? rows[rows.length - 1] : null;
-  const lastVol = last && Number.isFinite(last.volume) ? last.volume : null;
-  const chart =
-    rows.length >= 2
-      ? renderVolumeMiniSvg(rows, vol)
-      : `<div class="volume-mono-display"><div class="volume-mono-row"><span class="volume-mono-val">${vol}</span><span class="volume-mono-unit">L</span></div><p class="text-muted volume-mono-note">Con 2+ registros de volumen en <strong>Medir</strong> aparecerá la tendencia.</p></div>`;
-  return `
-    <div class="card-sm volume-diagram-panel">
-      <div class="section-label">Volumen (depósito / circuito)</div>
-      <p class="volume-diagram-hint">Mezcla actual: <strong>${vol} L</strong>${lastVol != null ? ` · Última lectura: <strong>${lastVol.toFixed(1)} L</strong>` : ''}</p>
-      ${chart}
-    </div>`;
-}
-
-function renderVolumeMiniSvg(rows, baselineL) {
-  const w = 280;
-  const h = 100;
-  const padL = 14;
-  const padR = 10;
-  const padT = 18;
-  const padB = 22;
-  const innerW = w - padL - padR;
-  const innerH = h - padT - padB;
-  const vals = rows.map((r) => r.volume);
-  const minV = Math.min(...vals, baselineL * 0.92);
-  const maxV = Math.max(...vals, baselineL * 1.08, minV + 1);
-  const span = maxV - minV || 1;
-  const n = rows.length;
-  const toX = (i) => padL + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
-  const toY = (v) => padT + (1 - (Math.max(minV, Math.min(maxV, v)) - minV) / span) * innerH;
-  const pts = rows.map((r, i) => `${toX(i)},${toY(r.volume)}`).join(' ');
-  const yRef = toY(baselineL);
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" class="volume-mini-svg" role="img" aria-label="Tendencia volumen depósito">
-    <rect x="0" y="0" width="${w}" height="${h}" rx="8" class="volume-mini-bg"></rect>
-    <text x="${padL}" y="14" class="volume-mini-title">Volumen (L)</text>
-    <line x1="${padL}" x2="${w - padR}" y1="${yRef}" y2="${yRef}" class="volume-mini-ref"></line>
-    <polyline points="${pts}" fill="none" class="volume-mini-line"></polyline>
-    ${rows
-      .map(
-        (r, i) =>
-          `<circle cx="${toX(i)}" cy="${toY(r.volume)}" r="3.5" class="volume-mini-dot"><title>${new Date(r.date).toLocaleString('es-ES')} · ${r.volume} L</title></circle>`,
-      )
-      .join('')}
-  </svg>`;
 }
 
 function renderSystemSvg(grow, strain, weekNum, phaseName) {
@@ -2461,24 +2413,43 @@ function selectPlantInDiagram(index) {
   myGrow.selectedPlant = Math.max(1, Math.min(maxPlants, index));
   saveGrowState();
   renderActiveGrow();
+  if (typeof renderHistorial === 'function') renderHistorial();
 }
 
-function getSelectedPlantInfo(grow, strain) {
-  const selected = grow.selectedPlant || 1;
-  const totalPlants = getConfiguredSiteCount(grow);
-  const totalYield = Math.round(grow.m2 * parseInt(strain.yieldIn) * 0.85);
-  const perPlant = Math.round(totalYield / totalPlants);
-  const slotStrain = getStrainForPlantSlot(grow, selected);
-  const latest = getLatestMeasurementForPlant(grow, selected);
-  return {
-    plantLabel: `P${selected} / ${totalPlants}`,
-    cultivar: slotStrain.name,
-    estimatedPlantYield: perPlant,
-    latestPH: latest && Number.isFinite(latest.ph) ? latest.ph.toFixed(1) : '—',
-    latestEC: latest && Number.isFinite(latest.ec) ? `${latest.ec.toFixed(2)} mS/cm` : '—',
-    latestWaterTemp: latest && Number.isFinite(latest.waterTemp) ? `${latest.waterTemp.toFixed(1)}°C` : '—',
-    latestDate: latest ? `${new Date(latest.date).toLocaleDateString('es-ES')} ${new Date(latest.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}` : 'Sin registros',
-  };
+/** Resumen bajo el esquema: todas las plantas / circuito y últimas lecturas por sitio. */
+function renderAllPlantsSystemSummaryHtml(grow, strain, phaseName) {
+  if (!grow || !strain) return '';
+  const n = getConfiguredSiteCount(grow);
+  const yieldIn = parseInt(strain.yieldIn, 10);
+  const totalYield = Math.round(grow.m2 * (Number.isFinite(yieldIn) ? yieldIn : 0) * 0.85);
+  const perPlant = n > 0 ? Math.round(totalYield / n) : 0;
+  const esc = escapeHtmlText;
+  if (isRdwcSharedSolution(grow)) {
+    const latest = getLatestMeasurementForPlant(grow, 1);
+    const ph = latest && Number.isFinite(latest.ph) ? latest.ph.toFixed(1) : '—';
+    const ec = latest && Number.isFinite(latest.ec) ? latest.ec.toFixed(2) : '—';
+    return `
+      <p class="form-hint plant-system-summary-lead">RDWC: <strong>${n}</strong> sitio(s), <strong>solución común</strong>. Última medición de circuito (Medir): pH <strong>${ph}</strong> · EC <strong>${ec}</strong> mS/cm.</p>
+      <div class="param-row"><span class="param-key">Fase</span><span class="param-val">${esc(phaseName)}</span></div>
+      <div class="param-row"><span class="param-key">Cultivar de referencia</span><span class="param-val">${esc(strain.name)}</span></div>
+      <div class="param-row"><span class="param-key">Rendimiento orientativo / sitio</span><span class="param-val c-amber">~${perPlant} g</span></div>`;
+  }
+  const blocks = [];
+  for (let i = 1; i <= n; i++) {
+    const slotStrain = getStrainForPlantSlot(grow, i);
+    const latest = getLatestMeasurementForPlant(grow, i);
+    const ph = latest && Number.isFinite(latest.ph) ? latest.ph.toFixed(1) : '—';
+    const ec = latest && Number.isFinite(latest.ec) ? latest.ec.toFixed(2) : '—';
+    const nameShort = esc((slotStrain.name || '').split(' ').slice(0, 2).join(' ') || slotStrain.name);
+    blocks.push(
+      `<div class="plant-system-summary-row"><span class="plant-system-summary-pid"><strong>P${i}</strong></span><span class="plant-system-summary-name">${nameShort}</span><span class="plant-system-summary-meas text-muted">pH ${ph} · EC ${ec}</span></div>`,
+    );
+  }
+  return `
+    <p class="form-hint plant-system-summary-lead"><strong>${n}</strong> planta(s). Última lectura por sitio (Medir).</p>
+    <div class="plant-system-summary-list">${blocks.join('')}</div>
+    <div class="param-row"><span class="param-key">Fase</span><span class="param-val">${esc(phaseName)}</span></div>
+    <div class="param-row"><span class="param-key">Rendimiento total estimado</span><span class="param-val c-amber">${totalYield} g</span> <span class="text-muted">(~${perPlant} g/planta)</span></div>`;
 }
 
 function getPlantCount(grow) {
