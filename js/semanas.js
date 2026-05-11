@@ -57,7 +57,19 @@ function collectGrowCalendarEvents(grow) {
   add(harvest, { type: 'milestone', label: 'Cosecha orientativa', icon: 'scissors' });
 
   for (let d = 10; d < totalW * 7; d += 10) {
-    add(addDays(start, d), { type: 'maint', label: 'Revisión solución / cambio parcial', icon: 'refresh' });
+    add(addDays(start, d), {
+      type: 'maint',
+      label: 'Renovación parcial de solución (~10 días) · revisar pH / EC',
+      icon: 'refresh',
+    });
+  }
+
+  for (let d = 7; d < totalW * 7; d += 7) {
+    add(addDays(start, d), {
+      type: 'maint',
+      label: 'Calibrar o verificar medidores pH y EC (orientativo 7 días)',
+      icon: 'gauge',
+    });
   }
 
   if (s.type === 'auto') {
@@ -140,7 +152,7 @@ function renderGrowCalendarSection(grow) {
   return `
     <div class="card grow-calendar-card">
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar-event"></i>Calendario de tareas e hitos</div></div>
-      <p class="body-prose">Fechas calculadas desde el <strong>inicio del cultivo</strong> y la duración de <strong>${grow.strain.name}</strong>. Ajusta en la práctica según observación. Leyenda: <span class="cal-dot cal-dot--milestone"></span> hito <span class="cal-dot cal-dot--task"></span> tarea <span class="cal-dot cal-dot--maint"></span> mantenimiento</p>
+      <p class="body-prose">Fechas desde el <strong>inicio del cultivo</strong> y la duración de <strong>${grow.strain.name}</strong>. Incluye renovación orientativa de solución (~10 días), revisión de medidores pH/EC (~7 días) y tareas. Leyenda: <span class="cal-dot cal-dot--milestone"></span> hito <span class="cal-dot cal-dot--task"></span> tarea <span class="cal-dot cal-dot--maint"></span> mantenimiento</p>
       <div class="cal-months-row">${months.join('')}</div>
       <div class="cal-day-modal" id="growCalDayModal" aria-hidden="true">
         <div class="cal-day-modal__scrim" onclick="closeGrowCalendarDay()"></div>

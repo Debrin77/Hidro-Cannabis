@@ -157,20 +157,16 @@ function updateMonitorLiveCorrection() {
     return;
   }
   const parts = buildLiveMeasureHints(reading, myGrow);
-  const strain = myGrow.strain;
-  const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
-  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
-  const phaseRef = getPhaseReference(strain, weekNum);
-
-  if (!parts.length) {
-    host.innerHTML = `<div class="alert info monitor-live-ok"><i class="ti ti-check"></i><p><strong>En rango (${phaseRef.phase}):</strong> los valores introducidos encajan en los objetivos orientativos de <strong>${escapeMonitorHtml(strain.name)}</strong>. Tras cualquier corrección en depósito, vuelve a medir.</p></div>`;
-    host.hidden = false;
+  const serious = parts.filter((p) => p.level === 'danger' || p.level === 'warn');
+  if (!serious.length) {
+    host.innerHTML = '';
+    host.hidden = true;
     return;
   }
-  host.innerHTML = parts
+  host.innerHTML = serious
     .map(
       (p) =>
-        `<div class="alert ${p.level === 'danger' ? 'danger' : p.level === 'warn' ? 'warn' : 'info'} monitor-live-alert"><i class="ti ti-${p.icon}"></i><div class="monitor-live-alert__body"><strong class="monitor-live-alert__title">${escapeMonitorHtml(p.title)}</strong><p class="monitor-live-alert__text">${escapeMonitorHtml(p.text)}</p></div></div>`,
+        `<div class="alert ${p.level === 'danger' ? 'danger' : 'warn'} monitor-live-alert"><i class="ti ti-${p.icon}"></i><div class="monitor-live-alert__body"><strong class="monitor-live-alert__title">${escapeMonitorHtml(p.title)}</strong><p class="monitor-live-alert__text">${escapeMonitorHtml(p.text)}</p></div></div>`,
     )
     .join('');
   host.hidden = false;
@@ -196,9 +192,14 @@ const MONITOR_LIVE_FIELD_IDS = new Set([
 ]);
 
 function onMonitorFormLiveEvent(ev) {
+  if (!myGrow) return;
+  const t = ev.target;
+  if (!t || typeof t.closest !== 'function') return;
   const mc = document.getElementById('monitorContent');
-  if (!mc || !myGrow || !mc.contains(ev.target)) return;
-  const id = ev.target.id;
+  const hc = document.getElementById('historialContent');
+  const inForm = (mc && mc.contains(t)) || (hc && hc.contains(t));
+  if (!inForm) return;
+  const id = t.id;
   if (!id || !MONITOR_LIVE_FIELD_IDS.has(id)) return;
   scheduleMonitorLiveCorrection();
 }
@@ -336,7 +337,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
   return out;
 }
 
-/** Tarjeta de alertas (mantenimiento + última medición + exterior) para Inicio y Sistema. */
+/** Tarjeta de alertas (última medición + exterior + fase) para Inicio y Sistema. Mantenimiento por fechas: Calendario. */
 function renderGrowAlertsCardHtml(grow) {
   if (!grow || !grow.strain) return '';
   const s = grow.strain;
@@ -347,8 +348,6 @@ function renderGrowAlertsCardHtml(grow) {
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-alert-triangle"></i>Alertas activas</div></div>
       ${grow.ambTemp > 28 ? `<div class="alert warn"><i class="ti ti-thermometer"></i><p>Temperatura ambiente ${grow.ambTemp}°C detectada. Riesgo de solución caliente. Monitorear agua — no superar 23°C.</p></div>` : ''}
-      <div class="alert info"><i class="ti ti-calendar"></i><p>Próxima renovación de solución recomendada: en ${10 - (daysSince % 10)} días.</p></div>
-      <div class="alert info"><i class="ti ti-droplet"></i><p>Calibrar medidor pH con tampón 7.0 cada 7 días. Último calibrado: verificar manualmente.</p></div>
       ${
         weekNum >= grow.strain.vegW + grow.strain.flowerW - 2
           ? `<div class="alert warn"><i class="ti ti-scissors"></i><p>Inicio del periodo de Flush recomendado. Cambiar a agua RO · EC 0.1–0.3 · pH 6.0</p></div>`
@@ -421,8 +420,10 @@ function renderMonitor(){
     waterLive != null ? Math.min(100, Math.max(0, ((waterLive - 15) / (24 - 15)) * 100)) : 50;
   mc.innerHTML=`
     ${renderMonitorActiveSystemStripHtml()}
-    <button type="button" class="btn btn-ghost btn--compact monitor-clima-link" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Ver Clima del emplazamiento</button>
-
+    <div class="card monitor-snapshot-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-activity-heartbeat"></i>Resumen · última medición</div></div>
+      <p class="body-prose body-prose--tight monitor-snapshot-lead">Valores más recientes según planta o circuito seleccionado en <strong>Historial → registro</strong>. Sin datos aún, se muestran guías de fase.</p>
+      <div class="monitor-snapshot-inner">
     <div class="grid4 monitor-metrics">
       <div class="metric"><div class="metric-label">pH ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-blue">${phLive != null ? phLive.toFixed(1) : '—'}</div><div class="metric-unit">${phaseRefQuick.phMin.toFixed(1)}–${phaseRefQuick.phMax.toFixed(1)} (${phaseRefQuick.phase})</div><div class="metric-bar"><div class="metric-fill metric-fill--ph" style="--fill-pct:${phPct.toFixed(0)}%"></div></div></div>
       <div class="metric"><div class="metric-label">EC ${rdwc ? '(circuito)' : 'actual'}</div><div class="metric-val c-green">${ecLive != null ? ecLive.toFixed(2) : s.ecFlower.toFixed(1)}</div><div class="metric-unit">mS/cm</div><div class="metric-bar"><div class="metric-fill metric-fill--ec" style="--fill-pct:${ecPct.toFixed(0)}%"></div></div></div>
@@ -435,11 +436,17 @@ function renderMonitor(){
       <div class="metric"><div class="metric-label">DLI estimado</div><div class="metric-val">${dliLive != null ? dliLive.toFixed(1) + ' mol/m²/d' : '—'}</div><div class="metric-unit">PPFD × horas luz</div></div>
       <div class="metric"><div class="metric-label">PPFD último</div><div class="metric-val">${ppfdLive != null ? ppfdLive.toFixed(0) + ' µmol' : '—'}</div><div class="metric-unit">sensor cuántico</div></div>
     </div>
+      </div>
+    </div>
 
     ${greenhouseCard}
 
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-flask"></i>Nutriente activo: ${n.name}</div></div>
+    <details class="card monitor-nutrient-details">
+      <summary class="monitor-nutrient-details__summary">
+        <span class="monitor-nutrient-details__title"><i class="ti ti-flask" aria-hidden="true"></i> Nutriente activo: ${escapeMonitorHtml(n.name)}</span>
+        <i class="ti ti-chevron-down monitor-nutrient-details__chev" aria-hidden="true"></i>
+      </summary>
+      <div class="monitor-nutrient-details__body">
       <div class="grid2">
         <div>
           <div class="section-label">Dosis esta semana</div>
@@ -449,56 +456,18 @@ function renderMonitor(){
         </div>
         <div>
           <div class="section-label">Aditivos recomendados</div>
-          <div class="pill-tag-row">${n.aditivos.map(a=>`<span class="pill-tag">${a}</span>`).join('')}</div>
+          <div class="pill-tag-row">${n.aditivos.map(a=>`<span class="pill-tag">${escapeMonitorHtml(a)}</span>`).join('')}</div>
         </div>
       </div>
-    </div>
+      </div>
+    </details>
 
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-report-analytics"></i>Registro diario de mediciones</div></div>
-      <div class="section-label section-label--block">Solución y volumen</div>
-      <div class="grid4">
-        <div class="form-group">${rdwc ? `<label>Sitio de la lectura</label><p class="form-static-text">Circuito RDWC (depósito de control / solución común)</p><input type="hidden" id="mPlant" value="0">` : `<label>Planta</label>
-          <select id="mPlant">
-            ${Array.from({length:getPlantCount(myGrow)},(_,i)=>`<option value="${i+1}" ${selectedPlant===i+1?'selected':''}>P${i+1}</option>`).join('')}
-          </select>`}
-        </div>
-        <div class="form-group"><label>pH</label><input id="mPH" type="number" step="0.1" min="4.5" max="8.5" placeholder="6.0"></div>
-        <div class="form-group"><label>EC (mS/cm)</label><input id="mEC" type="number" step="0.01" min="0" max="4" placeholder="1.85"></div>
-        <div class="form-group"><label>Volumen (L)</label><input id="mVolume" type="number" step="0.1" min="1" max="2000" placeholder="${myGrow.reservoirL||60}"></div>
-        <div class="form-group"><label>Temp. agua (°C)</label><input id="mWaterTemp" type="number" step="0.1" min="10" max="35" placeholder="19.0"><span class="form-hint">Raíz / depósito</span></div>
-      </div>
-
-      <div class="section-label section-label--block">Microclima (VPD con Tª aire + HR)</div>
-      <div class="grid4">
-        <div class="form-group"><label>Temp. aire en copa (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"></div>
-        <div class="form-group"><label>Humedad relativa (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"></div>
-        <div class="form-group"><label>CO₂ (ppm)</label><input id="mCO2" type="number" step="10" min="300" max="2000" placeholder="${myGrow.co2==='si'?'1200':'400'}"></div>
-        <div class="form-group"><label>Lux (opcional)</label><input id="mLux" type="number" step="100" min="0" max="200000" placeholder="35000"></div>
-      </div>
-
-      <div class="section-label section-label--block">Luz (PPFD + horas encendido → DLI)</div>
-      <div class="grid4">
-        <div class="form-group"><label>PPFD medio (µmol/m²/s)</label><input id="mPPFD" type="number" step="10" min="0" max="2500" placeholder="600"><span class="form-hint">Sensor cuántico</span></div>
-        <div class="form-group"><label>Horas luz encendida</label><input id="mLightHours" type="number" step="0.5" min="0" max="24" placeholder="${weekNum <= myGrow.strain.vegW ? '18' : '12'}"><span class="form-hint">Fotoperiodo hoy</span></div>
-      </div>
-
-      <div class="grid2">
-        <div class="form-group"><label>Notas</label><input id="mNote" type="text" placeholder="Observaciones del día"></div>
-      </div>
-      <div id="monitorLiveCorrectionHost" class="monitor-live-correction" hidden aria-live="polite" aria-atomic="true"></div>
-      <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
-      <details class="monitor-last-measure-details">
-        <summary class="monitor-last-measure-details__summary"><i class="ti ti-chevron-down monitor-last-measure-details__chev" aria-hidden="true"></i> Últimas mediciones registradas</summary>
-        <div class="monitor-last-measure-details__body">
-          ${renderMeasurementsTable()}
-        </div>
-      </details>
-      ${renderCorrectionPlanCard()}
-      ${renderPlantTrendCard()}
+      <div class="card-header"><div class="card-title"><i class="ti ti-history"></i>Registro de mediciones</div></div>
+      <p class="body-prose body-prose--tight">Las lecturas diarias y la tabla completa están en <strong>Historial</strong>. Desde aquí solo consultas el resumen y el nutriente.</p>
+      <button type="button" class="btn btn-primary" onclick="navTo('historial')"><i class="ti ti-clipboard-list"></i> Abrir Historial</button>
     </div>
   `;
-  requestAnimationFrame(() => initMonitorLiveValidation());
 }
 
 function renderGreenhouseMonitoringCard(grow, latestCircuit, phaseRefQuick) {
@@ -554,6 +523,29 @@ function addLog() {
   if (typeof renderCultivo === 'function') renderCultivo();
 }
 
+/** Texto de corrección calculado para persistir con la medición (Historial). */
+function buildMeasurementCorrectionNote(reading, grow) {
+  if (!grow?.strain || !reading) return '';
+  const strain = grow.strain;
+  const daysSince = Math.floor((new Date() - grow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const phaseRef = getPhaseReference(strain, weekNum);
+  const lines = [];
+  if (typeof buildStrainCorrectionPlan === 'function') {
+    const plan = buildStrainCorrectionPlan(reading, strain, weekNum, phaseRef, grow);
+    for (const st of plan.steps || []) {
+      lines.push(`${st.title}: ${st.detail}`);
+    }
+  }
+  if (!lines.length) {
+    const hints = buildLiveMeasureHints(reading, grow).filter((h) => h.level === 'danger' || h.level === 'warn');
+    for (const h of hints) {
+      lines.push(`${h.title}: ${h.text}`);
+    }
+  }
+  return lines.join('\n\n').trim();
+}
+
 function addMeasurement() {
   if (!myGrow) return;
   const rdwc = isMonitorRdwc(myGrow);
@@ -592,6 +584,9 @@ function addMeasurement() {
     return;
   }
 
+  const correctionNote = buildMeasurementCorrectionNote(reading, myGrow);
+  if (correctionNote) reading.correctionNote = correctionNote;
+
   myGrow.measurements = Array.isArray(myGrow.measurements) ? myGrow.measurements : [];
   myGrow.measurements.unshift(reading);
   myGrow.measurements = myGrow.measurements.slice(0, 30);
@@ -610,10 +605,12 @@ function addMeasurement() {
     if (vpdStr !== '—') summaryParts.push(`VPD ${vpdStr} kPa`);
   }
   if (reading.note) summaryParts.push(`Nota: ${reading.note}`);
+  let logLine = `Medición guardada (${scopeLabel}) · ${summaryParts.join(' · ')}`;
+  if (correctionNote) logLine += ' · Corrección orientativa guardada en la fila (columna Corrección).';
   myGrow.log.unshift({
     date: new Date().toISOString(),
-    text: `Medición guardada (${scopeLabel}) · ${summaryParts.join(' · ')}`,
-    type: 'ok',
+    text: logLine,
+    type: correctionNote ? 'warn' : 'ok',
   });
   saveGrowState();
   if (typeof renderHistorial === 'function') renderHistorial();
@@ -654,31 +651,6 @@ function renderMeasurementsTable() {
       </table>
     </div>
   `;
-}
-
-function renderCorrectionPlanCard() {
-  if (!myGrow || typeof buildStrainCorrectionPlan !== 'function') return '';
-  const plantId = myGrow.selectedPlant || 1;
-  const latest = getLatestMeasurementForPlant(myGrow, plantId);
-  if (!latest) return '';
-  const strain = myGrow.strain;
-  const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
-  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
-  const phaseRef = getPhaseReference(strain, weekNum);
-  const plan = buildStrainCorrectionPlan(latest, strain, weekNum, phaseRef, myGrow);
-  if (!plan.steps.length) {
-    return `
-    <div class="card-sm trend-card">
-      <div class="section-label section-label--block">Validación ${strain.name} · ${phaseRef.phase}</div>
-      <div class="alert info"><i class="ti ti-check"></i><p>La última medición encaja en los rangos orientativos de la cepa y la fase. Mantén el registro para detectar derivas.</p></div>
-    </div>`;
-  }
-  return `
-    <div class="card-sm trend-card">
-      <div class="section-label section-label--block">Corrección orientativa · ${strain.name} · ${phaseRef.phase}</div>
-      <p class="body-prose body-prose--tight">Pasos calculados a partir de tu última lectura. Ajusta en pequeñas dosis y <strong>vuelve a medir</strong> antes de seguir.</p>
-      ${plan.steps.map((s) => `<div class="correction-step"><div class="correction-step__title"><i class="ti ti-tool"></i> ${s.title}</div><p class="correction-step__text">${s.detail}</p></div>`).join('')}
-    </div>`;
 }
 
 function renderPlantTrendCard() {
@@ -734,8 +706,8 @@ function buildSmartAlerts(grow, strain, weekNum) {
       level: 'info',
       icon: 'clipboard-text',
       message: rdwc
-        ? 'Añade una medición del depósito de control para activar alertas sobre la solución común del RDWC.'
-        : `Añade una medición diaria para activar alertas inteligentes en P${plantId}.`,
+        ? 'Registra una medición del depósito en Historial → registro para alertas sobre la solución común del RDWC.'
+        : `Registra una medición en Historial → registro para alertas inteligentes en P${plantId}.`,
     });
     return alerts;
   }
@@ -948,15 +920,20 @@ function renderHistorialMeasurementsTable() {
   meas.sort((a, b) => new Date(b.date) - new Date(a.date));
   const rows = meas.slice(0, 40);
   if (!rows.length) {
-    return `<div class="alert info"><i class="ti ti-info-circle"></i><p>No hay mediciones guardadas. Regístralas en <strong>Medir</strong>.</p></div>`;
+    return `<div class="alert info"><i class="ti ti-info-circle"></i><p>No hay mediciones guardadas. Usa el formulario de <strong>Registro de cultivo</strong> arriba.</p></div>`;
   }
   const rdwc = isMonitorRdwc(myGrow);
   return `
     <div class="table-scroll table-scroll--mt-sm">
       <table class="week-table week-table--stack">
-        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Pl.'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>VPD</th><th>CO₂</th><th>PPFD</th><th>h</th><th>Notas</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>${rdwc ? 'Sitio' : 'Pl.'}</th><th>pH</th><th>EC</th><th>Vol</th><th>Tª agua</th><th>Tª aire</th><th>HR</th><th>VPD</th><th>CO₂</th><th>PPFD</th><th>h</th><th>Notas</th><th>Corrección</th></tr></thead>
         <tbody>
-          ${rows.map((r) => `<tr>
+          ${rows.map((r) => {
+            const corr = typeof r.correctionNote === 'string' ? r.correctionNote.trim() : '';
+            const corrCell = corr
+              ? `<details class="meas-correction-details"><summary>Corrección</summary><div class="meas-correction-body">${escapeMonitorHtml(corr).replace(/\n/g, '<br>')}</div></details>`
+              : '—';
+            return `<tr>
             <td data-label="Fecha">${new Date(r.date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
             <td data-label="${rdwc ? 'Sitio' : 'Pl.'}" class="ec-val">${measurementSiteLabel(myGrow, r)}</td>
             <td data-label="pH" class="ec-val">${Number.isFinite(r.ph) ? r.ph.toFixed(1) : '—'}</td>
@@ -969,8 +946,10 @@ function renderHistorialMeasurementsTable() {
             <td data-label="CO₂">${Number.isFinite(r.co2) ? r.co2.toFixed(0) + ' ppm' : '—'}</td>
             <td data-label="PPFD">${Number.isFinite(r.ppfd) ? r.ppfd.toFixed(0) : '—'}</td>
             <td data-label="h">${Number.isFinite(r.lightHours) ? r.lightHours.toFixed(1) : '—'}</td>
-            <td data-label="Notas" class="table-cell-note">${r.note || '—'}</td>
-          </tr>`).join('')}
+            <td data-label="Notas" class="table-cell-note">${r.note ? escapeMonitorHtml(r.note) : '—'}</td>
+            <td data-label="Corrección" class="meas-correction-cell">${corrCell}</td>
+          </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>`;
@@ -1160,6 +1139,56 @@ function renderHistoryDiarySection(grow) {
     </div>`;
 }
 
+function renderMeasurementRegistrationCardHtml() {
+  if (!myGrow) return '';
+  const s = myGrow.strain;
+  const daysSince = Math.floor((new Date() - myGrow.startDate) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  const rdwc = isMonitorRdwc(myGrow);
+  const selectedPlant = myGrow.selectedPlant || 1;
+  return `
+    <div class="card historial-measure-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-report-analytics"></i>Registro de cultivo · mediciones</div></div>
+      <p class="body-prose body-prose--tight">Guarda lecturas de solución y microclima. En <strong>Calendario</strong> verás por fecha la renovación orientativa de solución y la revisión de medidores pH/EC. Si los valores se salen del rango orientativo, aparecen avisos con pasos de corrección; al guardar, ese texto queda en la tabla (columna <strong>Corrección</strong>).</p>
+      <div class="section-label section-label--block">Solución y volumen</div>
+      <div class="grid4">
+        <div class="form-group">${rdwc ? `<label>Sitio de la lectura</label><p class="form-static-text">Circuito RDWC (depósito de control / solución común)</p><input type="hidden" id="mPlant" value="0">` : `<label>Planta</label>
+          <select id="mPlant">
+            ${Array.from({ length: getPlantCount(myGrow) }, (_, i) => `<option value="${i + 1}" ${selectedPlant === i + 1 ? 'selected' : ''}>P${i + 1}</option>`).join('')}
+          </select>`}
+        </div>
+        <div class="form-group"><label>pH</label><input id="mPH" type="number" step="0.1" min="4.5" max="8.5" placeholder="6.0"></div>
+        <div class="form-group"><label>EC (mS/cm)</label><input id="mEC" type="number" step="0.01" min="0" max="4" placeholder="1.85"></div>
+        <div class="form-group"><label>Volumen (L)</label><input id="mVolume" type="number" step="0.1" min="1" max="2000" placeholder="${myGrow.reservoirL || 60}"></div>
+        <div class="form-group"><label>Temp. agua (°C)</label><input id="mWaterTemp" type="number" step="0.1" min="10" max="35" placeholder="19.0"><span class="form-hint">Raíz / depósito</span></div>
+      </div>
+
+      <div class="section-label section-label--block">Microclima (VPD con Tª aire + HR)</div>
+      <div class="grid4">
+        <div class="form-group"><label>Temp. aire en copa (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"></div>
+        <div class="form-group"><label>Humedad relativa (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"></div>
+        <div class="form-group"><label>CO₂ (ppm)</label><input id="mCO2" type="number" step="10" min="300" max="2000" placeholder="${myGrow.co2 === 'si' ? '1200' : '400'}"></div>
+        <div class="form-group"><label>Lux (opcional)</label><input id="mLux" type="number" step="100" min="0" max="200000" placeholder="35000"></div>
+      </div>
+
+      <div class="section-label section-label--block">Luz (PPFD + horas encendido → DLI)</div>
+      <div class="grid4">
+        <div class="form-group"><label>PPFD medio (µmol/m²/s)</label><input id="mPPFD" type="number" step="10" min="0" max="2500" placeholder="600"><span class="form-hint">Sensor cuántico</span></div>
+        <div class="form-group"><label>Horas luz encendida</label><input id="mLightHours" type="number" step="0.5" min="0" max="24" placeholder="${weekNum <= s.vegW ? '18' : '12'}"><span class="form-hint">Fotoperiodo hoy</span></div>
+      </div>
+
+      <div class="grid2">
+        <div class="form-group"><label>Notas</label><input id="mNote" type="text" placeholder="Observaciones del día"></div>
+      </div>
+      <div id="monitorLiveCorrectionHost" class="monitor-live-correction" hidden aria-live="polite" aria-atomic="true"></div>
+      <button type="button" class="btn btn-primary" onclick="addMeasurement()"><i class="ti ti-plus"></i> Guardar medición</button>
+      ${renderPlantTrendCard()}
+      <div class="section-label section-label--block historial-measure-table-title">Mediciones guardadas</div>
+      ${renderHistorialMeasurementsTable()}
+      <button type="button" class="btn btn-ghost btn--compact historial-measure-to-monitor" onclick="navTo('monitor')"><i class="ti ti-gauge"></i> Ver resumen de última medición en Medir</button>
+    </div>`;
+}
+
 function renderHistorialQuickRefCard() {
   return `<div class="card historial-quick-ref">
       <div class="card-header"><div class="card-title"><i class="ti ti-book-2"></i> Referencia rápida</div></div>
@@ -1192,24 +1221,24 @@ function renderHistorial() {
     .join('');
   const checklistCard = renderHistoryChecklistSection(myGrow);
   const diaryCard = renderHistoryDiarySection(myGrow);
+  const measureCard = renderMeasurementRegistrationCardHtml();
   host.innerHTML = `${quickRef}
+    ${measureCard}
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-list"></i> Bitácora (${myGrow.strain.name})</div></div>
-      <p class="body-prose body-prose--tight historial-bitacora-hint">Observaciones manuales y resumen de cada medición guardada (desde <strong>Medir</strong>).</p>
+      <p class="body-prose body-prose--tight historial-bitacora-hint">Observaciones manuales y resumen de cada medición guardada.</p>
       <div class="log-add-bar">
         <input id="logInput" class="input-grow" type="text" placeholder="Añadir observación al historial…" autocomplete="off">
         <button class="btn btn-primary btn--compact" onclick="addLog()" type="button">Añadir</button>
       </div>
       <div class="log-list">${logHtml || '<p class="text-muted">Sin entradas.</p>'}</div>
     </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Mediciones recientes (${isMonitorRdwc(myGrow) ? 'circuito RDWC' : 'todas las plantas'})</div></div>
-      ${renderHistorialMeasurementsTable()}
-      <button type="button" class="btn btn-ghost historial-actions" onclick="navTo('monitor')"><i class="ti ti-plus"></i> Añadir medición en Medir</button>
-    </div>
     ${checklistCard}
     ${diaryCard}
   `;
+  requestAnimationFrame(() => {
+    if (typeof initMonitorLiveValidation === 'function') initMonitorLiveValidation();
+  });
 }
 
 window.toggleHistoryChecklistItem = toggleHistoryChecklistItem;

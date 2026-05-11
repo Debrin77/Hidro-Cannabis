@@ -1049,7 +1049,77 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
   margin-top:2px;
 }
 .monitor-active-system__btn{flex-shrink:0;white-space:nowrap}
-.monitor-clima-link{margin-bottom:0.85rem}
+.monitor-nutrient-details{margin-bottom:1rem;padding:0;border:none;background:transparent}
+.monitor-nutrient-details::before{display:none}
+.monitor-nutrient-details > summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:1rem 1.15rem;
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:linear-gradient(165deg,var(--surface) 0%,rgba(22,28,20,0.96) 100%);
+  box-shadow:0 6px 28px rgba(0,0,0,0.2),0 0 0 1px rgba(52,211,153,0.05);
+}
+[data-theme='light'] .monitor-nutrient-details > summary{background:var(--surface);box-shadow:0 4px 24px rgba(30,45,26,0.07),0 0 0 1px rgba(5,150,105,0.06)}
+.monitor-nutrient-details > summary::-webkit-details-marker{display:none}
+.monitor-nutrient-details__title{
+  font-size:11px;text-transform:uppercase;letter-spacing:0.11em;color:var(--hydro-teal);
+  font-weight:600;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:9px;
+}
+[data-theme='light'] .monitor-nutrient-details__title{color:var(--hydro-deep)}
+.monitor-nutrient-details__chev{flex-shrink:0;transition:transform .15s ease;opacity:0.85}
+.monitor-nutrient-details[open] .monitor-nutrient-details__chev{transform:rotate(180deg)}
+.monitor-nutrient-details__body{
+  margin-top:0.75rem;
+  padding:1rem 1.15rem 1.15rem;
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:var(--surface);
+}
+.meas-correction-cell{font-size:12px;vertical-align:top;max-width:10rem}
+.meas-correction-details{margin:0}
+.meas-correction-details > summary{
+  cursor:pointer;
+  font-weight:600;
+  color:var(--hydro-teal);
+  list-style:none;
+  font-size:11px;
+}
+[data-theme='light'] .meas-correction-details > summary{color:var(--hydro-deep)}
+.meas-correction-details > summary::-webkit-details-marker{display:none}
+.meas-correction-body{
+  margin-top:0.45rem;
+  padding:0.5rem 0.65rem;
+  border-radius:var(--radius);
+  background:var(--surface2);
+  border:1px solid var(--border);
+  font-size:11px;
+  line-height:1.45;
+  color:var(--text2);
+  max-height:12rem;
+  overflow:auto;
+}
+.monitor-snapshot-card{margin-bottom:1rem}
+.monitor-snapshot-card .card-header{margin-bottom:0.5rem}
+.monitor-snapshot-lead{margin-bottom:0.85rem;font-size:13px;color:var(--text2);line-height:1.55}
+.monitor-snapshot-inner{
+  padding:0.85rem 0.95rem 1rem;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  background:linear-gradient(160deg,rgba(52,211,153,0.06) 0%,rgba(34,211,238,0.04) 45%,transparent 100%);
+}
+[data-theme='light'] .monitor-snapshot-inner{
+  background:linear-gradient(160deg,rgba(5,150,105,0.07) 0%,rgba(8,145,178,0.05) 50%,transparent 100%);
+}
+.monitor-snapshot-inner .monitor-metrics:last-child{margin-bottom:0}
+.monitor-snapshot-inner .monitor-metrics{margin-bottom:0.65rem}
+.historial-measure-card{margin-bottom:1rem}
+.historial-measure-table-title{margin-top:1.25rem;margin-bottom:0.5rem}
+.historial-measure-to-monitor{margin-top:0.75rem}
 .monitor-live-correction{
   margin:1rem 0;display:flex;flex-direction:column;gap:0.65rem;
 }
