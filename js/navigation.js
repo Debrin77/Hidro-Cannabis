@@ -1,6 +1,14 @@
 // Navegación — barra inferior tipo app + hash
 
-const MORE_VIEWS = ['consejos', 'variedades', 'nutrientes', 'ambiental', 'legal', 'accesibilidad'];
+const MORE_VIEWS = [
+  'consejos',
+  'variedades',
+  'nutrientes',
+  'ambiental',
+  'legal',
+  'accesibilidad',
+  'climatologia',
+];
 
 function closeMoreMenu() {
   const m = document.getElementById('moreMenu');

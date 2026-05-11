@@ -43,7 +43,7 @@ const expertChecklistItems = [
     id: 'instrumentacion',
     title: 'Instrumentación y recinto',
     text:
-      'Marca medidores (pH/EC, Tª líquido, termohigrómetro…) y opciones del espacio en el checklist o en Sistema → desplegable «Complementos e instrumentación» si añades equipo después.',
+      'Marca medidores (pH/EC, Tª líquido, termohigrómetro…) y opciones del espacio en el checklist o en Cultivo → desplegable «Complementos e instrumentación» si añades equipo después.',
   },
   {
     id: 'registro',
@@ -153,15 +153,15 @@ function renderConsejosPage() {
   if (!host || typeof renderStrainSpecsTableHtml !== 'function') return;
   const learnC = typeof getUiExperienceMode === 'function' && getUiExperienceMode() === 'learning';
   const learnBlock = learnC
-    ? `<div class="alert info consejos-learning-block"><i class="ti ti-school"></i><p><strong>Modo Aprendizaje:</strong> interior no implica invernadero de cristal; con pH, EC, Tª del líquido y termohigrómetro en copa suele bastar en armario o carpa. CO₂, deshumidificador fijo o sensor PAR compensan cuando el espacio está acotado y ya llevas estable la solución. En <strong>Sistema</strong> el perfil «espacio amplio» describe macro-carpa o sala grande, no un requisito para cultivar en pequeño.</p></div>`
+    ? `<div class="alert info consejos-learning-block"><i class="ti ti-school"></i><p><strong>Modo Aprendizaje:</strong> interior no implica invernadero de cristal; con pH, EC, Tª del líquido y termohigrómetro en copa suele bastar en armario o carpa. CO₂, deshumidificador fijo o sensor PAR compensan cuando el espacio está acotado y ya llevas estable la solución. En <strong>Cultivo</strong> el perfil «espacio amplio» describe macro-carpa o sala grande, no un requisito para cultivar en pequeño.</p></div>`
     : `<div class="alert info"><i class="ti ti-hand-stop"></i><p>¿Prefieres menos jerga? En <strong>Apariencia y accesibilidad</strong> puedes dejar <strong>Guiado</strong>; si quieres el bloque anterior sobre recintos y equipo mínimo, activa <strong>Aprendizaje</strong>.</p></div>`;
   host.innerHTML = `
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i>Consejos de uso</div></div>
       <p class="body-prose consejos-lead">La app está pensada para quien cultiva en <strong>hidroponía en casa</strong>: eliges el sistema que ofrece la app, la variedad, el nutriente y el emplazamiento. Según lo que marques de <strong>medidores y equipo</strong>, verás sugerencias de mezcla y rangos acordes; en exterior se tiene en cuenta la <strong>meteorología de tu zona</strong>. Los detalles difíciles quedan en segundo plano: lo importante son pasos claros y poder anotar qué hiciste tras cada lectura.</p>
       <div class="alert info"><i class="ti ti-flask-2"></i><p><strong>Circuito RDWC:</strong> toda la planta comparte el mismo agua con abono. Mide pH y sales (EC) en el depósito de control o donde indique tu kit: no hace falta repetir en cada cubo.</p></div>
-      <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Qué conviene medir:</strong> pH y EC del líquido y, si puedes, temperatura del agua. En el aire, temperatura y humedad cerca de las plantas. El CO₂ solo aporta en espacio cerrado; la luz (lux o PAR) ayuda a regular la lámpara. Marca en Sistema solo lo que de verdad tienes: así las pantallas no te abruman.</p></div>
-      <div class="alert info"><i class="ti ti-wind"></i><p><strong>Dos “aires” distintos:</strong> la bomba de burbujas oxigena el <strong>nutriente</strong>; el extractor renueva el <strong>aire del cuarto o armario</strong>. En Sistema verás referencias para ambos. Los kits de tienda se rellenan como un montaje casero: caudales y litros según la ficha o la placa del equipo.</p></div>
+      <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Qué conviene medir:</strong> pH y EC del líquido y, si puedes, temperatura del agua. En el aire, temperatura y humedad cerca de las plantas. El CO₂ solo aporta en espacio cerrado; la luz (lux o PAR) ayuda a regular la lámpara. Marca en <strong>Cultivo</strong> solo lo que de verdad tienes: así las pantallas no te abruman.</p></div>
+      <div class="alert info"><i class="ti ti-wind"></i><p><strong>Dos “aires” distintos:</strong> la bomba de burbujas oxigena el <strong>nutriente</strong>; el extractor renueva el <strong>aire del cuarto o armario</strong>. En <strong>Cultivo</strong> verás referencias para ambos. Los kits de tienda se rellenan como un montaje casero: caudales y litros según la ficha o la placa del equipo.</p></div>
       ${learnBlock}
     </div>
     ${renderStrainSpecsTableHtml()}
@@ -183,7 +183,7 @@ function renderInicio() {
 
   let statusLabel = 'Configura tu instalación';
   let statusSublineHtml =
-    '<p class="dash-status-text">En <strong>Sistema</strong> indicas el hidro (RDWC, DWC, NFT…), la variedad, el nutriente y si está dentro o fuera. Con eso las pantallas te guían con números y recordatorios acordes a tu equipo, sin obligarte a ser técnico.</p>';
+    '<p class="dash-status-text">En <strong>Cultivo</strong> indicas el hidro (RDWC, DWC, NFT…), la variedad, el nutriente y si está dentro o fuera. Con eso las pantallas te guían con números y recordatorios acordes a tu equipo, sin obligarte a ser técnico.</p>';
   if (hasGrow) {
     const rank = Number.isFinite(myGrow.nutri) ? myGrow.nutri : 1;
     const n =
@@ -205,7 +205,7 @@ function renderInicio() {
     statusSublineHtml =
       skipWelcome && !appDone
         ? '<p class="dash-status-text">' +
-          escapeHomeHtml('Modo desarrollo activo. Entra en Sistema para el asistente completo.') +
+          escapeHomeHtml('Modo desarrollo activo. Entra en Cultivo para el asistente completo.') +
           '</p>'
         : '<p class="dash-status-text">Abre <strong>Cultivo</strong> o <strong>Variedades</strong> para empezar; los kits de tienda se configuran igual que un montaje casero: introduces lo que pone en la caja o la placa de la bomba.</p>';
   }
@@ -258,6 +258,43 @@ function renderInicio() {
     console.warn('Inicio: tarjeta de alertas omitida.', e);
   }
 
+  let inicioPriorityHtml = '';
+  if (!hasGrow) {
+    inicioPriorityHtml = `<section class="dash-priority-card" aria-labelledby="dash-priority-title">
+      <h2 id="dash-priority-title" class="dash-priority-card__title">Primer paso</h2>
+      <p class="dash-priority-card__lead">Indica instalación, variedad, nutriente y emplazamiento para activar <strong>Medir</strong>, <strong>Calendario</strong> e <strong>Historial</strong>.</p>
+      <button type="button" class="btn btn-primary dash-priority-card__cta" onclick="navTo('cultivo')"><i class="ti ti-bucket" aria-hidden="true"></i> Configurar mi cultivo</button>
+    </section>`;
+  } else {
+    const ms = Array.isArray(myGrow.measurements) ? myGrow.measurements : [];
+    let lastIso = '';
+    for (let i = ms.length - 1; i >= 0; i--) {
+      if (ms[i] && ms[i].date) {
+        lastIso = ms[i].date;
+        break;
+      }
+    }
+    const last = lastIso ? new Date(lastIso) : null;
+    const daysSince = last ? (Date.now() - last.getTime()) / 86400000 : 999;
+    const stale = !last || daysSince > 2;
+    const hint = stale
+      ? 'Llevas varios días sin lecturas nuevas: <strong>Medir</strong> sitúa pH/EC frente a la cepa y la fase.'
+      : 'Si ajustaste solución, luz o clima, <strong>vuelve a Medir</strong> para ver el cambio en <strong>Historial</strong>.';
+    const climaBtn =
+      myGrow.placement === 'exterior'
+        ? `<button type="button" class="btn btn-ghost" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm" aria-hidden="true"></i> Climatología</button>`
+        : '';
+    inicioPriorityHtml = `<section class="dash-priority-card" aria-labelledby="dash-priority-title">
+      <h2 id="dash-priority-title" class="dash-priority-card__title">Rutina recomendada</h2>
+      <p class="dash-priority-card__lead">${hint}</p>
+      <div class="dash-priority-card__row">
+        <button type="button" class="btn btn-primary" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2" aria-hidden="true"></i> Medir</button>
+        <button type="button" class="btn btn-ghost" onclick="navTo('semanas')"><i class="ti ti-calendar-event" aria-hidden="true"></i> Calendario</button>
+        ${climaBtn}
+      </div>
+    </section>`;
+  }
+
   try {
     host.innerHTML = `
     <section class="dash-hero">
@@ -276,6 +313,8 @@ function renderInicio() {
         ${statusSublineHtml}
       </div>
     </section>
+
+    ${inicioPriorityHtml}
 
     ${weatherLabel}
     ${weatherAlerts}

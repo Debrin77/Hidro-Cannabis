@@ -201,7 +201,7 @@ function closeGrowCalendarDay() {
 function renderSemanas() {
   const sc = document.getElementById('semanasContent');
   if (!myGrow) {
-    sc.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="ti ti-calendar-stats"></i></div><p>El calendario aparece cuando tengas un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Ir a Sistema</button></div>`;
+    sc.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="ti ti-calendar-stats"></i></div><p>El calendario aparece cuando tengas un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Ir a Cultivo</button></div>`;
     return;
   }
   const s = myGrow.strain;

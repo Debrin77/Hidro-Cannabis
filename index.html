@@ -79,8 +79,8 @@
 <!-- ══════════════ CULTIVO ══════════════ -->
 <div class="view" id="view-cultivo">
   <div class="page-header">
-    <div class="breadcrumb">Hydro Cannabis / Sistema</div>
-    <h1>Sistema</h1>
+    <div class="breadcrumb">Hydro Cannabis / Cultivo</div>
+    <h1>Cultivo</h1>
     <p>Checklist e ingeniería según tu instalación: bombas, aire, depósitos y nutriente. Al modificar la configuración, los cálculos y avisos se alinean aquí.</p>
   </div>
 
@@ -92,7 +92,7 @@
   <div class="page-header">
     <div class="breadcrumb">Hydro Cannabis / Monitor</div>
     <h1>Monitor de cultivo</h1>
-    <p>Resumen de la última medición y nutriente por fase. El registro de lecturas (pH, EC, clima, luz) está en <strong>Historial</strong>; el mantenimiento por fechas, en <strong>Calendario</strong>.</p>
+    <p>Resumen de la última medición y nutriente por fase. El registro de lecturas (pH, EC, clima, luz) está en <strong>Historial</strong>; el mantenimiento por fechas, en <strong>Calendario</strong>. La instrumentación se declara en <strong>Cultivo</strong>.</p>
   </div>
   <div id="monitorContent"></div>
 </div>
@@ -121,7 +121,7 @@
   <div class="page-header">
     <div class="breadcrumb">Hydro Cannabis / Climatología</div>
     <h1>Climatología del emplazamiento</h1>
-    <p>Pronóstico y riesgos orientativos para la <strong>ubicación del sistema</strong>. Cruza con el microclima que registras en <strong>Historial</strong>.</p>
+    <p>Pronóstico y riesgos orientativos para la <strong>ubicación del cultivo</strong>. Cruza con el microclima que registras en <strong>Historial</strong>. Acceso rápido: menú inferior <strong>Más</strong> → Climatología.</p>
   </div>
   <div id="climatologiaContent"></div>
 </div>
@@ -136,7 +136,7 @@
     <div class="consejo-card">
       <span class="consejo-num">1</span>
       <div>
-        <strong>Sistema</strong>
+        <strong>Cultivo (ajustes)</strong>
         <p>Configura RDWC/DWC, clima, variedad y dimensionado. Activa el cultivo al finalizar.</p>
       </div>
     </div>
@@ -157,8 +157,8 @@
     <div class="consejo-card">
       <span class="consejo-num">4</span>
       <div>
-        <strong>Más y Clima</strong>
-        <p>Variedades, nutrientes, legal, y la pestaña <strong>Clima</strong> con pronóstico para la ubicación del sistema.</p>
+        <strong>Más (referencia y clima)</strong>
+        <p>Variedades, nutrientes, legal, apariencia y <strong>Climatología</strong> con pronóstico para la ubicación del cultivo.</p>
       </div>
     </div>
     <div class="alert info"><i class="ti ti-info-circle"></i><p>Los cálculos y tablas son <strong>guías</strong>. Ajusta siempre según tus mediciones y el fabricante de nutrientes.</p></div>
@@ -366,16 +366,13 @@
     <i class="ti ti-droplet-half-2" aria-hidden="true"></i><span>Medir</span>
   </button>
   <button type="button" class="bottom-nav-item" data-nav-view="cultivo" onclick="navTo('cultivo')">
-    <i class="ti ti-bucket" aria-hidden="true"></i><span>Sistema</span>
+    <i class="ti ti-bucket" aria-hidden="true"></i><span>Cultivo</span>
   </button>
   <button type="button" class="bottom-nav-item" data-nav-view="semanas" onclick="navTo('semanas')">
     <i class="ti ti-calendar-event" aria-hidden="true"></i><span>Calendario</span>
   </button>
   <button type="button" class="bottom-nav-item" data-nav-view="historial" onclick="navTo('historial')">
     <i class="ti ti-chart-line" aria-hidden="true"></i><span>Historial</span>
-  </button>
-  <button type="button" class="bottom-nav-item" data-nav-view="climatologia" onclick="navTo('climatologia')">
-    <i class="ti ti-cloud-storm" aria-hidden="true"></i><span>Clima</span>
   </button>
   <button type="button" class="bottom-nav-item" data-nav-view="more" onclick="toggleMoreMenu()" aria-expanded="false" id="moreNavBtn">
     <i class="ti ti-layout-grid" aria-hidden="true"></i><span>Más</span>
@@ -394,6 +391,7 @@
     <button type="button" class="more-menu-row" onclick="navTo('variedades')"><i class="ti ti-seedling"></i> Variedades</button>
     <button type="button" class="more-menu-row" onclick="navTo('nutrientes')"><i class="ti ti-flask"></i> Nutrientes top 10</button>
     <button type="button" class="more-menu-row" onclick="navTo('ambiental')"><i class="ti ti-temperature"></i> Parámetros ambientales</button>
+    <button type="button" class="more-menu-row" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología</button>
     <button type="button" class="more-menu-row" onclick="navTo('legal')"><i class="ti ti-shield-check"></i> Legal España</button>
     <button type="button" class="more-menu-row" onclick="openAccesibilidadFromMore()"><i class="ti ti-palette"></i> Apariencia y accesibilidad</button>
   </div>

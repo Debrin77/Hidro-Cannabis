@@ -178,8 +178,8 @@ function saveGrowLocationAndPlacement() {
       date: new Date().toISOString(),
       text:
         newLoc !== prevLoc
-          ? `Ubicación actualizada («${prevLoc || '—'}» → «${newLoc || '—'}»). Pronóstico guardado invalidado: abre Climatología para cargar la nueva zona.`
-          : `Instalación ${prevPlace === 'exterior' ? 'exterior' : 'interior'} → ${newPlace === 'exterior' ? 'exterior' : 'interior'}. Pronóstico guardado invalidado: abre Climatología si usas tiempo exterior.`,
+          ? `Ubicación actualizada («${prevLoc || '—'}» → «${newLoc || '—'}»). Pronóstico guardado invalidado: abre Climatología desde el menú Más para cargar la nueva zona.`
+          : `Instalación ${prevPlace === 'exterior' ? 'exterior' : 'interior'} → ${newPlace === 'exterior' ? 'exterior' : 'interior'}. Pronóstico guardado invalidado: abre Climatología (menú Más) si usas tiempo exterior.`,
       type: 'info',
     });
   }
@@ -688,7 +688,7 @@ function renderInitialOnboarding() {
 
     <nav class="onboarding-progress" aria-label="Pasos del checklist">
       <ol class="onboarding-progress__track">
-        <li><a href="#onbStepSystem" class="onboarding-progress__link">1 · Sistema</a></li>
+        <li><a href="#onbStepSystem" class="onboarding-progress__link">1 · Instalación</a></li>
         <li><a href="#onbEngineeringCard" class="onboarding-progress__link">2 · Ingeniería</a></li>
         <li><a href="#onbStepComplements" class="onboarding-progress__link">3 · Instrumentos</a></li>
         <li><a href="#onbStepVariety" class="onboarding-progress__link">4 · Cultivo</a></li>
@@ -698,7 +698,7 @@ function renderInitialOnboarding() {
     <details class="card onboarding-acc" id="onbStepSystem" open>
       <summary class="onboarding-acc__summary">
         <span class="onboarding-acc__step-num" aria-hidden="true">1</span>
-        <span class="onboarding-acc__summary-title"><i class="ti ti-list-check"></i> Paso 1–2 · Sistema, ubicación y clima</span>
+        <span class="onboarding-acc__summary-title"><i class="ti ti-list-check"></i> Paso 1–2 · Instalación, ubicación y clima</span>
         <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
       </summary>
       <div class="onboarding-acc__body">
@@ -1051,7 +1051,7 @@ function updateOnboardingNutrientHint() {
     <p class="body-prose"><strong>${nameShort}</strong> · pH orientativo <span class="c-blue">${n.pHrange}</span> · EC <span class="c-green">${n.ECrange}</span></p>
     <div class="section-label section-label--block">Aditivos complementarios habituales</div>
     <div class="pill-tag-row">${adds || '<span class="text-muted">Sin lista en datos — revisa envase.</span>'}</div>
-    <p class="text-muted onboarding-nutri-foot">En <strong>Medir</strong> y <strong>Sistema</strong> la app usará esta base para mezclas; los aditivos son orientativos, no sustituyen al fabricante.</p>
+    <p class="text-muted onboarding-nutri-foot">En <strong>Medir</strong> y <strong>Cultivo</strong> la app usará esta base para mezclas; los aditivos son orientativos, no sustituyen al fabricante.</p>
   </div>`;
 }
 
@@ -1193,7 +1193,7 @@ function renderWizStep(){
     </div>`,
     // 2 sistema
     `<div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-settings-2"></i>Paso 2 · Sistema y espacio</div></div>
+      <div class="card-header"><div class="card-title"><i class="ti ti-settings-2"></i>Paso 2 · Instalación y espacio</div></div>
       ${errorBox}
       <div class="grid2">
         <div class="form-group"><label>Sistema hidropónico</label>
@@ -1494,7 +1494,7 @@ function renderActiveGrow(){
         <i class="ti ti-chevron-down cultivo-fold-card__chev" aria-hidden="true"></i>
       </summary>
       <div class="cultivo-fold-card__body">
-      <p class="body-prose cultivo-site-lead">La pestaña <strong>Climatología</strong> y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
+      <p class="body-prose cultivo-site-lead"><strong>Climatología</strong> (menú inferior <strong>Más</strong>) y las alertas de <strong>exterior</strong> usan esta ubicación. Si la cambias (o pasas de interior a exterior), se borra el pronóstico guardado para no mezclar datos de otra zona.</p>
       <div class="grid2 cultivo-site-grid">
         <div class="form-group">
           <label>Ubicación del sistema</label>

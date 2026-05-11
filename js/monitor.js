@@ -489,7 +489,7 @@ function buildOutdoorPlacementAlerts(grow, strain, weekNum) {
       level: 'info',
       icon: 'cloud-search',
       paramKey: 'exterior',
-      message: 'Abre la pestaña Climatología: se consulta sola la API para tu ubicación; puedes repetir con «Actualizar pronóstico» si hace falta.',
+      message: 'Abre Climatología desde el menú Más inferior: se consulta la API para tu ubicación; puedes repetir con «Actualizar pronóstico» si hace falta.',
     });
   }
 
@@ -674,7 +674,7 @@ function saveMonitorActiveSystemDisplayName() {
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
-    mc.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-gauge"></i></div><p>Aún no hay cultivo activo.</p><p class="empty-hint">Ve a <strong>Sistema</strong> y completa el checklist, o elige una variedad en <strong>Más → Variedades</strong>.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Abrir Sistema</button></div>`;
+    mc.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-gauge"></i></div><p>Aún no hay cultivo activo.</p><p class="empty-hint">Ve a <strong>Cultivo</strong> y completa el checklist, o elige una variedad en <strong>Más → Variedades</strong>.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Abrir Cultivo</button></div>`;
     return;
   }
   const s = myGrow.strain;
@@ -790,7 +790,8 @@ function renderMonitor(){
 
     <div class="card monitor-measure-assistant-card">
       <div class="card-header"><div class="card-title"><i class="ti ti-clipboard-data"></i> Asistente de mediciones</div></div>
-      <p class="body-prose body-prose--tight">Los campos dependen de la instrumentación y del perfil de espacio que configuraste en <strong>Sistema</strong>. Al guardar, la entrada queda en <strong>Historial</strong>.</p>
+      <p class="body-prose body-prose--tight">Los campos dependen de la instrumentación y del perfil de espacio que configuraste en <strong>Cultivo</strong>. Al guardar, la entrada queda en <strong>Historial</strong>.</p>
+      <p class="form-hint monitor-measure-routine-hint"><i class="ti ti-rotate-clockwise-2" aria-hidden="true"></i><span>Tras corregir pH, EC, luz o clima, registra de nuevo aquí para comparar en <strong>Historial</strong>.</span></p>
       ${renderMeasurementAssistantContextBanner()}
       ${renderMeasurementAssistantFormInnerHtml()}
     </div>
@@ -1540,7 +1541,7 @@ function renderHistoryDiarySection(grow) {
         <div class="form-group"><label>Tipo</label>
           <select id="histDiaryKind">
             <option value="seguimiento">Seguimiento</option>
-            <option value="sistema">Sistema</option>
+            <option value="sistema">Instalación / equipo</option>
             <option value="planta">Planta</option>
             <option value="recuerdo">Recuerdo</option>
           </select>
@@ -1593,7 +1594,7 @@ function renderMeasurementAssistantContextBanner() {
   const learnPara = learnBanner
     ? `<p class="form-hint monitor-assistant-context__learn">En espacio acotado, <strong>Tª y HR</strong> del aire definen el balance hídrico del follaje (VPD). CO₂ y PAR tienen más sentido cuando ya dominas pH/EC y el volumen alrededor de las plantas está relativamente confinado; el perfil «espacio amplio» no obliga a un invernadero de cristal.</p>`
     : '';
-  return `<div class="alert info monitor-assistant-context"><i class="ti ti-adjustments" aria-hidden="true"></i><div><p class="body-prose body-prose--tight"><strong>Emplazamiento:</strong> ${escapeMonitorHtml(plLabel)} · <strong>Perfil:</strong> ${escapeMonitorHtml(encLab)} · <strong>Instrumentación declarada:</strong> ${escapeMonitorHtml(chipStr)}.</p><p class="form-hint">Activa o configura sensores y <strong>opciones del recinto</strong> (extractor, humedad, LED) en <strong>Sistema</strong>. Sin marcar un sensor o variable, aquí no aparece su campo.</p>${learnPara}</div></div>`;
+  return `<div class="alert info monitor-assistant-context"><i class="ti ti-adjustments" aria-hidden="true"></i><div><p class="body-prose body-prose--tight"><strong>Emplazamiento:</strong> ${escapeMonitorHtml(plLabel)} · <strong>Perfil:</strong> ${escapeMonitorHtml(encLab)} · <strong>Instrumentación declarada:</strong> ${escapeMonitorHtml(chipStr)}.</p><p class="form-hint">Activa o configura sensores y <strong>opciones del recinto</strong> (extractor, humedad, LED) en <strong>Cultivo</strong>. Sin marcar un sensor o variable, aquí no aparece su campo.</p>${learnPara}</div></div>`;
 }
 
 function renderMeasurementAssistantFormInnerHtml() {
@@ -1635,14 +1636,14 @@ function renderMeasurementAssistantFormInnerHtml() {
   const thermoFields = m.meterThermoHygro
     ? `<div class="form-group"><label>Temp. aire en copa (°C)</label><input id="mAirTemp" type="number" step="0.1" min="10" max="45" placeholder="24.0"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mAirTemp" hidden></div></div>
         <div class="form-group"><label>Humedad relativa (%)</label><input id="mHumidity" type="number" step="1" min="20" max="95" placeholder="55"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mHumidity" hidden></div></div>`
-    : `<div class="form-group" style="grid-column:1/-1"><div class="alert warn"><i class="ti ti-info-circle"></i><p>Para registrar <strong>Tª aire</strong> y <strong>HR</strong> aquí, marca el <strong>termohigrómetro</strong> en <strong>Sistema → Configuración manual → Complementos</strong>.</p></div></div>`;
+    : `<div class="form-group" style="grid-column:1/-1"><div class="alert warn"><i class="ti ti-info-circle"></i><p>Para registrar <strong>Tª aire</strong> y <strong>HR</strong> aquí, marca el <strong>termohigrómetro</strong> en <strong>Cultivo → Configuración manual → Complementos</strong>.</p></div></div>`;
 
   const co2Block =
     m.meterCo2
       ? `<div class="form-group"><label>CO₂ (ppm)</label><input id="mCO2" type="number" step="10" min="300" max="2000" placeholder="${myGrow.co2 === 'si' ? '1200' : '400'}"><span class="form-hint">${myGrow.co2 === 'si' ? 'Recinto con CO₂ activado: orientativo más alto.' : 'Ambiente sin enriquecimiento: ~400 ppm referencia.'}</span><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mCO2" hidden></div></div>`
       : myGrow.placement === 'exterior'
         ? ''
-        : `<div class="form-group" style="grid-column:1/-1"><div class="alert info"><i class="ti ti-molecule"></i><p>CO₂ no aparece porque no marcaste <strong>medidor de CO₂</strong> en Sistema. Actívalo si mides ppm en interior.</p></div></div>`;
+        : `<div class="form-group" style="grid-column:1/-1"><div class="alert info"><i class="ti ti-molecule"></i><p>CO₂ no aparece porque no marcaste <strong>medidor de CO₂</strong> en Cultivo. Actívalo si mides ppm en interior.</p></div></div>`;
 
   const luxBlock = m.meterPpfd
     ? `<div class="form-group"><label>Lux (opcional)</label><input id="mLux" type="number" step="100" min="0" max="200000" placeholder="35000"><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mLux" hidden></div></div>`
@@ -1650,7 +1651,7 @@ function renderMeasurementAssistantFormInnerHtml() {
 
   const ppfdBlock = m.meterPpfd
     ? `<div class="form-group"><label>PPFD medio (µmol/m²/s)</label><input id="mPPFD" type="number" step="10" min="0" max="2500" placeholder="600"><span class="form-hint">Sensor cuántico / PAR</span><div class="monitor-live-field-slot" aria-live="polite" data-monitor-live-field="mPPFD" hidden></div></div>`
-    : `<div class="form-group" style="grid-column:1/-1"><div class="alert info"><i class="ti ti-sun"></i><p>PPFD / lux no se muestran sin <strong>medidor de luz</strong> en Sistema. Las <strong>horas de luz</strong> siguen disponibles (fotoperiodo).</p></div></div>`;
+    : `<div class="form-group" style="grid-column:1/-1"><div class="alert info"><i class="ti ti-sun"></i><p>PPFD / lux no se muestran sin <strong>medidor de luz</strong> en Cultivo. Las <strong>horas de luz</strong> siguen disponibles (fotoperiodo).</p></div></div>`;
 
   return `
       ${phEcHint}
@@ -1714,7 +1715,7 @@ function renderHistorial() {
   const quickRef = renderHistorialQuickRefCard();
   if (!myGrow) {
     host.innerHTML = `${quickRef}
-    <div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay bitácora ni mediciones sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Sistema</button></div>`;
+    <div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay bitácora ni mediciones sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Cultivo</button></div>`;
     return;
   }
   const logHtml = (myGrow.log || [])
