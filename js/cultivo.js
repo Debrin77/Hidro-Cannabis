@@ -32,6 +32,17 @@ function escapeHtmlText(s) {
     .replace(/"/g, '&quot;');
 }
 
+/** Volumen útil del espacio de cultivo (m³) para afinar solo la fila del extractor; vacío = estimación automática. */
+function parseEnclosureVolumeM3Input(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return null;
+  const t = String(el.value ?? '').trim();
+  if (t === '') return null;
+  const v = parseFloat(t.replace(',', '.'));
+  if (!Number.isFinite(v) || v < 0.05 || v > 80) return null;
+  return Math.round(v * 1000) / 1000;
+}
+
 function setSideStatusText(text) {
   const el = document.getElementById('sideStatus');
   if (el) el.textContent = text;
@@ -44,6 +55,111 @@ function invalidateGrowWeatherSnapshot() {
   const c = myGrow.climate;
   if (c && typeof c === 'object' && typeof c.source === 'string' && /Open-Meteo|Climatología|rejilla/i.test(c.source)) {
     myGrow.climate = null;
+  }
+}
+
+function onOnboardingPlacementEnclosureSync() {
+  const pl = document.getElementById('onbPlacement')?.value;
+  const enc = document.getElementById('onbEnclosureType');
+  if (!enc) return;
+  if (pl === 'exterior') {
+    enc.value = 'outdoor';
+    enc.disabled = true;
+  } else {
+    enc.disabled = false;
+    if (enc.value === 'outdoor') enc.value = 'cabinet';
+  }
+  syncInstrumentComplementsUi('onb');
+}
+
+function onCfgGrowPlacementEnclosureSync() {
+  const pl = document.getElementById('cfgGrowPlacement')?.value;
+  const enc = document.getElementById('cfgGrowEnclosure');
+  if (!enc) return;
+  if (pl === 'exterior') {
+    enc.value = 'outdoor';
+    enc.disabled = true;
+  } else {
+    enc.disabled = false;
+    if (enc.value === 'outdoor') enc.value = 'cabinet';
+  }
+  syncInstrumentComplementsUi('cfg');
+}
+
+/** Habilita / deshabilita checkboxes de instrumentación según interior|exterior y perfil de espacio. */
+function syncInstrumentComplementsUi(which) {
+  if (typeof getInstrumentPolicy !== 'function') return;
+  const pre = which === 'onb' ? 'onb' : 'cfg';
+  const plEl = document.getElementById(pre === 'onb' ? 'onbPlacement' : 'cfgGrowPlacement');
+  const encEl = document.getElementById(pre === 'onb' ? 'onbEnclosureType' : 'cfgGrowEnclosure');
+  if (!plEl || !encEl) return;
+  const placement = plEl.value === 'exterior' ? 'exterior' : 'interior';
+  let enclosureType = encEl.value;
+  if (placement === 'exterior') enclosureType = 'outdoor';
+  const pol = getInstrumentPolicy(placement, enclosureType);
+
+  function bindCo2(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = !pol.meterCo2;
+    if (!pol.meterCo2) el.checked = false;
+    const lab = el.closest('label');
+    if (lab) {
+      lab.classList.toggle('checkbox-label--muted', !pol.meterCo2);
+      lab.title = pol.meterCo2 ? pol.meterCo2OpenRoomHint || '' : pol.meterCo2Hint;
+    }
+  }
+  bindCo2(pre === 'onb' ? 'onbCompCo2' : 'cfgCompCo2');
+
+  const ppfd = document.getElementById(pre === 'onb' ? 'onbCompPpfd' : 'cfgCompPpfd');
+  if (ppfd) {
+    ppfd.disabled = false;
+    const lab = ppfd.closest('label');
+    if (lab) {
+      lab.classList.remove('checkbox-label--muted');
+      lab.title = pol.meterPpfdHint || '';
+    }
+  }
+  const th = document.getElementById(pre === 'onb' ? 'onbCompThermoHygro' : 'cfgCompThermoHygro');
+  if (th) {
+    th.disabled = false;
+    const lab = th.closest('label');
+    if (lab) {
+      lab.classList.remove('checkbox-label--muted');
+      lab.title = pol.meterThermoHygroHint || '';
+    }
+  }
+
+  const ghPairs = [
+    pre === 'onb' ? 'onbGhReflective' : 'cfgGhReflective',
+    pre === 'onb' ? 'onbGhAeration' : 'cfgGhAeration',
+    pre === 'onb' ? 'onbGhHumidity' : 'cfgGhHumidity',
+  ];
+  for (const id of ghPairs) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.disabled = !pol.greenhouseToggles;
+    if (!pol.greenhouseToggles) el.checked = false;
+    const lab = el.closest('label');
+    if (lab) {
+      lab.classList.toggle('checkbox-label--muted', !pol.greenhouseToggles);
+      lab.title = pol.greenhouseToggles ? '' : pol.greenhouseTogglesHint;
+    }
+  }
+  const ledMode = document.getElementById(pre === 'onb' ? 'onbGhLedMode' : 'cfgGhLedMode');
+  const ledW = document.getElementById(pre === 'onb' ? 'onbGhLedPowerW' : 'cfgGhLedPowerW');
+  if (!pol.greenhouseToggles) {
+    if (ledMode) {
+      ledMode.disabled = true;
+      ledMode.value = 'none';
+    }
+    if (ledW) {
+      ledW.disabled = true;
+      ledW.value = '';
+    }
+  } else {
+    if (ledMode) ledMode.disabled = false;
+    if (ledW) ledW.disabled = false;
   }
 }
 
@@ -69,6 +185,22 @@ function saveGrowLocationAndPlacement() {
   }
   myGrow.location = newLoc;
   myGrow.placement = newPlace;
+  if (typeof normalizeHardwareComplements === 'function') {
+    let hc = normalizeHardwareComplements(myGrow.hardwareComplements);
+    if (newPlace === 'exterior') {
+      hc = { ...hc, enclosureType: 'outdoor' };
+    } else if (hc.enclosureType === 'outdoor') {
+      hc = { ...hc, enclosureType: 'cabinet' };
+    }
+    if (typeof sanitizeHardwareComplementsForContext === 'function') {
+      hc = sanitizeHardwareComplementsForContext(newPlace, hc.enclosureType, hc);
+    }
+    const volM3 = parseEnclosureVolumeM3Input('cfgEnclosureVolumeM3');
+    myGrow.hardwareComplements = normalizeHardwareComplements({ ...hc, enclosureVolumeM3: volM3 });
+  }
+  if (myGrow.systemSizing && typeof refreshVentilationInSizingResult === 'function') {
+    myGrow.systemSizing = refreshVentilationInSizingResult(myGrow.systemSizing, myGrow.hardwareComplements);
+  }
   if (typeof appConfig === 'object' && appConfig) {
     appConfig.location = newLoc;
     appConfig.placement = newPlace;
@@ -471,6 +603,10 @@ window.confirmWorkSystemSelection = confirmWorkSystemSelection;
 window.syncCurrentSystemWorkspaceState = syncCurrentSystemWorkspaceState;
 window.migrateGrowWorkspacesAndActiveInstall = migrateGrowWorkspacesAndActiveInstall;
 window.addSystemInstallationOfType = addSystemInstallationOfType;
+window.onOnboardingPlacementEnclosureSync = onOnboardingPlacementEnclosureSync;
+window.onCfgGrowPlacementEnclosureSync = onCfgGrowPlacementEnclosureSync;
+window.syncInstrumentComplementsUi = syncInstrumentComplementsUi;
+window.parseEnclosureVolumeM3Input = parseEnclosureVolumeM3Input;
 
 function renderInitialOnboarding() {
   if (appConfig) ensureAppConfigInstallations();
@@ -513,10 +649,24 @@ function renderInitialOnboarding() {
           meterThermoHygro: true,
           meterCo2: false,
           meterPpfd: false,
+          enclosureType: 'cabinet',
+          enclosureVolumeM3: null,
         };
   const weatherBox = cfg.climate
     ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>Clima detectado:</strong> ${cfg.climate.summary} · ${cfg.climate.temperature}°C · HR ${cfg.climate.humidity}% · Viento ${cfg.climate.wind} km/h · Fuente: ${cfg.climate.source}</p></div>`
     : `<div class="alert info"><i class="ti ti-info-circle"></i><p>Aún sin análisis climático. Pulsa "Analizar clima" tras indicar ubicación.</p></div>`;
+
+  const learnUi = typeof getUiExperienceMode === 'function' && getUiExperienceMode() === 'learning';
+  const placementCfg = (cfg.placement || 'interior') === 'exterior' ? 'exterior' : 'interior';
+  const minSnip = typeof getMinimumHydroInstrumentSnippets === 'function' ? getMinimumHydroInstrumentSnippets(placementCfg) : [];
+  const minKitOnboardingBlock =
+    minSnip.length > 0
+      ? `<div class="alert info complements-min-kit"><i class="ti ti-checklist"></i><div><strong>Mínimo razonable (${placementCfg === 'exterior' ? 'exterior' : 'interior'})</strong><ul class="legal-list">${minSnip.map((t) => `<li>${escapeHtmlText(t)}</li>`).join('')}</ul>${
+          learnUi && typeof getLearningRecintoEquipmentNarrativeHtml === 'function'
+            ? getLearningRecintoEquipmentNarrativeHtml()
+            : `<p class="form-hint complements-min-kit-hint">¿Cuándo compensa más equipo o el perfil «espacio amplio»? Activa <strong>Aprendizaje</strong> en Apariencia y accesibilidad.</p>`
+        }</div></div>`
+      : '';
 
   document.getElementById('cultivoContent').innerHTML = `
     <div class="card">
@@ -582,7 +732,22 @@ function renderInitialOnboarding() {
         </div>
         <div class="form-group">
           <label>Tipo de instalación</label>
-          <select id="onbPlacement"><option value="interior" ${(cfg.placement||'interior')==='interior'?'selected':''}>Interior</option><option value="exterior" ${cfg.placement==='exterior'?'selected':''}>Exterior</option></select>
+          <select id="onbPlacement" onchange="onOnboardingPlacementEnclosureSync()"><option value="interior" ${(cfg.placement||'interior')==='interior'?'selected':''}>Interior</option><option value="exterior" ${cfg.placement==='exterior'?'selected':''}>Exterior</option></select>
+        </div>
+        <div class="form-group">
+          <label>Perfil del espacio (microclima y asistente de mediciones)</label>
+          <select id="onbEnclosureType" onchange="syncInstrumentComplementsUi('onb')">
+            <option value="cabinet" ${(comp.enclosureType||'cabinet')==='cabinet'?'selected':''}>Armario o carpa sellada (extracción / intracción típica)</option>
+            <option value="greenhouse" ${comp.enclosureType==='greenhouse'?'selected':''}>Espacio amplio / macro-carpa (microclima tipo invernadero)</option>
+            <option value="open_room" ${comp.enclosureType==='open_room'?'selected':''}>Estancia o nave amplia (renovación de aire alta)</option>
+            <option value="outdoor" ${comp.enclosureType==='outdoor'?'selected':''}>Exterior / vivero al aire libre</option>
+          </select>
+          <span class="form-hint">Si eliges <strong>Exterior</strong> arriba, el perfil pasa a aire libre: no se usará CO₂ de recinto y se desactivan opciones de recinto cerrado (extractor, humedad forzada, LED suplemento). El asistente de <strong>Medir</strong> se adapta a eso.</span>
+        </div>
+        <div class="form-group">
+          <label>Volumen del recinto (m³, opcional)</label>
+          <input id="onbEnclosureVolumeM3" type="number" min="0.05" max="80" step="0.01" inputmode="decimal" placeholder="Ej. 1.2" value="${Number.isFinite(comp.enclosureVolumeM3) ? comp.enclosureVolumeM3 : ''}" onchange="scheduleOnboardingSizingRecalc()">
+          <span class="form-hint">Si conoces los m³ útiles de armario, carpa o cuarto, la sugerencia de <strong>extractor</strong> en el paso 2 usa este dato; si lo dejas vacío, se estima por sitios y litros de solución.</span>
         </div>
       </div>
       <button type="button" class="btn btn-ghost" onclick="analyzeClimateContext()"><i class="ti ti-cloud-search"></i> Analizar clima (AEMET/Open-Meteo)</button>
@@ -597,7 +762,7 @@ function renderInitialOnboarding() {
         <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
       </summary>
       <div class="onboarding-acc__body">
-      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire</strong> y <strong>recirculación</strong> y valida <strong>geometría</strong> (tapas DWC, balsa, depósito NFT) cuando corresponda. <strong>Al cambiar cualquier dato</strong> de este bloque se <strong>vuelve a calcular</strong> automáticamente (debounce corto). En DWC ~1 L/min de aire por galón US; en RDWC, varios vuelcos del volumen/hora. Montaje <strong>DIY</strong>: introduce L/min y L/h; <strong>kit comercial</strong>: puedes contrastar con la placa.</p>
+      <p class="body-prose mb-text-block">Introduce <strong>volumen por cubo</strong>, <strong>número de sitios</strong> y, en RDWC, el <strong>depósito de control</strong>. La app calcula caudales orientativos de <strong>aire en el líquido</strong>, <strong>recirculación</strong> y una fila aparte de <strong>extractor del recinto</strong> (m³/h, distinto de la bomba de burbuja). Valida <strong>geometría</strong> (tapas DWC, balsa, depósito NFT) cuando corresponda. <strong>Al cambiar cualquier dato</strong> de este bloque se <strong>vuelve a calcular</strong> automáticamente (debounce corto). En DWC ~1 L/min de aire por galón US; en RDWC, varios vuelcos del volumen/hora. Montaje <strong>DIY</strong>: introduce L/min y L/h; <strong>kit comercial</strong>: puedes contrastar con la placa.</p>
       ${(() => {
         const pr = typeof getSystemProfile === 'function' ? getSystemProfile(sysActive) : null;
         if (!pr) return '';
@@ -702,7 +867,8 @@ function renderInitialOnboarding() {
         <i class="ti ti-chevron-down onboarding-acc__chev" aria-hidden="true"></i>
       </summary>
       <div class="onboarding-acc__body">
-      <p class="body-prose mb-text-block">Marca lo que tienes. En <strong>Medir</strong> solo se ofrecerán <strong>gráficos de tendencia</strong> acordes (sin pH/EC no verás el gráfico pH/EC, etc.). En hidro de cannabis suele ser imprescindible: <strong>pH y EC</strong>, <strong>Tª del líquido</strong> y <strong>Tª + HR</strong> en copa o sala (VPD); el calentador con termostato ayuda si el líquido queda frío.</p>
+      <p class="body-prose mb-text-block">Marca <strong>solo lo que vas a medir de verdad</strong>. El contexto <strong>interior / exterior / perfil de espacio</strong> desactiva opciones incoherentes (p. ej. CO₂ de recinto en aire libre). En <strong>Medir</strong> solo verás campos que correspondan. En hidro de cannabis lo habitual es: <strong>pH y EC</strong>, <strong>Tª del líquido</strong> y <strong>Tª + HR</strong> cerca del dosel. CO₂ y lux/PAR solo si tienes el instrumento y el recinto lo justifica. <strong>Ventilación</strong> y <strong>humedad</strong> marcadas abajo son opcionales y sirven para alertas más finas.</p>
+      ${minKitOnboardingBlock}
       <div class="grid2 onboarding-complements">
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompPhEc" ${comp.meterPhEc ? 'checked' : ''}><span>Medidor <strong>pH</strong> y <strong>EC</strong> (pen o continuo)</span></label>
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompWaterTemp" ${comp.meterWaterTemp ? 'checked' : ''}><span>Sonda / termómetro <strong>temperatura del líquido</strong></span></label>
@@ -711,13 +877,14 @@ function renderInitialOnboarding() {
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompPpfd" ${comp.meterPpfd ? 'checked' : ''}><span>Medidor de <strong>luz</strong> (lux o PAR/PPFD)</span></label>
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbCompHeater" ${comp.reservoirHeater ? 'checked' : ''} onchange="toggleOnbHeaterSetpoint(this.checked)"><span><strong>Calentador</strong> en depósito (sumergible o similar) con termostato</span></label>
       </div>
-      <div class="section-label section-label--block">Variables de invernadero (si aplica)</div>
+      <div class="section-label section-label--block">Opciones del recinto (opcional)</div>
+      <p class="form-hint">En interior <strong>no hace falta</strong> un invernadero de cristal: un armario o carpa con luz y renovación razonable del aire suele bastar. Marca reflectante, extractor, humedad o LED suplemento <strong>solo si los tienes</strong>; sirven para alertas y texto en Medir, no implican montaje “semi profesional”.</p>
       <div class="grid2 onboarding-complements">
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbGhReflective" ${comp.greenhouseReflectiveInterior ? 'checked' : ''}><span>Interior <strong>reflectante</strong> (mylar/similar)</span></label>
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbGhAeration" ${comp.greenhouseAerationControl ? 'checked' : ''}><span><strong>Aireación/ventilación</strong> controlada (extractor, intractor, recirculación)</span></label>
         <label class="checkbox-label chip-check-line"><input type="checkbox" id="onbGhHumidity" ${comp.greenhouseHumidityControl ? 'checked' : ''}><span>Control de <strong>humedad</strong> (humidificador/deshumidificador)</span></label>
         <div class="form-group">
-          <label>Iluminación LED del invernadero</label>
+          <label>LED suplementario o mezcla con luz natural</label>
           <select id="onbGhLedMode">
             <option value="none" ${comp.greenhouseLedMode === 'none' ? 'selected' : ''}>No / solo luz natural</option>
             <option value="full" ${comp.greenhouseLedMode === 'full' ? 'selected' : ''}>LED espectro completo</option>
@@ -765,6 +932,7 @@ function renderInitialOnboarding() {
   `;
   requestAnimationFrame(() => {
     updateOnboardingNutrientHint();
+    if (typeof onOnboardingPlacementEnclosureSync === 'function') onOnboardingPlacementEnclosureSync();
     if (typeof toggleOnbHeaterSetpoint === 'function') {
       toggleOnbHeaterSetpoint(!!document.getElementById('onbCompHeater')?.checked);
     }
@@ -934,12 +1102,6 @@ function completeInitialSetup() {
   appConfig.error = '';
   snapshotSystemHardwareToAppConfig();
   appConfig.system = document.getElementById('onbSystem')?.value || 'RDWC';
-  const sz = computeHydroSizing(appConfig.systemHardware, appConfig.system);
-  sz.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, sz);
-  if (typeof attachGeometryToSizingResult === 'function') {
-    attachGeometryToSizingResult(sz, appConfig.systemHardware, appConfig.system);
-  }
-  appConfig.systemSizingResult = sz;
   appConfig.location = (document.getElementById('onbLocation')?.value || '').trim();
   appConfig.placement = document.getElementById('onbPlacement')?.value || 'interior';
   appConfig.strainId = document.getElementById('onbStrain')?.value || 'ww';
@@ -966,6 +1128,12 @@ function completeInitialSetup() {
   ensureAppConfigInstallations();
   const hardwareComplements = readOnboardingHardwareComplements();
   appConfig.hardwareComplements = hardwareComplements;
+  const sz = computeHydroSizing(appConfig.systemHardware, appConfig.system, hardwareComplements);
+  sz.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, sz);
+  if (typeof attachGeometryToSizingResult === 'function') {
+    attachGeometryToSizingResult(sz, appConfig.systemHardware, appConfig.system);
+  }
+  appConfig.systemSizingResult = sz;
   saveAppConfig();
 
   const siteCount = Math.min(48, Math.max(1, parseInt(appConfig.systemHardware?.sites, 10) || 2));
@@ -1224,6 +1392,18 @@ function renderActiveGrow(){
     typeof normalizeHardwareComplements === 'function'
       ? normalizeHardwareComplements(myGrow.hardwareComplements)
       : {};
+  const learnUiGrow = typeof getUiExperienceMode === 'function' && getUiExperienceMode() === 'learning';
+  const placementCfgGrow = myGrow.placement === 'exterior' ? 'exterior' : 'interior';
+  const minSnipGrow =
+    typeof getMinimumHydroInstrumentSnippets === 'function' ? getMinimumHydroInstrumentSnippets(placementCfgGrow) : [];
+  const minKitCfgBlock =
+    minSnipGrow.length > 0
+      ? `<div class="alert info complements-min-kit"><i class="ti ti-checklist"></i><div><strong>Mínimo razonable (${placementCfgGrow === 'exterior' ? 'exterior' : 'interior'})</strong><ul class="legal-list">${minSnipGrow.map((t) => `<li>${escapeHtmlText(t)}</li>`).join('')}</ul>${
+          learnUiGrow && typeof getLearningRecintoEquipmentNarrativeHtml === 'function'
+            ? getLearningRecintoEquipmentNarrativeHtml()
+            : `<p class="form-hint complements-min-kit-hint">Con <strong>Aprendizaje</strong> en Apariencia verás cuándo compensa el perfil «espacio amplio» o más equipo.</p>`
+        }</div></div>`
+      : '';
   const systemSvg = renderSystemSvg(myGrow, s, weekNum, phase);
   const selectedPlantInfo = getSelectedPlantInfo(myGrow, s);
   const volumeDiagramPanel = renderVolumeDiagramPanel(myGrow);
@@ -1232,6 +1412,12 @@ function renderActiveGrow(){
       ? escapeHtmlText(getResolvedSystemDisplayName(myGrow, myGrow.system))
       : escapeHtmlText(myGrow.system);
   const sz = myGrow.systemSizing;
+  const ventLine =
+    sz?.ventilation && Number.isFinite(sz.ventilation.extractorM3hComfort)
+      ? sz.ventilation.usedUserSuppliedVolume
+        ? `<p><strong>Extractor (recinto, orientativo):</strong> ~${sz.ventilation.extractorM3hMin}–${sz.ventilation.extractorM3hComfort} m³/h, según los <strong>${sz.ventilation.spaceAssumedM3} m³</strong> que indicaste.</p><p class="form-hint cultivo-sizing-vent-note">Si cambias el volumen del recinto, guarda emplazamiento o instrumentación para actualizar esta fila.</p>`
+        : `<p><strong>Extractor (recinto, orientativo):</strong> ~${sz.ventilation.extractorM3hMin}–${sz.ventilation.extractorM3hComfort} m³/h (~${sz.ventilation.cfmMin}–${sz.ventilation.cfmComfort} CFM).</p><p class="form-hint cultivo-sizing-vent-note">Estimación por sitios y volumen de solución; indica m³ del recinto en emplazamiento para afinar.</p>`
+      : '';
   const sizingRecall =
     sz && !sz.nft
       ? `<div class="card">
@@ -1249,9 +1435,18 @@ function renderActiveGrow(){
           }
           ${Number.isFinite(sz.totalSolutionL) ? `<p><strong>Volumen útil estimado:</strong> ~${sz.totalSolutionL} L</p>` : ''}
           ${sz.mainPipeHint ? `<p class="cultivo-pipe-hint"><strong>Tubería:</strong> ${sz.mainPipeHint}</p>` : ''}
+          ${ventLine}
         </div>
       </div>`
-      : '';
+      : sz && sz.nft && (ventLine || Number.isFinite(sz.totalSolutionL))
+        ? `<div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-tool"></i>Referencias de escala (${escapeHtmlText(sz.systemType || '')})</div></div>
+        <div class="cultivo-sizing-body">
+          ${Number.isFinite(sz.totalSolutionL) ? `<p><strong>Volumen de solución orientativo:</strong> ~${sz.totalSolutionL} L</p>` : ''}
+          ${ventLine}
+        </div>
+      </div>`
+        : '';
 
   const segs = Array.from({length:totalW},(_,i)=>{
     let cls='tl-veg';
@@ -1295,11 +1490,26 @@ function renderActiveGrow(){
         </div>
         <div class="form-group">
           <label>Instalación</label>
-          <select id="cfgGrowPlacement">
+          <select id="cfgGrowPlacement" onchange="onCfgGrowPlacementEnclosureSync()">
             <option value="interior" ${myGrow.placement === 'exterior' ? '' : 'selected'}>Interior</option>
             <option value="exterior" ${myGrow.placement === 'exterior' ? 'selected' : ''}>Exterior</option>
           </select>
           <span class="form-hint">Exterior activa el plan hidropónico según tiempo y viento/lluvia.</span>
+        </div>
+        <div class="form-group">
+          <label>Perfil del espacio (microclima · Medir)</label>
+          <select id="cfgGrowEnclosure" onchange="syncInstrumentComplementsUi('cfg')">
+            <option value="cabinet" ${(compGrow.enclosureType || 'cabinet') === 'cabinet' ? 'selected' : ''}>Armario o carpa sellada</option>
+            <option value="greenhouse" ${compGrow.enclosureType === 'greenhouse' ? 'selected' : ''}>Espacio amplio / macro-carpa (microclima tipo invernadero)</option>
+            <option value="open_room" ${compGrow.enclosureType === 'open_room' ? 'selected' : ''}>Estancia o nave amplia</option>
+            <option value="outdoor" ${compGrow.enclosureType === 'outdoor' ? 'selected' : ''}>Exterior / vivero al aire libre</option>
+          </select>
+          <span class="form-hint">Con <strong>Exterior</strong> en Instalación, este selector queda en exterior. Guárdalo junto con la instrumentación abajo.</span>
+        </div>
+        <div class="form-group">
+          <label>Volumen del recinto (m³, opcional)</label>
+          <input id="cfgEnclosureVolumeM3" type="number" min="0.05" max="80" step="0.01" inputmode="decimal" placeholder="Ej. 1.2" value="${Number.isFinite(compGrow.enclosureVolumeM3) ? compGrow.enclosureVolumeM3 : ''}">
+          <span class="form-hint">Solo para afinar la fila del <strong>extractor</strong> en el resumen de dimensionado. Vacío = estimación por sitios y litros de solución.</span>
         </div>
       </div>
       <div class="cultivo-site-actions">
@@ -1383,7 +1593,8 @@ function renderActiveGrow(){
           }
         </div>
         <div class="section-label section-label--block complements-section-label">Complementos e instrumentación</div>
-        <p class="text-muted complements-section-hint">Igual que en el checklist: define qué equipos tienes; en <strong>Medir</strong> se filtran los tipos de gráfico.</p>
+        <p class="text-muted complements-section-hint">Define medidores y perfil de espacio; el <strong>asistente de mediciones</strong> en Medir solo muestra campos coherentes. Marca extractor, humedad o LED suplemento solo si los usas: alimentan alertas y textos, no implican montaje “semi profesional”.</p>
+        ${minKitCfgBlock}
         <div class="grid2 onboarding-complements">
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompPhEc" ${compGrow.meterPhEc ? 'checked' : ''}><span>Medidor <strong>pH</strong> y <strong>EC</strong></span></label>
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompWaterTemp" ${compGrow.meterWaterTemp ? 'checked' : ''}><span>Sonda <strong>Tª líquido</strong></span></label>
@@ -1392,13 +1603,14 @@ function renderActiveGrow(){
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompPpfd" ${compGrow.meterPpfd ? 'checked' : ''}><span>Medidor <strong>luz</strong> (lux/PAR)</span></label>
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgCompHeater" ${compGrow.reservoirHeater ? 'checked' : ''} onchange="toggleCfgHeaterSetpoint(this.checked)"><span><strong>Calentador</strong> depósito + termostato</span></label>
         </div>
-        <div class="section-label section-label--block">Variables de invernadero</div>
+        <div class="section-label section-label--block">Opciones del recinto (opcional)</div>
+        <p class="form-hint">En interior <strong>no hace falta</strong> invernadero de cristal: armario o carpa con luz y aire razonable suele bastar. Marca solo lo que tengas; extractor, humedad y LED inciden en alertas y en el asistente de <strong>Medir</strong>.</p>
         <div class="grid2 onboarding-complements">
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgGhReflective" ${compGrow.greenhouseReflectiveInterior ? 'checked' : ''}><span>Interior <strong>reflectante</strong></span></label>
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgGhAeration" ${compGrow.greenhouseAerationControl ? 'checked' : ''}><span><strong>Aireación/ventilación</strong> controlada</span></label>
           <label class="checkbox-label chip-check-line"><input type="checkbox" id="cfgGhHumidity" ${compGrow.greenhouseHumidityControl ? 'checked' : ''}><span>Control de <strong>humedad</strong></span></label>
           <div class="form-group">
-            <label>LED invernadero</label>
+            <label>LED suplementario o mezcla con luz natural</label>
             <select id="cfgGhLedMode">
               <option value="none" ${compGrow.greenhouseLedMode === 'none' ? 'selected' : ''}>No / natural</option>
               <option value="full" ${compGrow.greenhouseLedMode === 'full' ? 'selected' : ''}>Espectro completo</option>
@@ -1416,7 +1628,7 @@ function renderActiveGrow(){
           <input type="number" id="cfgCompHeaterSetC" min="15" max="32" step="0.5" value="${Number.isFinite(compGrow.heaterThermostatC) ? compGrow.heaterThermostatC : 22}" ${compGrow.reservoirHeater ? '' : 'disabled'}>
         </div>
         <button type="button" class="btn btn-primary btn--compact" onclick="saveGrowHardwareComplements()"><i class="ti ti-device-floppy"></i> Guardar instrumentación</button>
-        <div class="section-label section-label--block">Resumen invernadero activo</div>
+        <div class="section-label section-label--block">Resumen del recinto (opcional)</div>
         <div class="pill-tag-row">
           ${compGrow.greenhouseReflectiveInterior ? '<span class="pill-tag">Interior reflectante</span>' : ''}
           ${compGrow.greenhouseAerationControl ? '<span class="pill-tag">Aireación controlada</span>' : ''}
@@ -1430,7 +1642,7 @@ function renderActiveGrow(){
                       ? 'Veg/Bloom'
                       : 'suplementario'
                 }${Number.isFinite(compGrow.greenhouseLedPowerW) ? ` · ${compGrow.greenhouseLedPowerW}W` : ''}</span>`
-              : '<span class="text-muted">Sin iluminación LED de invernadero declarada.</span>'
+              : '<span class="text-muted">Sin LED suplementario declarado.</span>'
           }
         </div>
         <div class="alert info"><i class="ti ti-database"></i><p>Estos valores se guardan en memoria local para tus próximos cálculos.</p></div>
@@ -1475,6 +1687,9 @@ function renderActiveGrow(){
       <i class="ti ti-trash"></i> Reiniciar cultivo
     </button>
   `;
+  requestAnimationFrame(() => {
+    if (typeof onCfgGrowPlacementEnclosureSync === 'function') onCfgGrowPlacementEnclosureSync();
+  });
 }
 
 function resetWizardAndSessionChrome() {
@@ -1621,7 +1836,11 @@ function readOnboardingHardwareComplements() {
       ? document.getElementById('onbGhLedMode')?.value
       : 'none';
   const ledPowerRaw = parseFloat(document.getElementById('onbGhLedPowerW')?.value);
-  return {
+  const encSel = document.getElementById('onbEnclosureType')?.value;
+  let enclosureType = ['cabinet', 'greenhouse', 'open_room', 'outdoor'].includes(encSel) ? encSel : 'cabinet';
+  const placement = document.getElementById('onbPlacement')?.value === 'exterior' ? 'exterior' : 'interior';
+  if (placement === 'exterior') enclosureType = 'outdoor';
+  const raw = {
     reservoirHeater: heater,
     heaterThermostatC: heater && Number.isFinite(setRaw) ? Math.min(35, Math.max(15, setRaw)) : null,
     meterPhEc: !!document.getElementById('onbCompPhEc')?.checked,
@@ -1629,12 +1848,18 @@ function readOnboardingHardwareComplements() {
     meterThermoHygro: !!document.getElementById('onbCompThermoHygro')?.checked,
     meterCo2: !!document.getElementById('onbCompCo2')?.checked,
     meterPpfd: !!document.getElementById('onbCompPpfd')?.checked,
+    enclosureType,
     greenhouseReflectiveInterior: !!document.getElementById('onbGhReflective')?.checked,
     greenhouseAerationControl: !!document.getElementById('onbGhAeration')?.checked,
     greenhouseHumidityControl: !!document.getElementById('onbGhHumidity')?.checked,
     greenhouseLedMode: ledMode,
     greenhouseLedPowerW: ledMode !== 'none' && Number.isFinite(ledPowerRaw) ? Math.max(20, Math.min(3000, ledPowerRaw)) : null,
+    enclosureVolumeM3: parseEnclosureVolumeM3Input('onbEnclosureVolumeM3'),
   };
+  if (typeof sanitizeHardwareComplementsForContext === 'function') {
+    return sanitizeHardwareComplementsForContext(placement, enclosureType, raw);
+  }
+  return raw;
 }
 
 function toggleOnbHeaterSetpoint(checked) {
@@ -1659,7 +1884,11 @@ function readCfgHardwareComplements() {
       ? document.getElementById('cfgGhLedMode')?.value
       : 'none';
   const ledPowerRaw = parseFloat(document.getElementById('cfgGhLedPowerW')?.value);
-  return {
+  const encSel = document.getElementById('cfgGrowEnclosure')?.value;
+  let enclosureType = ['cabinet', 'greenhouse', 'open_room', 'outdoor'].includes(encSel) ? encSel : 'cabinet';
+  if (document.getElementById('cfgGrowPlacement')?.value === 'exterior') enclosureType = 'outdoor';
+  const placement = document.getElementById('cfgGrowPlacement')?.value === 'exterior' ? 'exterior' : 'interior';
+  const raw = {
     reservoirHeater: heater,
     heaterThermostatC: heater && Number.isFinite(setRaw) ? Math.min(35, Math.max(15, setRaw)) : null,
     meterPhEc: !!document.getElementById('cfgCompPhEc')?.checked,
@@ -1667,12 +1896,18 @@ function readCfgHardwareComplements() {
     meterThermoHygro: !!document.getElementById('cfgCompThermoHygro')?.checked,
     meterCo2: !!document.getElementById('cfgCompCo2')?.checked,
     meterPpfd: !!document.getElementById('cfgCompPpfd')?.checked,
+    enclosureType,
     greenhouseReflectiveInterior: !!document.getElementById('cfgGhReflective')?.checked,
     greenhouseAerationControl: !!document.getElementById('cfgGhAeration')?.checked,
     greenhouseHumidityControl: !!document.getElementById('cfgGhHumidity')?.checked,
     greenhouseLedMode: ledMode,
     greenhouseLedPowerW: ledMode !== 'none' && Number.isFinite(ledPowerRaw) ? Math.max(20, Math.min(3000, ledPowerRaw)) : null,
+    enclosureVolumeM3: parseEnclosureVolumeM3Input('cfgEnclosureVolumeM3'),
   };
+  if (typeof sanitizeHardwareComplementsForContext === 'function') {
+    return sanitizeHardwareComplementsForContext(placement, enclosureType, raw);
+  }
+  return raw;
 }
 
 function saveGrowHardwareComplements() {
@@ -1681,6 +1916,9 @@ function saveGrowHardwareComplements() {
     typeof normalizeHardwareComplements === 'function'
       ? normalizeHardwareComplements(readCfgHardwareComplements())
       : readCfgHardwareComplements();
+  if (myGrow.systemSizing && typeof refreshVentilationInSizingResult === 'function') {
+    myGrow.systemSizing = refreshVentilationInSizingResult(myGrow.systemSizing, myGrow.hardwareComplements);
+  }
   saveGrowState();
   renderActiveGrow();
   if (typeof renderMonitor === 'function') renderMonitor();

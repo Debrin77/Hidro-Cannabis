@@ -37,6 +37,8 @@
 .complements-section-hint{font-size:12px;margin:0 0 0.65rem}
 .chip-check-line{align-items:flex-start;margin-bottom:0.65rem}
 .chip-check-line input{margin-top:4px}
+.checkbox-label--muted{opacity:0.55}
+.checkbox-label--muted input:disabled{cursor:not-allowed}
 .onboarding-complements{margin-bottom:0.25rem}
 
 /* Espaciado y hosts */
@@ -817,6 +819,7 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 .empty-hint{font-size:13px!important;color:var(--text3)!important}
 
 .consejos-stack{display:flex;flex-direction:column;gap:14px}
+.consejos-lead{font-size:14px;color:var(--text2);line-height:1.65;margin:0 0 1rem}
 .consejo-card{
   display:flex;gap:16px;align-items:flex-start;padding:16px 18px;border-radius:var(--radius2);
   background:linear-gradient(165deg,var(--surface),rgba(22,28,20,0.92));
@@ -836,8 +839,15 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 
 .monitor-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
 
+.monitor-assistant-context{display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem}
+.monitor-assistant-context .body-prose--tight{margin-bottom:0.35rem}
+.monitor-assistant-context__learn{margin-top:0.5rem;margin-bottom:0}
+
 .sizing-result{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
 .sizing-block{margin-bottom:1rem}
+.sizing-block--ventilation{padding-top:0.75rem;margin-top:0.25rem;border-top:1px dashed var(--border2)}
+.sizing-vent-hint{font-size:12px;color:var(--text2);line-height:1.55;margin:0.4rem 0 0}
+.sizing-vent-tech{font-size:12px;color:var(--text3);line-height:1.55;margin:0.5rem 0 0}
 .sizing-block:last-of-type{margin-bottom:0.5rem}
 .sizing-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--hydro-teal);font-family:'DM Mono',monospace;margin-bottom:6px;font-weight:600}
 [data-theme='light'] .sizing-label{color:var(--hydro-deep)}
@@ -1510,6 +1520,13 @@ details.card.onboarding-acc[open] .onboarding-acc__chev{transform:rotate(180deg)
 .a11y-theme-seg{
   display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;
 }
+.a11y-exp-seg{margin-top:10px}
+.complements-min-kit{margin-top:0.75rem}
+.complements-min-kit .legal-list{margin:8px 0 0;padding-left:1.1rem}
+.complements-min-kit-hint{margin-top:8px;margin-bottom:0}
+.learning-recinto-detail{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border2)}
+.learning-recinto-detail .body-prose:last-child{margin-bottom:0}
+.consejos-learning-block{margin-top:2px}
 .a11y-theme-btn{
   flex:1;min-width:120px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border);

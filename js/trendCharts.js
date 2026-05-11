@@ -22,7 +22,8 @@ function _svgShell(innerSvg, aria) {
   </div>`;
 }
 
-function renderTrendSolution(rows, phaseRef) {
+function renderTrendSolution(rows, phaseRef, strainTargets) {
+  const band = strainTargets && Number.isFinite(strainTargets.phMin) ? strainTargets : phaseRef;
   const valid = rows.filter((r) => Number.isFinite(r.ph) && Number.isFinite(r.ec));
   if (valid.length < 2) {
     return `<div class="alert info"><i class="ti ti-info-circle"></i><p>Necesitas al menos 2 mediciones con pH y EC.</p></div>`;
@@ -43,10 +44,10 @@ function renderTrendSolution(rows, phaseRef) {
   const ecPts = valid.map((r, i) => ({ x: toX(i), y: toYEc(r.ec), r }));
   const phPoints = phPts.map((p) => `${p.x},${p.y}`).join(' ');
   const ecPoints = ecPts.map((p) => `${p.x},${p.y}`).join(' ');
-  const phTargetY1 = toYPh(phaseRef.phMin);
-  const phTargetY2 = toYPh(phaseRef.phMax);
-  const ecTargetY1 = toYEc(phaseRef.ecMin);
-  const ecTargetY2 = toYEc(phaseRef.ecMax);
+  const phTargetY1 = toYPh(band.phMin);
+  const phTargetY2 = toYPh(band.phMax);
+  const ecTargetY1 = toYEc(band.ecMin);
+  const ecTargetY2 = toYEc(band.ecMax);
   const pathArea = (pts) => {
     if (!pts.length) return '';
     const first = pts[0];
@@ -82,7 +83,7 @@ function renderTrendSolution(rows, phaseRef) {
       </defs>
       <rect x="0" y="0" width="${width}" height="${height}" rx="12" class="trend-bg"></rect>
       <text x="${padL}" y="22" class="trend-chart-title">pH / EC</text>
-      <text x="${padL}" y="36" class="trend-chart-sub">Bandas = rango fase · ${phaseRef.phase}</text>
+      <text x="${padL}" y="36" class="trend-chart-sub">Bandas = rango óptimo (fase ∩ cepa) · ${phaseRef.phase}</text>
       <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
       <line x1="${width - padR}" y1="${padT}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--secondary"></line>
       <line x1="${padL}" y1="${baseY}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
@@ -118,8 +119,8 @@ function renderTrendThermal(rows, phaseRef, strainTargets) {
   const toYEc = (v) => padT + (1 - (Math.max(ecMin, Math.min(ecMax, v)) - ecMin) / (ecMax - ecMin)) * innerH;
   const tLow = strainTargets.waterTempMin;
   const tHigh = strainTargets.waterTempMax;
-  const ecT1 = toYEc(phaseRef.ecMin);
-  const ecT2 = toYEc(phaseRef.ecMax);
+  const ecT1 = toYEc(strainTargets.ecMin);
+  const ecT2 = toYEc(strainTargets.ecMax);
   const wtT1 = toYWt(tLow);
   const wtT2 = toYWt(tHigh);
   const wtPts = valid.map((r, i) => ({ x: toX(i), y: toYWt(r.waterTemp), r }));
@@ -159,7 +160,7 @@ function renderTrendThermal(rows, phaseRef, strainTargets) {
       </defs>
       <rect x="0" y="0" width="${width}" height="${height}" rx="12" class="trend-bg"></rect>
       <text x="${padL}" y="22" class="trend-chart-title">EC + temperatura de agua</text>
-      <text x="${padL}" y="36" class="trend-chart-sub">Banda violeta = Tª agua objetivo cepa · verde = EC fase</text>
+      <text x="${padL}" y="36" class="trend-chart-sub">Banda violeta = Tª agua objetivo cepa · verde = EC óptimo (fase ∩ cepa)</text>
       <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
       <line x1="${width - padR}" y1="${padT}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--secondary"></line>
       <line x1="${padL}" y1="${baseY}" x2="${width - padR}" y2="${baseY}" class="trend-axis trend-axis--main"></line>
@@ -243,7 +244,7 @@ function renderTrendBySystemMode(rows, grow, phaseRef, strain, weekNum, modeId) 
   const targets = getStrainTargetsForWeek(strain, weekNum, phaseRef);
   if (modeId === 'thermal') return renderTrendThermal(rows, phaseRef, targets);
   if (modeId === 'climate') return renderTrendClimate(rows, phaseRef);
-  return renderTrendSolution(rows, phaseRef);
+  return renderTrendSolution(rows, phaseRef, targets);
 }
 
 function getStoredTrendMode(system) {

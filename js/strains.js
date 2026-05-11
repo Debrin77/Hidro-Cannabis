@@ -19,7 +19,7 @@ function renderStrains(filter='all'){
         <div class="sstat"><span class="sstat-label">Floración</span><span class="sstat-val">${s.flower}</span></div>
         <div class="sstat"><span class="sstat-label">Rendimiento</span><span class="sstat-val">${s.yieldIn} g/m²</span></div>
         <div class="sstat"><span class="sstat-label">Sistema</span><span class="sstat-val sstat-val--sm">${s.system.split('/')[0].trim()}</span></div>
-        <div class="sstat"><span class="sstat-label">EC floración</span><span class="sstat-val hi">${s.ecFlower} mS/cm</span></div>
+        <div class="sstat"><span class="sstat-label">EC floración</span><span class="sstat-val hi">${s.ecFlower}–${s.ecPeak}</span></div>
       </div>
     </div>
   `).join('');
@@ -49,7 +49,7 @@ function selectStrain(id){
         <div>
           <div class="section-label">Parámetros técnicos</div>
           <div class="param-row"><span class="param-key">EC vegetación</span><span class="param-val green">${s.ecVeg}–${(s.ecVeg+0.4).toFixed(1)} mS/cm</span></div>
-          <div class="param-row"><span class="param-key">EC floración</span><span class="param-val green">${s.ecFlower} mS/cm</span></div>
+          <div class="param-row"><span class="param-key">EC floración</span><span class="param-val green">${s.ecFlower}–${s.ecPeak} mS/cm</span></div>
           <div class="param-row"><span class="param-key">EC pico (semanas 5-7)</span><span class="param-val amber">${s.ecPeak} mS/cm</span></div>
           <div class="param-row"><span class="param-key">pH vegetación</span><span class="param-val blue">${s.ph}</span></div>
           <div class="param-row"><span class="param-key">pH floración</span><span class="param-val blue">${s.phFlower}</span></div>

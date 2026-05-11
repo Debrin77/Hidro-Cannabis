@@ -10,7 +10,7 @@ function parsePhRangeStr(str) {
     return { min: Math.min(a, b), max: Math.max(a, b) };
   }
   const single = parseFloat(norm);
-  if (Number.isFinite(single)) return { min: single - 0.2, max: single + 0.2 };
+  if (Number.isFinite(single)) return { min: single - 0.25, max: single + 0.25 };
   return { min: 5.8, max: 6.2 };
 }
 
@@ -35,6 +35,9 @@ function getStrainTargetsForWeek(strain, weekNum, phaseRef) {
       max: Math.min(phaseRef.phMax, p.max),
     };
   }
+  if (!Number.isFinite(phRange.min) || !Number.isFinite(phRange.max) || phRange.min > phRange.max) {
+    phRange = { min: phaseRef.phMin, max: phaseRef.phMax };
+  }
 
   let ecMin = phaseRef.ecMin;
   let ecMax = phaseRef.ecMax;
@@ -55,10 +58,14 @@ function getStrainTargetsForWeek(strain, weekNum, phaseRef) {
     ecMax,
     waterTempMin: waterMin,
     waterTempMax: waterMax,
+    airTempMin: Number.isFinite(phaseRef.airTempMin) ? phaseRef.airTempMin : null,
+    airTempMax: Number.isFinite(phaseRef.airTempMax) ? phaseRef.airTempMax : null,
     nightAirMinC: rules.nightAirMinC != null ? rules.nightAirMinC : null,
     flowerRHMax: rules.flowerRHMax != null ? rules.flowerRHMax : phaseRef.humidityMax,
     vpdMin: phaseRef.vpdMin,
     vpdMax: phaseRef.vpdMax,
+    co2Min: phaseRef.co2Min,
+    co2Max: phaseRef.co2Max,
     ppfdMin: phaseRef.ppfdMin,
     ppfdMax: phaseRef.ppfdMax,
   };

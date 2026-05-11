@@ -116,19 +116,24 @@ function normalizeHardwareComplements(raw) {
       meterThermoHygro: true,
       meterCo2: false,
       meterPpfd: false,
+      enclosureType: 'cabinet',
       greenhouseReflectiveInterior: false,
       greenhouseAerationControl: false,
       greenhouseHumidityControl: false,
       greenhouseLedMode: 'none',
       greenhouseLedPowerW: null,
+      enclosureVolumeM3: null,
     };
   }
   const heater = !!raw.reservoirHeater;
   const setC = parseFloat(raw.heaterThermostatC);
   const ledRaw = parseFloat(raw.greenhouseLedPowerW);
+  const ev = parseFloat(raw.enclosureVolumeM3);
   const ledMode = ['none', 'full', 'veg_bloom', 'supplement'].includes(raw.greenhouseLedMode)
     ? raw.greenhouseLedMode
     : 'none';
+  const enc = raw.enclosureType;
+  const enclosureType = ['cabinet', 'greenhouse', 'open_room', 'outdoor'].includes(enc) ? enc : 'cabinet';
   return {
     reservoirHeater: heater,
     heaterThermostatC: heater && Number.isFinite(setC) ? Math.min(35, Math.max(15, setC)) : null,
@@ -137,11 +142,13 @@ function normalizeHardwareComplements(raw) {
     meterThermoHygro: raw.meterThermoHygro !== false,
     meterCo2: !!raw.meterCo2,
     meterPpfd: !!raw.meterPpfd,
+    enclosureType,
     greenhouseReflectiveInterior: !!raw.greenhouseReflectiveInterior,
     greenhouseAerationControl: !!raw.greenhouseAerationControl,
     greenhouseHumidityControl: !!raw.greenhouseHumidityControl,
     greenhouseLedMode: ledMode,
     greenhouseLedPowerW: ledMode !== 'none' && Number.isFinite(ledRaw) ? Math.max(20, Math.min(3000, ledRaw)) : null,
+    enclosureVolumeM3: Number.isFinite(ev) && ev >= 0.05 && ev <= 80 ? Math.round(ev * 1000) / 1000 : null,
   };
 }
 
@@ -166,8 +173,99 @@ function getFilteredChartModes(grow) {
   return out.length ? out : modes;
 }
 
+/** Perfil físico del espacio (microclima): en exterior se asume outdoor; si no, lo guardado en complementos. */
+function effectiveEnclosureType(grow, complements) {
+  const c = complements || normalizeHardwareComplements(grow?.hardwareComplements);
+  if (grow && grow.placement === 'exterior') return 'outdoor';
+  if (['cabinet', 'greenhouse', 'open_room', 'outdoor'].includes(c.enclosureType)) return c.enclosureType;
+  return 'cabinet';
+}
+
+/** Exterior o perfil «vivero al aire» → checklist de recinto cerrado no aplica. */
+function isOpenAirGrowingContext(placement, enclosureType) {
+  if (placement === 'exterior') return true;
+  return enclosureType === 'outdoor';
+}
+
+/**
+ * Qué instrumentación encaja con el contexto (evita CO₂ de recinto en aire libre, etc.).
+ * @returns {{ openAir: boolean, meterCo2: boolean, meterCo2Hint: string, meterCo2OpenRoomHint: string, meterPpfdHint: string, meterThermoHygroHint: string, greenhouseToggles: boolean, greenhouseTogglesHint: string }}
+ */
+function getInstrumentPolicy(placement, enclosureType) {
+  const enc = ['cabinet', 'greenhouse', 'open_room', 'outdoor'].includes(enclosureType) ? enclosureType : 'cabinet';
+  const openAir = isOpenAirGrowingContext(placement, enc);
+  return {
+    openAir,
+    meterCo2: !openAir,
+    meterCo2Hint: openAir
+      ? 'En exterior o vivero al aire el CO₂ es el del ambiente (~400 ppm); no es una variable de recinto cerrado.'
+      : '',
+    meterCo2OpenRoomHint:
+      !openAir && enc === 'open_room'
+        ? 'En estancias muy abiertas el ppm solo es útil si mides cerca del dosel y el espacio está razonablemente confinado o enriqueces CO₂.'
+        : '',
+    meterPpfdHint: openAir
+      ? 'Útil para seguir DLI con el sol (nubes, sombra, orientación).'
+      : enc === 'greenhouse'
+        ? 'Muy útil con LED suplementario o para homogeneizar zonas con distinta PAR.'
+        : 'Recomendado bajo LED para ajustar altura y fotoperiodo.',
+    meterThermoHygroHint: openAir
+      ? 'El microclima en copa o junto al follaje puede diferir mucho del tiempo «general». '
+      : '',
+    greenhouseToggles: !openAir,
+    greenhouseTogglesHint: openAir
+      ? 'Extractor forzado, interior reflectante o LED suplemento solo si el cultivo va en recinto cerrado o semi-cerrado; en aire libre no aplican.'
+      : 'Marca solo lo que tengas: reflectante, extractor, humedad o LED suplemento son mejoras; en un armario pequeño no equivalen a “invernadero profesional”.',
+  };
+}
+
+/** Limpia flags imposibles antes de normalizar (p. ej. CO₂ exterior). */
+function sanitizeHardwareComplementsForContext(placement, enclosureType, raw) {
+  const enc = ['cabinet', 'greenhouse', 'open_room', 'outdoor'].includes(enclosureType) ? enclosureType : 'cabinet';
+  const pol = getInstrumentPolicy(placement, enc);
+  const out = { ...raw, enclosureType: enc };
+  if (!pol.meterCo2) out.meterCo2 = false;
+  if (!pol.greenhouseToggles) {
+    out.greenhouseReflectiveInterior = false;
+    out.greenhouseAerationControl = false;
+    out.greenhouseHumidityControl = false;
+    out.greenhouseLedMode = 'none';
+    out.greenhouseLedPowerW = null;
+  }
+  return out;
+}
+
+/** Listas breves de instrumentación mínima razonable (orientación doméstica). */
+function getMinimumHydroInstrumentSnippets(placement) {
+  if (placement === 'exterior') {
+    return [
+      'pH y EC del líquido (imprescindible en hidro)',
+      'Temperatura del agua en calor',
+      'Protección u oscurecimiento del depósito al sol directo',
+      'Seguimiento del tiempo local (la app enlaza pronóstico en exterior)',
+    ];
+  }
+  return [
+    'pH y EC del líquido (pen o continuo)',
+    'Temperatura del agua de nutriente',
+    'Termohigrómetro junto al dosel (Tª y HR del aire)',
+    'Renovación básica del aire del recinto (extractor modesto o ventilación efectiva)',
+  ];
+}
+
+/** Bloque HTML (modo aprendizaje): cuándo encaja cada perfil de espacio y el equipo “extra”. */
+function getLearningRecintoEquipmentNarrativeHtml() {
+  return `<div class="learning-recinto-detail"><p class="body-prose body-prose--tight"><strong>Perfiles</strong>: «Armario o carpa sellada» es el caso habitual en casa. «Espacio amplio / macro-carpa» describe <strong>volúmenes grandes o carpa muy ventilada</strong> donde el microclima se parece más a un túnel o sala de cultivo — no obliga a invernadero de cristal ni a montaje “semi profesional” para triunfar en un armario pequeño.</p><p class="body-prose body-prose--tight">«Estancia amplia»: el aire se mezcla con la vivienda; CO₂ o control fino de HR solo compensan si el volumen útil alrededor del dosel está <em>razonablemente</em> acotado.</p><p class="body-prose body-prose--tight text-muted">CO₂, deshumidificador fijo o sensor PAR caro suelen rentar cuando ya llevas estable pH, EC y temperatura del líquido; antes, el coste por resultado suele ser alto.</p></div>`;
+}
+
 window.HYDRO_SYSTEM_PROFILES = HYDRO_SYSTEM_PROFILES;
 window.getSystemProfile = getSystemProfile;
 window.getResolvedSystemDisplayName = getResolvedSystemDisplayName;
 window.normalizeHardwareComplements = normalizeHardwareComplements;
 window.getFilteredChartModes = getFilteredChartModes;
+window.effectiveEnclosureType = effectiveEnclosureType;
+window.isOpenAirGrowingContext = isOpenAirGrowingContext;
+window.getInstrumentPolicy = getInstrumentPolicy;
+window.sanitizeHardwareComplementsForContext = sanitizeHardwareComplementsForContext;
+window.getMinimumHydroInstrumentSnippets = getMinimumHydroInstrumentSnippets;
+window.getLearningRecintoEquipmentNarrativeHtml = getLearningRecintoEquipmentNarrativeHtml;

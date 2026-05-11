@@ -54,6 +54,7 @@ function initSplashScreen() {
 }
 
 initTheme();
+if (typeof applyUiExperienceToDocument === 'function') applyUiExperienceToDocument();
 loadAppConfig();
 applyDevUrlParams();
 initSplashScreen();

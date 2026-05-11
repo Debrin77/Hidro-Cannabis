@@ -9,6 +9,8 @@ let appConfig = null;
 const STORAGE_KEY = 'hydrogrow-pro.v1.myGrow';
 const APP_CONFIG_KEY = 'hydrogrow-pro.v1.appConfig';
 const THEME_KEY = 'hydrogrow-pro.v1.theme';
+/** `guided` o `learning` (texto técnico y contexto extra). Sin clave guardada: aprendizaje. */
+const UI_EXPERIENCE_KEY = 'hydrogrow-pro.v1.uiExperience';
 /** Si es true, se salta la bienvenida/checklist inicial y se usa el asistente clásico (útil al programar). */
 const SKIP_INITIAL_WELCOME_KEY = 'hydrogrow-pro.v1.skipInitialWelcome';
 
@@ -27,6 +29,40 @@ function setSkipInitialWelcome(on) {
   } catch (error) {
     console.warn('No se pudo guardar preferencia de bienvenida.', error);
   }
+}
+
+function getUiExperienceMode() {
+  try {
+    const v = localStorage.getItem(UI_EXPERIENCE_KEY);
+    if (v === 'guided') return 'guided';
+    if (v === 'learning') return 'learning';
+    return 'learning';
+  } catch {
+    return 'guided';
+  }
+}
+
+function applyUiExperienceToDocument() {
+  document.documentElement.setAttribute('data-ui-experience', getUiExperienceMode());
+}
+
+function setUiExperienceMode(mode) {
+  const m = mode === 'learning' ? 'learning' : 'guided';
+  try {
+    localStorage.setItem(UI_EXPERIENCE_KEY, m);
+  } catch (error) {
+    console.warn('No se pudo guardar el modo de experiencia.', error);
+  }
+  applyUiExperienceToDocument();
+  if (typeof renderAccesibilidad === 'function') {
+    const v = location.hash.slice(1) || 'inicio';
+    if (v === 'accesibilidad') renderAccesibilidad();
+  }
+  if (typeof renderInicio === 'function') renderInicio();
+  if (typeof renderCultivo === 'function') renderCultivo();
+  if (typeof renderMonitor === 'function') renderMonitor();
+  if (typeof renderSemanas === 'function') renderSemanas();
+  if (typeof renderConsejosPage === 'function') renderConsejosPage();
 }
 
 function serializeGrow(grow) {
@@ -76,10 +112,18 @@ function restoreGrow(payload) {
     reservoirL: Number.isFinite(payload.reservoirL) ? payload.reservoirL : 60,
     sourceEC: Number.isFinite(payload.sourceEC) ? payload.sourceEC : 0.1,
     sourcePH: Number.isFinite(payload.sourcePH) ? payload.sourcePH : 6.1,
-    hardwareComplements:
-      typeof normalizeHardwareComplements === 'function'
-        ? normalizeHardwareComplements(payload.hardwareComplements)
-        : payload.hardwareComplements || undefined,
+    hardwareComplements: (() => {
+      let hc =
+        typeof normalizeHardwareComplements === 'function'
+          ? normalizeHardwareComplements(payload.hardwareComplements)
+          : payload.hardwareComplements || undefined;
+      if (hc && typeof sanitizeHardwareComplementsForContext === 'function') {
+        const pl = payload.placement === 'exterior' ? 'exterior' : 'interior';
+        const enc = pl === 'exterior' ? 'outdoor' : hc.enclosureType || 'cabinet';
+        hc = normalizeHardwareComplements(sanitizeHardwareComplementsForContext(pl, enc, hc));
+      }
+      return hc;
+    })(),
   };
 }
 
@@ -145,6 +189,17 @@ function loadAppConfig() {
   try {
     const raw = localStorage.getItem(APP_CONFIG_KEY);
     appConfig = raw ? JSON.parse(raw) : null;
+    if (
+      appConfig?.hardwareComplements &&
+      typeof sanitizeHardwareComplementsForContext === 'function' &&
+      typeof normalizeHardwareComplements === 'function'
+    ) {
+      const pl = appConfig.placement === 'exterior' ? 'exterior' : 'interior';
+      const hc0 = normalizeHardwareComplements(appConfig.hardwareComplements);
+      const enc = pl === 'exterior' ? 'outdoor' : hc0.enclosureType || 'cabinet';
+      const hc1 = normalizeHardwareComplements(sanitizeHardwareComplementsForContext(pl, enc, hc0));
+      if (JSON.stringify(hc0) !== JSON.stringify(hc1)) appConfig.hardwareComplements = hc1;
+    }
   } catch (error) {
     console.warn('No se pudo recuperar la configuración inicial.', error);
     appConfig = null;
@@ -207,3 +262,6 @@ function setAppTheme(theme) {
   }
 }
 window.setAppTheme = setAppTheme;
+window.getUiExperienceMode = getUiExperienceMode;
+window.setUiExperienceMode = setUiExperienceMode;
+window.applyUiExperienceToDocument = applyUiExperienceToDocument;

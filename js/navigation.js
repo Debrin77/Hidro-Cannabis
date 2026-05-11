@@ -45,6 +45,7 @@ function renderAccesibilidad() {
   const host = document.getElementById('accesibilidadContent');
   if (!host) return;
   const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const exp = typeof getUiExperienceMode === 'function' ? getUiExperienceMode() : 'guided';
   host.innerHTML = `
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-contrast"></i> Esquema de color</div></div>
@@ -55,6 +56,18 @@ function renderAccesibilidad() {
         </button>
         <button type="button" role="radio" aria-checked="${current === 'light' ? 'true' : 'false'}" class="a11y-theme-btn ${current === 'light' ? 'is-active' : ''}" onclick="setAppTheme('light')">
           <i class="ti ti-sun" aria-hidden="true"></i> Claro
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-school"></i> Experiencia de uso</div></div>
+      <p class="body-prose body-prose--tight"><strong>Guiado</strong> prioriza pasos claros y poca jerga. <strong>Aprendizaje · avanzado</strong> muestra contexto técnico extra (VPD, perfiles de espacio, extractor, cuándo compensa más equipo).</p>
+      <div class="a11y-theme-seg a11y-exp-seg" role="radiogroup" aria-label="Modo de experiencia">
+        <button type="button" role="radio" aria-checked="${exp === 'guided' ? 'true' : 'false'}" class="a11y-theme-btn ${exp === 'guided' ? 'is-active' : ''}" onclick="setUiExperienceMode('guided')">
+          <i class="ti ti-hand-stop" aria-hidden="true"></i> Guiado
+        </button>
+        <button type="button" role="radio" aria-checked="${exp === 'learning' ? 'true' : 'false'}" class="a11y-theme-btn ${exp === 'learning' ? 'is-active' : ''}" onclick="setUiExperienceMode('learning')">
+          <i class="ti ti-book" aria-hidden="true"></i> Aprendizaje
         </button>
       </div>
     </div>`;

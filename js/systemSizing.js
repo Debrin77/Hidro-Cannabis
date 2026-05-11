@@ -7,6 +7,78 @@
 const GAL_US_L = 3.78541;
 
 /**
+ * Ventilación del recinto (extractor), no confundir con bomba de aire del nutriente.
+ * Si `userRoomM3` es un número entre 0,05 y 80, sustituye la heurística por sitios + litros de solución.
+ */
+function computeVentilationSizingHint(sites, totalSolutionL, userRoomM3) {
+  const s = Math.min(48, Math.max(1, parseInt(sites, 10) || 1));
+  const solutionLoadL = Number.isFinite(totalSolutionL) ? Math.max(1, totalSolutionL) : s * 20;
+  const u = parseFloat(userRoomM3);
+  let spaceM3;
+  let usedUserSuppliedVolume = false;
+  if (Number.isFinite(u) && u >= 0.05 && u <= 80) {
+    spaceM3 = Math.min(80, Math.max(0.05, u));
+    usedUserSuppliedVolume = true;
+  } else {
+    spaceM3 = Math.min(12, Math.max(0.35, s * 0.32 + solutionLoadL / 850));
+  }
+  const achComfort = 4;
+  const achMin = 2.5;
+  const m3hComfort = Math.round(spaceM3 * achComfort);
+  const m3hMin = Math.round(spaceM3 * achMin);
+  const cfmComfort = Math.round(m3hComfort * 0.588);
+  const cfmMin = Math.round(m3hMin * 0.588);
+  return {
+    sitesUsed: s,
+    solutionLoadL: Math.round(solutionLoadL),
+    spaceAssumedM3: Math.round(spaceM3 * 1000) / 1000,
+    usedUserSuppliedVolume,
+    extractorM3hMin: m3hMin,
+    extractorM3hComfort: m3hComfort,
+    cfmMin,
+    cfmComfort,
+    hint: usedUserSuppliedVolume
+      ? 'Usamos el volumen de recinto que indicaste. Si llevas filtro antiolor o conductos largos, el extractor real suele ir algo por encima del mínimo orientativo.'
+      : 'Es una primera aproximación. El extractor adecuado depende del tamaño real de tu armario o carpa, del filtro y de la tubería; revisa siempre la ficha del equipo.',
+  };
+}
+
+function peekEnclosureVolumeM3ForSizing(hardwareComplements) {
+  if (typeof normalizeHardwareComplements !== 'function') return null;
+  const v = normalizeHardwareComplements(hardwareComplements).enclosureVolumeM3;
+  return Number.isFinite(v) ? v : null;
+}
+
+/** Recalcula solo la fila de ventilación cuando cambia el volumen del recinto (cultivo activo). */
+function refreshVentilationInSizingResult(sizingResult, hardwareComplements) {
+  if (!sizingResult) return sizingResult;
+  const sitesNum = Number.isFinite(sizingResult.sites) ? sizingResult.sites : parseInt(sizingResult.sites, 10);
+  const sites = Math.min(48, Math.max(1, Number.isFinite(sitesNum) ? sitesNum : 1));
+  const totalL = Number.isFinite(sizingResult.totalSolutionL)
+    ? sizingResult.totalSolutionL
+    : sites * 20;
+  const volM3 = peekEnclosureVolumeM3ForSizing(hardwareComplements);
+  const ventilation = computeVentilationSizingHint(sites, totalL, volM3);
+  return { ...sizingResult, ventilation };
+}
+
+function renderVentilationSizingHtml(vent) {
+  if (!vent || !Number.isFinite(vent.extractorM3hComfort)) return '';
+  const basis = vent.usedUserSuppliedVolume
+    ? `los <strong>${vent.spaceAssumedM3} m³</strong> de recinto que indicaste`
+    : `un tamaño orientativo del montaje (~${vent.sitesUsed} sitio(s), ~${vent.solutionLoadL} L de solución)`;
+  const learning = typeof getUiExperienceMode === 'function' && getUiExperienceMode() === 'learning';
+  const techExtra = learning
+    ? `<p class="sizing-vent-tech">Equivalente aproximado: <strong>${vent.cfmMin}–${vent.cfmComfort} CFM</strong>. Referencia doméstica: del orden de <strong>2,5–4 renovaciones/hora</strong> del volumen de aire del recinto; invernaderos comerciales o climatización industrial se dimensionan con otros criterios (pérdidas de carga del filtro, curva Q–H del extractor).</p>`
+    : '';
+  return `<div class="sizing-block sizing-block--ventilation">
+        <div class="sizing-label">Aire del cuarto (extractor)</div>
+        <p>Para renovar el aire del <strong>espacio de cultivo</strong> (no del líquido), una referencia cómoda suele rondar <strong>${vent.extractorM3hMin}–${vent.extractorM3hComfort} m³/h</strong>, calculada a partir de ${basis}.</p>
+        <p class="sizing-vent-hint">${vent.hint}</p>${techExtra}
+      </div>`;
+}
+
+/**
  * @param {object} hw
  * @param {number} hw.sites
  * @param {number} hw.volumePerSiteL
@@ -15,8 +87,10 @@ const GAL_US_L = 3.78541;
  * @param {number} hw.airLineLengthM
  * @param {number} hw.solutionTempC
  * @param {'RDWC'|'DWC'|'NFT'|'FLOAT'|'AERO'} systemType
+ * @param {object} [hardwareComplements] complementos del checklist (p. ej. volumen del recinto en m³ para el extractor)
  */
-function computeHydroSizing(hw, systemType) {
+function computeHydroSizing(hw, systemType, hardwareComplements) {
+  const roomVol = peekEnclosureVolumeM3ForSizing(hardwareComplements);
   const sites = Math.min(48, Math.max(1, parseInt(hw.sites, 10) || 1));
   const vSite = Math.min(200, Math.max(1, parseFloat(hw.volumePerSiteL) || 20));
   const vControl = Math.min(2000, Math.max(0, parseFloat(hw.controlReservoirL) || 0));
@@ -25,9 +99,16 @@ function computeHydroSizing(hw, systemType) {
   const tempC = parseFloat(hw.solutionTempC);
 
   if (systemType === 'NFT') {
+    const sitesNft = Math.min(48, Math.max(1, parseInt(hw.sites, 10) || 1));
+    const vPerNft = Math.min(200, Math.max(1, parseFloat(hw.volumePerSiteL) || 20));
+    const totalLNft = sitesNft * vPerNft;
+    const ventilation = computeVentilationSizingHint(sitesNft, totalLNft, roomVol);
     return {
       systemType,
       nft: true,
+      sites: sitesNft,
+      totalSolutionL: Math.round(totalLNft),
+      ventilation,
       hints: [
         'NFT: pendiente de canal 1–3 %, película de nutriente continua. Caudal típico por canal ~1–2 L/min (depende del ancho y longitud).',
         'Comprueba que las raíces no sechen entre pulsos; en verano aumenta caudal o oscurece el depósito.',
@@ -39,9 +120,16 @@ function computeHydroSizing(hw, systemType) {
   }
 
   if (systemType === 'AERO') {
+    const sitesAe = Math.min(48, Math.max(1, parseInt(hw.sites, 10) || 1));
+    const vPerAe = Math.min(200, Math.max(1, parseFloat(hw.volumePerSiteL) || 15));
+    const totalLAe = sitesAe * vPerAe;
+    const ventilation = computeVentilationSizingHint(sitesAe, totalLAe, roomVol);
     return {
       systemType,
       nft: true,
+      sites: sitesAe,
+      totalSolutionL: Math.round(totalLAe),
+      ventilation,
       hints: [
         'Aeroponía: raíces en cámara oscura con nebulización o fumigación fina. Cannabis es viable con kits maduros y buena higiene.',
         'Riesgo principal: boquillas obstruidas y exceso de humedad en raíz — filtrado fino, limpiezas y ciclos húmedo/seco según diseño.',
@@ -130,6 +218,8 @@ function computeHydroSizing(hw, systemType) {
     hints.push('Agua >24 °C: considera chiller, botellas congeladas o bajar temperatura ambiente; el O₂ disuelto cae rápido.');
   }
 
+  const ventilation = computeVentilationSizingHint(sites, totalSolutionL, roomVol);
+
   return {
     systemType,
     sizingBasis: sizingSystem,
@@ -137,6 +227,7 @@ function computeHydroSizing(hw, systemType) {
     volumePerSiteL: vSite,
     controlReservoirL: vControl,
     totalSolutionL: Math.round(totalSolutionL),
+    ventilation,
     airPumpLpmMinimum: Math.round(airMinimum * 10) / 10,
     airPumpLpmRecommended: Math.round(airRecommended * 10) / 10,
     waterPump,
@@ -419,7 +510,19 @@ function runSystemSizingCalculation() {
   if (!appConfig) appConfig = {};
   snapshotSystemHardwareToAppConfig();
   const sys = appConfig.system;
-  const result = computeHydroSizing(appConfig.systemHardware, sys);
+  let complementsForVent = appConfig.hardwareComplements;
+  if (typeof document !== 'undefined' && document.getElementById('onbEnclosureVolumeM3')) {
+    const parseVol = typeof window.parseEnclosureVolumeM3Input === 'function' ? window.parseEnclosureVolumeM3Input : null;
+    if (parseVol) {
+      const v = parseVol('onbEnclosureVolumeM3');
+      const base =
+        typeof normalizeHardwareComplements === 'function'
+          ? normalizeHardwareComplements(appConfig.hardwareComplements)
+          : {};
+      complementsForVent = { ...base, enclosureVolumeM3: v };
+    }
+  }
+  const result = computeHydroSizing(appConfig.systemHardware, sys, complementsForVent);
   result.userPumpValidation = validateUserDeclaredPumps(appConfig.systemHardware, result);
   attachGeometryToSizingResult(result, appConfig.systemHardware, sys);
   appConfig.systemSizingResult = result;
@@ -482,9 +585,11 @@ function renderSystemSizingHtml(result) {
         : result?.userPumpValidation;
     const pumpExtra = uv ? renderUserPumpValidationHtml(uv, result) : '';
     const geomExtra = result ? renderGeometrySizingHtml(result) : '';
+    const ventExtra = result?.ventilation ? renderVentilationSizingHtml(result.ventilation) : '';
     return `
       <div class="sizing-result">
         <div class="alert info"><i class="ti ti-info-circle"></i><div><strong>${label}</strong><p>${result ? result.disclaimer : 'Selecciona sistema y pulsa «Calcular dimensionado».'}</p>${hs.length ? `<ul class="sizing-hint-list">${hs.map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}</div></div>
+        ${ventExtra}
         ${geomExtra}
         ${pumpExtra ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Equipo declarado</div>${pumpExtra}</div>` : ''}
       </div>`;
@@ -505,6 +610,7 @@ function renderSystemSizingHtml(result) {
       : null);
   const pumpValHtml = renderUserPumpValidationHtml(uvMerged, result);
   const geomHtml = renderGeometrySizingHtml(result);
+  const ventHtml = result.ventilation ? renderVentilationSizingHtml(result.ventilation) : '';
 
   return `
     <div class="sizing-result">
@@ -513,6 +619,7 @@ function renderSystemSizingHtml(result) {
         <p>Bomba de aire recomendada: <strong>≥ ${result.airPumpLpmRecommended} L/min</strong> (mínimo prudente ~${result.airPumpLpmMinimum} L/min) para ${result.sites} depósito(s) de ${result.volumePerSiteL} L.</p>
       </div>
       ${waterBlock}
+      ${ventHtml}
       ${geomHtml}
       ${pumpValHtml ? `<div class="sizing-block sizing-block--validation"><div class="sizing-label">Contraste con tu equipo (DIY / kit)</div>${pumpValHtml}</div>` : ''}
       <div class="sizing-block">
@@ -532,6 +639,9 @@ function renderSystemSizingHtml(result) {
 }
 
 window.computeHydroSizing = computeHydroSizing;
+window.computeVentilationSizingHint = computeVentilationSizingHint;
+window.peekEnclosureVolumeM3ForSizing = peekEnclosureVolumeM3ForSizing;
+window.refreshVentilationInSizingResult = refreshVentilationInSizingResult;
 window.runSystemSizingCalculation = runSystemSizingCalculation;
 window.snapshotSystemHardwareToAppConfig = snapshotSystemHardwareToAppConfig;
 window.validateUserDeclaredPumps = validateUserDeclaredPumps;

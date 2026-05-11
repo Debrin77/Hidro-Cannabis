@@ -145,11 +145,18 @@ function escapeHomeHtml(s) {
 function renderConsejosPage() {
   const host = document.getElementById('consejosStrainSpecs');
   if (!host || typeof renderStrainSpecsTableHtml !== 'function') return;
+  const learnC = typeof getUiExperienceMode === 'function' && getUiExperienceMode() === 'learning';
+  const learnBlock = learnC
+    ? `<div class="alert info consejos-learning-block"><i class="ti ti-school"></i><p><strong>Modo Aprendizaje:</strong> interior no implica invernadero de cristal; con pH, EC, Tª del líquido y termohigrómetro en copa suele bastar en armario o carpa. CO₂, deshumidificador fijo o sensor PAR compensan cuando el espacio está acotado y ya llevas estable la solución. En <strong>Sistema</strong> el perfil «espacio amplio» describe macro-carpa o sala grande, no un requisito para cultivar en pequeño.</p></div>`
+    : `<div class="alert info"><i class="ti ti-hand-stop"></i><p>¿Prefieres menos jerga? En <strong>Apariencia y accesibilidad</strong> puedes dejar <strong>Guiado</strong>; si quieres el bloque anterior sobre recintos y equipo mínimo, activa <strong>Aprendizaje</strong>.</p></div>`;
   host.innerHTML = `
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i>Consejos operativos (movidos desde Medir)</div></div>
-      <div class="alert info"><i class="ti ti-flask-2"></i><p><strong>RDWC:</strong> la solución es común a todo el circuito. El pH y la EC se miden en el depósito de control (o en el mismo volumen recirculado), no en cada cubo por separado.</p></div>
-      <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Medición resolutiva:</strong> además de pH/EC y temperatura de agua, registra aire, humedad (VPD), CO₂ y, si puedes, PPFD + horas de luz (DLI). Ajusta siempre en pasos pequeños y vuelve a medir.</p></div>
+      <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i>Consejos de uso</div></div>
+      <p class="body-prose consejos-lead">La app está pensada para quien cultiva en <strong>hidroponía en casa</strong>: eliges el sistema que ofrece la app, la variedad, el nutriente y el emplazamiento. Según lo que marques de <strong>medidores y equipo</strong>, verás sugerencias de mezcla y rangos acordes; en exterior se tiene en cuenta la <strong>meteorología de tu zona</strong>. Los detalles difíciles quedan en segundo plano: lo importante son pasos claros y poder anotar qué hiciste tras cada lectura.</p>
+      <div class="alert info"><i class="ti ti-flask-2"></i><p><strong>Circuito RDWC:</strong> toda la planta comparte el mismo agua con abono. Mide pH y sales (EC) en el depósito de control o donde indique tu kit: no hace falta repetir en cada cubo.</p></div>
+      <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Qué conviene medir:</strong> pH y EC del líquido y, si puedes, temperatura del agua. En el aire, temperatura y humedad cerca de las plantas. El CO₂ solo aporta en espacio cerrado; la luz (lux o PAR) ayuda a regular la lámpara. Marca en Sistema solo lo que de verdad tienes: así las pantallas no te abruman.</p></div>
+      <div class="alert info"><i class="ti ti-wind"></i><p><strong>Dos “aires” distintos:</strong> la bomba de burbujas oxigena el <strong>nutriente</strong>; el extractor renueva el <strong>aire del cuarto o armario</strong>. En Sistema verás referencias para ambos. Los kits de tienda se rellenan como un montaje casero: caudales y litros según la ficha o la placa del equipo.</p></div>
+      ${learnBlock}
     </div>
     ${renderStrainSpecsTableHtml()}
   `;
@@ -169,7 +176,8 @@ function renderInicio() {
   const appDone = !!appConfig?.completed;
 
   let statusLabel = 'Configura tu instalación';
-  let statusDetail = 'Abre Sistema en la barra inferior y completa el checklist con datos reales de bomba, aire y depósitos.';
+  let statusDetail =
+    'En <strong>Sistema</strong> indicas el hidro (RDWC, DWC, NFT…), la variedad, el nutriente y si está dentro o fuera. Con eso las pantallas te guían con números y recordatorios acordes a tu equipo, sin obligarte a ser técnico.';
   if (hasGrow) {
     const rank = Number.isFinite(myGrow.nutri) ? myGrow.nutri : 1;
     const n =
@@ -178,17 +186,17 @@ function renderInicio() {
         : null;
     if (n) {
       statusLabel = n.name;
-      statusDetail = `${n.brand} · Nutriente principal: mezclas y calendario siguen esta línea.`;
+      statusDetail = `${n.brand} · Recargas y rangos según tu cultivo. <strong>Medir</strong> guarda lecturas y ajustes; si cultivas fuera, <strong>Climatología</strong> usa el tiempo de tu zona.`;
     } else {
       statusLabel = 'Cultivo activo';
-      statusDetail = 'Semana en curso · Usa Medir y Sistema para seguimiento.';
+      statusDetail = 'Sigue la semana en curso, registra en Medir y revisa Cultivo para el resumen.';
     }
   } else if (appDone || skipWelcome) {
     statusLabel = 'Listo para arrancar';
     statusDetail =
       skipWelcome && !appDone
         ? 'Modo desarrollo activo. Entra en Sistema para el asistente completo.'
-        : 'Elige Variedades (menú Más) o abre Sistema para el flujo guiado.';
+        : 'Abre <strong>Cultivo</strong> o <strong>Variedades</strong> para empezar; los kits de tienda se configuran igual que un montaje casero: introduces lo que pone en la caja o la placa de la bomba.';
   }
 
   const checklistRows = expertChecklistItems
@@ -246,7 +254,7 @@ function renderInicio() {
       <div class="dash-hero-inner">
         <p class="dash-eyebrow">Cannabis · Hidrocultivo</p>
         <h1 class="dash-headline">Hydro Cannabis</h1>
-        <p class="dash-tagline">Planifica el sistema, mide con método y conserva el historial en un solo lugar.</p>
+        <p class="dash-tagline">Guía para cultivar en hidroponía en casa: tú indicas sistema, variedad, nutriente y si está dentro o fuera; la app orienta recargas, valores razonables y qué vigilar según tus medidores, con el tiempo local cuando cultivas fuera. Puedes registrar cada medida y corrección sin liarte con tecnicismos.</p>
       </div>
     </section>
 
