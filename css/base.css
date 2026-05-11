@@ -107,16 +107,7 @@ body{
 .page-header p{font-size:13px;color:var(--text2);line-height:1.65;max-width:52ch}
 .page-header--compact h1::after{width:40px;margin-top:10px;height:2px}
 .breadcrumb{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:0.06em;
-  margin-bottom:12px;padding:5px 12px;border-radius:999px;
-  background:var(--surface2);border:1px solid var(--border);
-  text-transform:uppercase;
-}
-.breadcrumb::before{
-  content:'';width:6px;height:6px;border-radius:50%;
-  background:linear-gradient(135deg,var(--hydro-teal),var(--hydro-aqua));
-  flex-shrink:0;
+  display:none;
 }
 
 /* CARDS */

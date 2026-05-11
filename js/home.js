@@ -247,7 +247,7 @@ function renderInicio() {
     ${weatherAlerts}
     ${hasGrow && typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
 
-    <details class="dash-check-section" open>
+    <details class="dash-check-section">
       <summary class="dash-check-summary">
         <div class="dash-check-summary__grow">
           <div class="dash-check-summary__topline">
@@ -266,7 +266,7 @@ function renderInicio() {
       <div class="dash-check-section__body expert-checklist expert-checklist--inset">${checklistRows}</div>
     </details>
 
-    <section class="inicio-system-reset" aria-labelledby="inicio-reset-heading">
+    <section class="inicio-system-reset" id="inicio-system-reset" aria-labelledby="inicio-reset-heading">
       <h2 id="inicio-reset-heading" class="inicio-system-reset__title">Zona sensible</h2>
       <p class="inicio-system-reset__text">Reinicia la app en este navegador como si fuera la primera vez (cultivo, sistema, registros y checklist de inicio). El tema elegido en Apariencia se mantiene.</p>
       <button type="button" class="btn btn-ghost inicio-system-reset__btn" onclick="requestFullSystemReset()">
