@@ -1160,7 +1160,18 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
   font-weight:600;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:9px;
 }
 [data-theme='light'] .monitor-nutrient-details__title{color:var(--hydro-deep)}
-.monitor-nutrient-details__chev{flex-shrink:0;transition:transform .15s ease;opacity:0.85}
+.monitor-nutrient-details__summary-text{
+  display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+  flex:1;min-width:0;text-align:left;
+}
+.monitor-nutrient-details__strain{
+  font-size:12px;font-weight:600;color:var(--text2);line-height:1.35;
+  letter-spacing:0;text-transform:none;font-family:inherit;
+  display:flex;align-items:center;gap:6px;
+}
+.monitor-nutrient-details__strain .ti{font-size:14px;opacity:0.88;color:var(--hydro-teal);flex-shrink:0}
+[data-theme='light'] .monitor-nutrient-details__strain .ti{color:var(--hydro-deep)}
+.monitor-nutrient-details__chev{flex-shrink:0;transition:transform .15s ease;opacity:0.85;align-self:center}
 .monitor-nutrient-details[open] .monitor-nutrient-details__chev{transform:rotate(180deg)}
 .monitor-nutrient-details__body{
   margin-top:0.75rem;

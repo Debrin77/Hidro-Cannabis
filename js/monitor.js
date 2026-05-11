@@ -589,7 +589,12 @@ function renderMonitor(){
 
     <details class="card monitor-nutrient-details">
       <summary class="monitor-nutrient-details__summary">
-        <span class="monitor-nutrient-details__title"><i class="ti ti-flask" aria-hidden="true"></i> Nutriente activo: ${escapeMonitorHtml(n.name)}</span>
+        <div class="monitor-nutrient-details__summary-text">
+          <span class="monitor-nutrient-details__title"><i class="ti ti-flask" aria-hidden="true"></i> Nutriente activo: ${escapeMonitorHtml(n.name)}</span>
+          <span class="monitor-nutrient-details__strain"><i class="ti ti-seedling" aria-hidden="true"></i> Variedad: ${escapeMonitorHtml(s.name)}${
+            s.typeName ? ` · ${escapeMonitorHtml(s.typeName)}` : ''
+          }</span>
+        </div>
         <i class="ti ti-chevron-down monitor-nutrient-details__chev" aria-hidden="true"></i>
       </summary>
       <div class="monitor-nutrient-details__body">
