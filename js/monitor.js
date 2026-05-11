@@ -367,6 +367,31 @@ function renderGrowAlertsCardHtml(grow) {
     </div>`;
 }
 
+/** Franja superior en Medir: sistema activo y acceso rápido al selector multi-sistema. */
+function renderMonitorActiveSystemStripHtml() {
+  if (!myGrow) return '';
+  const code = myGrow.system || 'RDWC';
+  const pr = typeof getSystemProfile === 'function' ? getSystemProfile(code) : null;
+  const name = escapeMonitorHtml(pr?.label || code);
+  const sub = pr?.solutionSubtitle ? escapeMonitorHtml(pr.solutionSubtitle) : '';
+  const available =
+    typeof getAvailableWorkSystems === 'function' ? getAvailableWorkSystems() : [code];
+  const canSwitch = available.length > 1;
+  const switchBtn = canSwitch
+    ? `<button type="button" class="btn btn-ghost btn--compact monitor-active-system__btn" onclick="openSystemWorkspaceSelector()"><i class="ti ti-switch-horizontal" aria-hidden="true"></i> Cambiar</button>`
+    : '';
+  return `<section class="monitor-active-system" aria-label="Sistema hidropónico activo">
+    <div class="monitor-active-system__row">
+      <div class="monitor-active-system__copy">
+        <span class="monitor-active-system__eyebrow">Sistema activo</span>
+        <span class="monitor-active-system__name">${name}</span>
+        ${sub ? `<span class="monitor-active-system__sub">${sub}</span>` : ''}
+      </div>
+      ${switchBtn}
+    </div>
+  </section>`;
+}
+
 function renderMonitor(){
   const mc = document.getElementById('monitorContent');
   if(!myGrow){
@@ -395,6 +420,7 @@ function renderMonitor(){
   const waterPct =
     waterLive != null ? Math.min(100, Math.max(0, ((waterLive - 15) / (24 - 15)) * 100)) : 50;
   mc.innerHTML=`
+    ${renderMonitorActiveSystemStripHtml()}
     <button type="button" class="btn btn-ghost btn--compact monitor-clima-link" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Ver Clima del emplazamiento</button>
 
     <div class="grid4 monitor-metrics">

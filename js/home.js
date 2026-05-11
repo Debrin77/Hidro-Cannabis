@@ -146,10 +146,20 @@ function renderInicio() {
   const appDone = !!appConfig?.completed;
 
   let statusLabel = 'Configura tu instalación';
-  let statusDetail = 'Pulsa Sistema y completa el checklist con datos reales de bomba, aire y depósitos.';
+  let statusDetail = 'Abre Sistema en la barra inferior y completa el checklist con datos reales de bomba, aire y depósitos.';
   if (hasGrow) {
-    statusLabel = 'Cultivo activo';
-    statusDetail = `Semana activa en curso · Barra inferior: Medir, Sistema, Calendario, Historial, Clima.`;
+    const rank = Number.isFinite(myGrow.nutri) ? myGrow.nutri : 1;
+    const n =
+      typeof nutrients !== 'undefined'
+        ? nutrients.find((x) => x.rank === rank) || nutrients[0]
+        : null;
+    if (n) {
+      statusLabel = n.name;
+      statusDetail = `${n.brand} · Nutriente principal: mezclas y calendario siguen esta línea.`;
+    } else {
+      statusLabel = 'Cultivo activo';
+      statusDetail = 'Semana en curso · Usa Medir y Sistema para seguimiento.';
+    }
   } else if (appDone || skipWelcome) {
     statusLabel = 'Listo para arrancar';
     statusDetail =
@@ -205,22 +215,14 @@ function renderInicio() {
     <section class="dash-status-card">
       <div class="dash-status-icon"><i class="ti ti-plant"></i></div>
       <div>
-        <div class="dash-status-label">${statusLabel}</div>
-        <p class="dash-status-text">${statusDetail}</p>
+        <div class="dash-status-label">${escapeHomeHtml(statusLabel)}</div>
+        <p class="dash-status-text">${escapeHomeHtml(statusDetail)}</p>
       </div>
     </section>
 
     ${weatherLabel}
     ${weatherAlerts}
     ${hasGrow && typeof renderGrowAlertsCardHtml === 'function' ? renderGrowAlertsCardHtml(myGrow) : ''}
-
-    <section class="dash-actions">
-      <button type="button" class="dash-tile dash-tile--primary" onclick="navTo('cultivo')">
-        <i class="ti ti-adjustments"></i>
-        <span class="dash-tile-title">Sistema</span>
-        <span class="dash-tile-sub">Checklist e ingeniería</span>
-      </button>
-    </section>
 
     <details class="dash-check-section" open>
       <summary class="dash-check-summary">

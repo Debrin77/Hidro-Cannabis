@@ -45,6 +45,11 @@ function updateTopbarBackVisibility() {
   btn.setAttribute('aria-hidden', show ? 'false' : 'true');
 }
 
+function toggleThemeFromMenu() {
+  closeMoreMenu();
+  if (typeof toggleTheme === 'function') toggleTheme();
+}
+
 function applyNavView(view) {
   closeMoreMenu();
   document.querySelectorAll('[data-nav-view]').forEach((n) => {
@@ -92,6 +97,7 @@ function nav(el, view) {
 function initNavigationFromHash() {
   let v = location.hash.slice(1);
   if (!v) {
+    applyNavView('inicio');
     updateTopbarBackVisibility();
     return;
   }
@@ -114,3 +120,4 @@ window.toggleMoreMenu = toggleMoreMenu;
 window.closeMoreMenu = closeMoreMenu;
 window.initNavigationFromHash = initNavigationFromHash;
 window.applyNavView = applyNavView;
+window.toggleThemeFromMenu = toggleThemeFromMenu;

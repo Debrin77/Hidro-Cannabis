@@ -60,6 +60,9 @@ initSplashScreen();
 renderStrains('all');
 renderNutrientes();
 loadGrowState();
+if (typeof initNavigationFromHash === 'function') {
+  initNavigationFromHash();
+}
 renderInicio();
 renderCultivo();
 renderMonitor();
@@ -67,10 +70,6 @@ renderSemanas();
 renderHistorial();
 renderClimatologia();
 if (typeof renderConsejosPage === 'function') renderConsejosPage();
-
-if (typeof initNavigationFromHash === 'function') {
-  initNavigationFromHash();
-}
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => {

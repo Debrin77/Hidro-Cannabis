@@ -64,7 +64,7 @@ body{
 }
 
 .app-topbar{
-  display:flex;
+  display:none;
   align-items:center;
   justify-content:space-between;
   gap:10px;
@@ -149,7 +149,9 @@ body{
 
 .main{
   flex:1;
-  padding:1rem 1rem 6.5rem;
+  padding-left:1rem;
+  padding-right:1rem;
+  padding-top:max(1rem,calc(12px + env(safe-area-inset-top)));
   padding-bottom:calc(6.5rem + env(safe-area-inset-bottom));
   overflow-x:hidden;
   overflow-y:auto;
