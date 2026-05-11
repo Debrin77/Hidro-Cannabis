@@ -41,6 +41,10 @@ function openAccesibilidadFromMore() {
   navTo('accesibilidad');
 }
 
+function closeAccesibilidadView() {
+  navTo('inicio');
+}
+
 function renderAccesibilidad() {
   const host = document.getElementById('accesibilidadContent');
   if (!host) return;
@@ -149,4 +153,5 @@ window.closeMoreMenu = closeMoreMenu;
 window.initNavigationFromHash = initNavigationFromHash;
 window.applyNavView = applyNavView;
 window.openAccesibilidadFromMore = openAccesibilidadFromMore;
+window.closeAccesibilidadView = closeAccesibilidadView;
 window.renderAccesibilidad = renderAccesibilidad;

@@ -113,6 +113,22 @@ body{
 .breadcrumb{
   display:none;
 }
+.page-header--with-close{
+  display:flex;flex-direction:row;align-items:flex-start;justify-content:space-between;gap:12px;
+}
+.page-header--with-close .page-header__col{flex:1;min-width:0}
+.page-header-close-btn{
+  flex-shrink:0;width:40px;height:40px;margin-top:2px;border-radius:var(--radius2);
+  border:1px solid var(--border);background:var(--surface2);color:var(--text2);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  padding:0;font:inherit;transition:border-color .15s,background .15s,color .15s;
+}
+.page-header-close-btn:hover{
+  color:var(--text);border-color:rgba(52,211,153,0.35);
+  background:linear-gradient(135deg,var(--surface2),rgba(52,211,153,0.06));
+}
+.page-header-close-btn i{font-size:22px;line-height:1;opacity:0.95}
+[data-theme='light'] .page-header-close-btn:hover{border-color:rgba(5,150,105,0.35)}
 
 /* CARDS */
 .card{

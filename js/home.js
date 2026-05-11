@@ -182,8 +182,8 @@ function renderInicio() {
   const appDone = !!appConfig?.completed;
 
   let statusLabel = 'Configura tu instalación';
-  let statusDetail =
-    'En <strong>Sistema</strong> indicas el hidro (RDWC, DWC, NFT…), la variedad, el nutriente y si está dentro o fuera. Con eso las pantallas te guían con números y recordatorios acordes a tu equipo, sin obligarte a ser técnico.';
+  let statusSublineHtml =
+    '<p class="dash-status-text">En <strong>Sistema</strong> indicas el hidro (RDWC, DWC, NFT…), la variedad, el nutriente y si está dentro o fuera. Con eso las pantallas te guían con números y recordatorios acordes a tu equipo, sin obligarte a ser técnico.</p>';
   if (hasGrow) {
     const rank = Number.isFinite(myGrow.nutri) ? myGrow.nutri : 1;
     const n =
@@ -191,18 +191,23 @@ function renderInicio() {
         ? nutrients.find((x) => x.rank === rank) || nutrients[0]
         : null;
     if (n) {
-      statusLabel = n.name;
-      statusDetail = `${n.brand} · Recargas y rangos según tu cultivo. <strong>Medir</strong> guarda lecturas y ajustes; si cultivas fuera, <strong>Climatología</strong> usa el tiempo de tu zona.`;
+      statusLabel = `Nutriente · ${n.name} — ${n.brand}`;
+      statusSublineHtml = '';
     } else {
       statusLabel = 'Cultivo activo';
-      statusDetail = 'Sigue la semana en curso, registra en Medir y revisa Cultivo para el resumen.';
+      statusSublineHtml =
+        '<p class="dash-status-text">' +
+        escapeHomeHtml('Sigue la semana en curso, registra en Medir y revisa Cultivo para el resumen.') +
+        '</p>';
     }
   } else if (appDone || skipWelcome) {
     statusLabel = 'Listo para arrancar';
-    statusDetail =
+    statusSublineHtml =
       skipWelcome && !appDone
-        ? 'Modo desarrollo activo. Entra en Sistema para el asistente completo.'
-        : 'Abre <strong>Cultivo</strong> o <strong>Variedades</strong> para empezar; los kits de tienda se configuran igual que un montaje casero: introduces lo que pone en la caja o la placa de la bomba.';
+        ? '<p class="dash-status-text">' +
+          escapeHomeHtml('Modo desarrollo activo. Entra en Sistema para el asistente completo.') +
+          '</p>'
+        : '<p class="dash-status-text">Abre <strong>Cultivo</strong> o <strong>Variedades</strong> para empezar; los kits de tienda se configuran igual que un montaje casero: introduces lo que pone en la caja o la placa de la bomba.</p>';
   }
 
   const checklistRows = expertChecklistItems
@@ -268,7 +273,7 @@ function renderInicio() {
       <div class="dash-status-icon"><i class="ti ti-plant"></i></div>
       <div>
         <div class="dash-status-label">${escapeHomeHtml(statusLabel)}</div>
-        <p class="dash-status-text">${escapeHomeHtml(statusDetail)}</p>
+        ${statusSublineHtml}
       </div>
     </section>
 

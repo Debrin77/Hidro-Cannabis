@@ -282,10 +282,13 @@
 
 <!-- ══════════════ APARIENCIA Y ACCESIBILIDAD ══════════════ -->
 <div class="view" id="view-accesibilidad">
-  <div class="page-header page-header--compact">
-    <div class="breadcrumb">Hydro Cannabis / Apariencia</div>
-    <h1>Apariencia y accesibilidad</h1>
-    <p>Elige el esquema de color de la interfaz. La preferencia se guarda en este dispositivo.</p>
+  <div class="page-header page-header--compact page-header--with-close">
+    <div class="page-header__col">
+      <div class="breadcrumb">Hydro Cannabis / Apariencia</div>
+      <h1>Apariencia y accesibilidad</h1>
+      <p>Elige el esquema de color de la interfaz. La preferencia se guarda en este dispositivo.</p>
+    </div>
+    <button type="button" class="page-header-close-btn" onclick="closeAccesibilidadView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
   <div id="accesibilidadContent"></div>
 </div>
