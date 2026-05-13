@@ -1,0 +1,605 @@
+{
+  "generated": "2026-04-12T07:49:23.437Z",
+  "zones": [
+    {
+      "emma": "ES070",
+      "areaDesc": "Valle del Almanzora y Los Vélez",
+      "lat": 36.84,
+      "lon": -2.43
+    },
+    {
+      "emma": "ES074",
+      "areaDesc": "Grazalema",
+      "lat": 36.7583892,
+      "lon": -5.366074
+    },
+    {
+      "emma": "ES078",
+      "areaDesc": "Sierra y Pedroches",
+      "lat": 38.28,
+      "lon": -5.22
+    },
+    {
+      "emma": "ES079",
+      "areaDesc": "Campiña cordobesa",
+      "lat": 37.88,
+      "lon": -4.78
+    },
+    {
+      "emma": "ES080",
+      "areaDesc": "Subbética cordobesa",
+      "lat": 37.4584125,
+      "lon": -4.2634833
+    },
+    {
+      "emma": "ES081",
+      "areaDesc": "Cuenca del Genil",
+      "lat": 37.18,
+      "lon": -3.6
+    },
+    {
+      "emma": "ES082",
+      "areaDesc": "Guadix y Baza",
+      "lat": 37.4134098,
+      "lon": -2.9190842
+    },
+    {
+      "emma": "ES083",
+      "areaDesc": "Nevada y Alpujarras",
+      "lat": 36.9943881,
+      "lon": -2.8953334
+    },
+    {
+      "emma": "ES088",
+      "areaDesc": "Morena y Condado",
+      "lat": 37.395535,
+      "lon": -6.3774742
+    },
+    {
+      "emma": "ES089",
+      "areaDesc": "Cazorla y Segura",
+      "lat": 38.1358351,
+      "lon": -0.6930995
+    },
+    {
+      "emma": "ES090",
+      "areaDesc": "Valle del Guadalquivir de Jaén",
+      "lat": 37.945966,
+      "lon": -2.9206371
+    },
+    {
+      "emma": "ES091",
+      "areaDesc": "Capital y Montes de Jaén",
+      "lat": 37.77,
+      "lon": -3.79
+    },
+    {
+      "emma": "ES092",
+      "areaDesc": "Antequera",
+      "lat": 37.0183652,
+      "lon": -4.5596649
+    },
+    {
+      "emma": "ES093",
+      "areaDesc": "Ronda",
+      "lat": 36.7421339,
+      "lon": -5.1665916
+    },
+    {
+      "emma": "ES094",
+      "areaDesc": "Sol y Guadalhorce",
+      "lat": 36.8461832,
+      "lon": -4.4988484
+    },
+    {
+      "emma": "ES095",
+      "areaDesc": "Axarquía",
+      "lat": 36.8664777,
+      "lon": -4.1110172
+    },
+    {
+      "emma": "ES096",
+      "areaDesc": "Sierra norte de Sevilla",
+      "lat": 37.2849111,
+      "lon": -5.9294468
+    },
+    {
+      "emma": "ES097",
+      "areaDesc": "Campiña sevillana",
+      "lat": 37.38,
+      "lon": -6.05
+    },
+    {
+      "emma": "ES098",
+      "areaDesc": "Sierra sur de Sevilla",
+      "lat": 37.4155911,
+      "lon": -6.1001769
+    },
+    {
+      "emma": "ES104",
+      "areaDesc": "Bajo Aragón de Teruel",
+      "lat": 40.9810893,
+      "lon": -0.1460616
+    },
+    {
+      "emma": "ES105",
+      "areaDesc": "Cinco Villas de Zaragoza",
+      "lat": 42.1277665,
+      "lon": -1.1388677
+    },
+    {
+      "emma": "ES106",
+      "areaDesc": "Ibérica zaragozana",
+      "lat": 41.65,
+      "lon": -0.75
+    },
+    {
+      "emma": "ES107",
+      "areaDesc": "Ribera del Ebro de Zaragoza",
+      "lat": 41.7705437,
+      "lon": -1.1207884
+    },
+    {
+      "emma": "ES117",
+      "areaDesc": "Sur de Mallorca",
+      "lat": 38.24688,
+      "lon": -0.7655223
+    },
+    {
+      "emma": "ES121",
+      "areaDesc": "Cumbres de Gran Canaria",
+      "lat": 28.1021782,
+      "lon": -15.4173236
+    },
+    {
+      "emma": "ES122",
+      "areaDesc": "Este, sur y oeste de Gran Canaria",
+      "lat": 27.95,
+      "lon": -15.52
+    },
+    {
+      "emma": "ES123",
+      "areaDesc": "Lanzarote",
+      "lat": 29.0397081,
+      "lon": -13.6362916
+    },
+    {
+      "emma": "ES125",
+      "areaDesc": "Cumbres de La Palma",
+      "lat": 36.7392006,
+      "lon": -4.43918
+    },
+    {
+      "emma": "ES126",
+      "areaDesc": "Este de La Palma",
+      "lat": 28.65,
+      "lon": -17.76
+    },
+    {
+      "emma": "ES127",
+      "areaDesc": "Oeste de La Palma",
+      "lat": 36.7558198,
+      "lon": -4.4442659
+    },
+    {
+      "emma": "ES128",
+      "areaDesc": "La Gomera",
+      "lat": 28.1192356,
+      "lon": -17.2257471
+    },
+    {
+      "emma": "ES129",
+      "areaDesc": "El Hierro",
+      "lat": 27.7435084,
+      "lon": -18.0381796
+    },
+    {
+      "emma": "ES130",
+      "areaDesc": "Norte de Tenerife",
+      "lat": 28.0374934,
+      "lon": -16.6076136
+    },
+    {
+      "emma": "ES131",
+      "areaDesc": "Área metropolitana de Tenerife",
+      "lat": 28.47,
+      "lon": -16.32
+    },
+    {
+      "emma": "ES132",
+      "areaDesc": "Este, sur y oeste de Tenerife",
+      "lat": 28.05,
+      "lon": -16.55
+    },
+    {
+      "emma": "ES137",
+      "areaDesc": "Meseta de Ávila",
+      "lat": 40.65,
+      "lon": -4.68
+    },
+    {
+      "emma": "ES138",
+      "areaDesc": "Sistema Central de Ávila",
+      "lat": 40.25,
+      "lon": -5.3
+    },
+    {
+      "emma": "ES144",
+      "areaDesc": "Ibérica de Burgos",
+      "lat": 42.5091163,
+      "lon": -3.3840823
+    },
+    {
+      "emma": "ES153",
+      "areaDesc": "Meseta de Segovia",
+      "lat": 41.011302,
+      "lon": -4.2906577
+    },
+    {
+      "emma": "ES154",
+      "areaDesc": "Sistema Central de Segovia",
+      "lat": 41.05,
+      "lon": -3.64
+    },
+    {
+      "emma": "ES155",
+      "areaDesc": "Ibérica de Soria",
+      "lat": 41.8199534,
+      "lon": -2.3711517
+    },
+    {
+      "emma": "ES162",
+      "areaDesc": "Alcaraz y Segura",
+      "lat": 38.2159365,
+      "lon": -0.8708605
+    },
+    {
+      "emma": "ES163",
+      "areaDesc": "Hellín y Almansa",
+      "lat": 38.8611126,
+      "lon": -1.0881623
+    },
+    {
+      "emma": "ES184",
+      "areaDesc": "Ampurdán",
+      "lat": 42.2902495,
+      "lon": 2.9751099
+    },
+    {
+      "emma": "ES186",
+      "areaDesc": "Valle de Arán",
+      "lat": 42.7256058,
+      "lon": 0.8503525
+    },
+    {
+      "emma": "ES192",
+      "areaDesc": "Litoral sur de Tarragona",
+      "lat": 41.02,
+      "lon": 1.22
+    },
+    {
+      "emma": "ES193",
+      "areaDesc": "Prelitoral sur de Tarragona",
+      "lat": 41.12,
+      "lon": 0.95
+    },
+    {
+      "emma": "ES195",
+      "areaDesc": "La Siberia extremeña",
+      "lat": 39.0430769,
+      "lon": -5.2347138
+    },
+    {
+      "emma": "ES196",
+      "areaDesc": "Barros y Serena",
+      "lat": 38.7039607,
+      "lon": -5.8774867
+    },
+    {
+      "emma": "ES197",
+      "areaDesc": "Sur de Badajoz",
+      "lat": 38.8595123,
+      "lon": -7.025651
+    },
+    {
+      "emma": "ES201",
+      "areaDesc": "Villuercas y Montánchez",
+      "lat": 39.42,
+      "lon": -5.22
+    },
+    {
+      "emma": "ES221",
+      "areaDesc": "Altiplano de Murcia",
+      "lat": 38.6135611,
+      "lon": -1.1158173
+    },
+    {
+      "emma": "ES222",
+      "areaDesc": "Noroeste de Murcia",
+      "lat": 38.0908501,
+      "lon": -1.801984
+    },
+    {
+      "emma": "ES223",
+      "areaDesc": "Vega del Segura",
+      "lat": 38.0141152,
+      "lon": -0.6930946
+    },
+    {
+      "emma": "ES224",
+      "areaDesc": "Valle del Guadalentín, Lorca y Águilas",
+      "lat": 37.68,
+      "lon": -1.7
+    },
+    {
+      "emma": "ES225",
+      "areaDesc": "Campo de Cartagena y Mazarrón",
+      "lat": 37.7176222,
+      "lon": -1.3471548
+    },
+    {
+      "emma": "ES228",
+      "areaDesc": "Pirineo navarro",
+      "lat": 42.82,
+      "lon": -1.3
+    },
+    {
+      "emma": "ES238",
+      "areaDesc": "Ibérica riojana",
+      "lat": 42.35,
+      "lon": -2.45
+    },
+    {
+      "emma": "ES240",
+      "areaDesc": "Interior de Alicante",
+      "lat": 38.694498,
+      "lon": -0.48702
+    },
+    {
+      "emma": "ES241",
+      "areaDesc": "Litoral sur de Alicante",
+      "lat": 38.02,
+      "lon": -0.66
+    },
+    {
+      "emma": "ES242",
+      "areaDesc": "Interior norte de Castellón",
+      "lat": 40.55,
+      "lon": -0.18
+    },
+    {
+      "emma": "ES243",
+      "areaDesc": "Litoral norte de Castellón",
+      "lat": 40.48,
+      "lon": 0.35
+    },
+    {
+      "emma": "ES244",
+      "areaDesc": "Interior sur de Castellón",
+      "lat": 39.96,
+      "lon": -0.26
+    },
+    {
+      "emma": "ES245",
+      "areaDesc": "Litoral sur de Castellón",
+      "lat": 39.986,
+      "lon": -0.036
+    },
+    {
+      "emma": "ES250",
+      "areaDesc": "Ceuta",
+      "lat": 35.888361,
+      "lon": -5.304138
+    },
+    {
+      "emma": "ES251",
+      "areaDesc": "Melilla",
+      "lat": 35.2918698,
+      "lon": -2.9409026
+    },
+    {
+      "emma": "ES840",
+      "areaDesc": "Costa - Gipuzkoa litoral",
+      "lat": 43.32,
+      "lon": -1.98
+    },
+    {
+      "emma": "ES841",
+      "areaDesc": "Costa - Bizkaia litoral",
+      "lat": 43.38,
+      "lon": -3.02
+    },
+    {
+      "emma": "ES842",
+      "areaDesc": "Costa - Litoral cántabro",
+      "lat": 43.46,
+      "lon": -3.81
+    },
+    {
+      "emma": "ES843",
+      "areaDesc": "Costa - Litoral oriental asturiano",
+      "lat": 43.55,
+      "lon": -5
+    },
+    {
+      "emma": "ES844",
+      "areaDesc": "Costa - Litoral occidental asturiano",
+      "lat": 43.57,
+      "lon": -6.95
+    },
+    {
+      "emma": "ES845",
+      "areaDesc": "Costa - A Mariña",
+      "lat": 43.6100002,
+      "lon": -7.5707024
+    },
+    {
+      "emma": "ES846",
+      "areaDesc": "Costa - Noroeste de A Coruña",
+      "lat": 43.75,
+      "lon": -7.85
+    },
+    {
+      "emma": "ES847",
+      "areaDesc": "Costa - Oeste de A Coruña",
+      "lat": 43.35,
+      "lon": -8.45
+    },
+    {
+      "emma": "ES848",
+      "areaDesc": "Costa - Suroeste de A Coruña",
+      "lat": 42.43,
+      "lon": -8.7
+    },
+    {
+      "emma": "ES849",
+      "areaDesc": "Costa - Rias Baixas",
+      "lat": 42.4,
+      "lon": -8.75
+    },
+    {
+      "emma": "ES850",
+      "areaDesc": "Costa - Miño de Pontevedra",
+      "lat": 42.090929,
+      "lon": -8.4756092
+    },
+    {
+      "emma": "ES853",
+      "areaDesc": "Costa - Estrecho",
+      "lat": 39.7769029,
+      "lon": -1.1878663
+    },
+    {
+      "emma": "ES854",
+      "areaDesc": "Costa - Sol y Guadalhorce",
+      "lat": 36.72,
+      "lon": -4.42
+    },
+    {
+      "emma": "ES855",
+      "areaDesc": "Costa - Axarquía",
+      "lat": 36.7738714,
+      "lon": -4.0382787
+    },
+    {
+      "emma": "ES856",
+      "areaDesc": "Costa - Costa granadina",
+      "lat": 36.7451873,
+      "lon": -3.5208166
+    },
+    {
+      "emma": "ES857",
+      "areaDesc": "Costa - Poniente y Almería Capital",
+      "lat": 36.84,
+      "lon": -2.45
+    },
+    {
+      "emma": "ES867",
+      "areaDesc": "Costa - Litoral sur de Tarragona",
+      "lat": 41.08,
+      "lon": 1.15
+    },
+    {
+      "emma": "ES870",
+      "areaDesc": "Costa - Litoral sur de Girona",
+      "lat": 41.72,
+      "lon": 2.8
+    },
+    {
+      "emma": "ES871",
+      "areaDesc": "Costa - Ceuta",
+      "lat": 35.89,
+      "lon": -5.32
+    },
+    {
+      "emma": "ES872",
+      "areaDesc": "Costa - Melilla",
+      "lat": 35.2977391,
+      "lon": -2.9504812
+    },
+    {
+      "emma": "ES873",
+      "areaDesc": "Costa - Ibiza y Formentera",
+      "lat": 38.98,
+      "lon": 1.42
+    },
+    {
+      "emma": "ES874",
+      "areaDesc": "Costa - Sur de Mallorca",
+      "lat": 39.35,
+      "lon": 2.98
+    },
+    {
+      "emma": "ES875",
+      "areaDesc": "Costa - Sierra Tramontana",
+      "lat": 39.5405253,
+      "lon": 2.561967
+    },
+    {
+      "emma": "ES876",
+      "areaDesc": "Costa - Norte y nordeste de Mallorca",
+      "lat": 39.85,
+      "lon": 3.05
+    },
+    {
+      "emma": "ES877",
+      "areaDesc": "Costa - Levante mallorquín",
+      "lat": 39.62,
+      "lon": 3.35
+    },
+    {
+      "emma": "ES878",
+      "areaDesc": "Costa - Menorca",
+      "lat": 39.835119,
+      "lon": 4.3029955
+    },
+    {
+      "emma": "ES879",
+      "areaDesc": "Costa - El Hierro",
+      "lat": 27.75,
+      "lon": -18
+    },
+    {
+      "emma": "ES880",
+      "areaDesc": "Costa - Oeste de La Palma",
+      "lat": 28.65,
+      "lon": -17.92
+    },
+    {
+      "emma": "ES882",
+      "areaDesc": "Costa - La Gomera",
+      "lat": 28.1074906,
+      "lon": -17.1280377
+    },
+    {
+      "emma": "ES885",
+      "areaDesc": "Costa - Este, sur y oeste de Tenerife",
+      "lat": 28.04,
+      "lon": -16.54
+    },
+    {
+      "emma": "ES886",
+      "areaDesc": "Costa - Este, sur y oeste de Gran Canaria",
+      "lat": 27.75,
+      "lon": -15.58
+    },
+    {
+      "emma": "ES888",
+      "areaDesc": "Costa - Fuerteventura",
+      "lat": 28.3992417,
+      "lon": -13.8554858
+    },
+    {
+      "emma": "ES889",
+      "areaDesc": "Costa - Lanzarote",
+      "lat": 28.9334362,
+      "lon": -13.6238422
+    },
+    {
+      "emma": "ES890",
+      "areaDesc": "Costa - Ampurdán",
+      "lat": 42.32,
+      "lon": 3.15
+    }
+  ]
+}

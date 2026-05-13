@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 228" fill="none">
+  <defs>
+    <linearGradient id="splashLeaf" x1="38" y1="24" x2="168" y2="140" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4ade80"/>
+      <stop offset="0.55" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="splashDrop" x1="100" y1="138" x2="100" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a7f3d0"/>
+      <stop offset="0.45" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+  <!-- Hoja -->
+  <path
+    d="M100 18c-36.8 0-64 28.6-64 66.2 0 28.4 17.4 53.8 40.2 66.4 7.4 4.1 15.5 6.4 23.8 6.4s16.4-2.3 23.8-6.4c22.8-12.6 40.2-38 40.2-66.4C164 46.6 136.8 18 100 18z"
+    fill="url(#splashLeaf)"/>
+  <!-- Nervadura central -->
+  <path d="M100 40v94" stroke="rgba(255,255,255,0.28)" stroke-width="4" stroke-linecap="round"/>
+  <!-- Nervaduras laterales suaves -->
+  <path d="M100 58c-18 10-30 24-34 42M100 72c16 12 28 28 32 46" stroke="rgba(255,255,255,0.14)" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Gota -->
+  <path
+    d="M100 132c-.8 0-21 17-21 38.2 0 18.6 15.6 31.8 21 31.8s21-13.2 21-31.8C121 149 100.8 132 100 132z"
+    fill="url(#splashDrop)"/>
+  <ellipse cx="93" cy="174" rx="7" ry="10" fill="rgba(255,255,255,0.38)"/>
+</svg>

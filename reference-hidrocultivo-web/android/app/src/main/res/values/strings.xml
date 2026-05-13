@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HidroCultivo</string>
+    <string name="title_activity_main">HidroCultivo</string>
+    <string name="package_name">es.hidrocultivo.app</string>
+    <string name="custom_url_scheme">es.hidrocultivo.app</string>
+</resources>
