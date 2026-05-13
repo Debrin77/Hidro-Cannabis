@@ -875,6 +875,76 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 }
 [data-theme='light'] .more-menu-row:hover{border-color:rgba(5,150,105,0.35)}
 
+.more-menu-section-label{
+  font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--text3);padding:14px 18px 6px;margin:0;
+}
+.more-menu-section-label--after{padding-top:18px;border-top:1px solid var(--border);margin-top:4px}
+
+/* HidroCultivo embebido (iframe) */
+#view-hc-embed.view.active{
+  display:flex;
+  flex-direction:column;
+  min-height:calc(100dvh - 5.5rem);
+}
+.hc-embed-view{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  gap:10px;
+  min-height:0;
+}
+.hc-embed-chrome{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  gap:12px;
+}
+.hc-embed-back{flex-shrink:0}
+.hc-embed-chrome-text{flex:1;min-width:0}
+.hc-embed-title{
+  font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;margin:4px 0 0;
+  line-height:1.15;color:var(--text);
+}
+.hc-embed-sub{font-size:13px;color:var(--text2);margin:6px 0 0;line-height:1.4}
+.hc-embed-alert{margin-bottom:0!important}
+.hc-embed-alert p{font-size:13px;line-height:1.5;margin:0}
+.hc-embed-frame{
+  flex:1;
+  width:100%;
+  min-height:280px;
+  height:calc(100dvh - 15rem - env(safe-area-inset-bottom));
+  max-height:900px;
+  border:1px solid var(--border);
+  border-radius:var(--radius2);
+  background:rgba(0,0,0,0.2);
+}
+[data-theme='light'] .hc-embed-frame{background:rgba(255,255,255,0.5)}
+
+/* Accesos rápidos HidroCultivo en Inicio */
+.dash-hc-strip{
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:linear-gradient(165deg,var(--surface),rgba(22,28,20,0.92));
+  padding:14px 16px 16px;
+  margin-bottom:1rem;
+}
+[data-theme='light'] .dash-hc-strip{background:var(--surface)}
+.dash-hc-strip__title{
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin:0 0 4px;
+  display:flex;align-items:center;gap:8px;color:var(--text);
+}
+.dash-hc-strip__lead{font-size:13px;color:var(--text2);margin:0 0 12px;line-height:1.45}
+.dash-hc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(min-width:420px){.dash-hc-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.dash-hc-btn{
+  font-size:12px;line-height:1.25;padding:10px 8px;border-radius:10px;
+  border:1px solid var(--border);background:var(--surface2);color:var(--text);
+  cursor:pointer;text-align:center;transition:border-color .15s,background .15s;
+}
+.dash-hc-btn:hover{border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.06)}
+[data-theme='light'] .dash-hc-btn:hover{border-color:rgba(5,150,105,0.35)}
+
 .empty-state{
   text-align:center;padding:2.5rem 1.35rem;border-radius:var(--radius2);
   border:1px dashed rgba(52,211,153,0.28);background:rgba(52,211,153,0.04);

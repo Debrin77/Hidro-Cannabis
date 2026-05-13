@@ -316,6 +316,19 @@ function renderInicio() {
 
     ${inicioPriorityHtml}
 
+    <section class="dash-hc-strip" aria-labelledby="dash-hc-title">
+      <h2 id="dash-hc-title" class="dash-hc-strip__title"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> HidroCultivo (referencia)</h2>
+      <p class="dash-hc-strip__lead">Mismas pantallas que la app general de hidroponía: torre, riego, meteo avanzado… El <strong>Medir</strong> de cannabis sigue en la barra inferior.</p>
+      <div class="dash-hc-grid">
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('inicio')">Inicio HC</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('sistema')">Sistema</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('riego')">Riego</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('meteo')">Meteo</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('calendario')">Cal. HC</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('ayuda')">Ayuda</button>
+      </div>
+    </section>
+
     ${weatherLabel}
     ${weatherAlerts}
     ${growAlertsHtml}

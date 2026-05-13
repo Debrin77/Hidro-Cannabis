@@ -122,6 +122,29 @@
   <div id="historialContent"></div>
 </div>
 
+<!-- ══════════════ HIDROCULTIVO (REFERENCIA EMBEBIDA) ══════════════ -->
+<div class="view" id="view-hc-embed">
+  <div class="hc-embed-view">
+    <div class="hc-embed-chrome">
+      <button type="button" class="btn btn-ghost hc-embed-back" onclick="navTo('inicio')" aria-label="Volver a inicio de Hydro Cannabis">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i> Hydro Cannabis
+      </button>
+      <div class="hc-embed-chrome-text">
+        <div class="breadcrumb">Integración / HidroCultivo</div>
+        <h1 class="hc-embed-title">Módulos de referencia</h1>
+        <p class="hc-embed-sub" id="hcEmbedSubtitle">Inicio</p>
+      </div>
+    </div>
+    <div class="alert info hc-embed-alert">
+      <i class="ti ti-info-circle" aria-hidden="true"></i>
+      <p>Aquí se carga la app <strong>HidroCultivo</strong> (hidroponía general: torre, riego, cultivos alimentarios). Tus <strong>variedades</strong> y la pestaña <strong>Medir</strong> de cannabis siguen en la barra inferior. Los datos guardados aquí usan otras claves de almacenaje que el cultivo cannabis.</p>
+    </div>
+    <iframe id="hcEmbedFrame" class="hc-embed-frame" title="HidroCultivo — módulos de referencia"
+      loading="lazy"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
+  </div>
+</div>
+
 <!-- ══════════════ CLIMATOLOGÍA ══════════════ -->
 <div class="view" id="view-climatologia">
   <div class="page-header">
@@ -167,7 +190,7 @@
       <span class="consejo-num">4</span>
       <div>
         <strong>Más (referencia)</strong>
-        <p>Variedades, nutrientes, legal y apariencia. El tiempo de tu zona está en la pestaña <strong>Clima</strong> de la barra inferior.</p>
+        <p>Variedades, nutrientes, legal y apariencia. Desde <strong>Más</strong> también abres los módulos <strong>HidroCultivo</strong> (torre, riego, meteo…). El tiempo de tu zona está en la pestaña <strong>Clima</strong> de la barra inferior.</p>
       </div>
     </div>
     <div class="alert info"><i class="ti ti-info-circle"></i><p>Los cálculos y tablas son <strong>guías</strong>. Ajusta siempre según tus mediciones y el fabricante de nutrientes.</p></div>
@@ -405,6 +428,44 @@
       <div class="more-menu-title">Más opciones</div>
       <button type="button" class="more-menu-close" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
+    <div class="more-menu-section-label">HidroCultivo (misma app de referencia)</div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('inicio')"><i class="ti ti-home"></i> Inicio (torre, meteo)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('sistema')"><i class="ti ti-layout-grid"></i> Cultivo e instalación</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Calendario (HC)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('riego')"><i class="ti ti-droplet"></i> Riego (HC)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('meteo')"><i class="ti ti-cloud"></i> Meteorología (HC)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('historial')"><i class="ti ti-chart-line"></i> Historial (HC)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('consejos')"><i class="ti ti-book"></i> Consejos (HC)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('ayuda')"><i class="ti ti-help"></i> Ayuda / manual (HC)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-item">
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('mediciones')"><i class="ti ti-gauge"></i> Medir versión HC (alimentario)</button>
+      <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="more-menu-section-label more-menu-section-label--after">Hydro Cannabis</div>
     <div class="more-menu-item">
       <button type="button" class="more-menu-row" onclick="navTo('consejos')"><i class="ti ti-bulb"></i> Consejos de uso</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
@@ -457,6 +518,7 @@
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
 <script src="js/navigation.js"></script>
+<script src="js/hcEmbed.js"></script>
 <script src="js/systemSizing.js"></script>
 <script src="js/strains.js"></script>
 <script src="js/nutrients.js"></script>

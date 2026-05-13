@@ -122,6 +122,7 @@ function applyNavView(view) {
   }
   if (view === 'consejos' && typeof renderConsejosPage === 'function') renderConsejosPage();
   if (view === 'accesibilidad' && typeof renderAccesibilidad === 'function') renderAccesibilidad();
+  if (view === 'hc-embed' && typeof window.applyHcEmbedView === 'function') window.applyHcEmbedView();
 }
 
 function navTo(view) {
