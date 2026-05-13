@@ -113,7 +113,12 @@ function applyNavView(view) {
   if (view === 'cultivo' && typeof renderCultivo === 'function') renderCultivo();
   if (view === 'monitor' && typeof renderMonitor === 'function') renderMonitor();
   if (view === 'semanas' && typeof renderSemanas === 'function') renderSemanas();
-  if (view === 'riego' && typeof renderRiego === 'function') renderRiego();
+  if (view === 'riego') {
+    if (typeof renderRiego === 'function') renderRiego();
+    window.requestAnimationFrame(() => {
+      if (typeof window.refreshRiegoOnTabFocus === 'function') window.refreshRiegoOnTabFocus();
+    });
+  }
   if (view === 'nutrientes' && typeof renderNutrientes === 'function') renderNutrientes();
   if (view === 'historial' && typeof renderHistorial === 'function') renderHistorial();
   if (view === 'climatologia') {

@@ -71,6 +71,46 @@ async function riegoFetchEt0Hourly(lat, lon) {
   return r.json();
 }
 
+/** Reutilizar hourly del bundle de Climatología si es reciente y coincide la rejilla. */
+const RIEGO_REUSE_SITE_WEATHER_MAX_MS = 4 * 60 * 60 * 1000;
+const RIEGO_REUSE_COORD_MATCH_DEG = 0.08;
+
+function riegoHourlyFromSiteWeather(sw) {
+  const h = sw?.hourly;
+  if (!h || !Array.isArray(h.time) || h.time.length < 8) return null;
+  const et0 = h.et0_fao_evapotranspiration;
+  const tH = h.temperature_2m;
+  const rhH = h.relative_humidity_2m;
+  if (!Array.isArray(et0) || et0.length !== h.time.length) return null;
+  if (!Array.isArray(tH) || tH.length !== h.time.length) return null;
+  if (!Array.isArray(rhH) || rhH.length !== h.time.length) return null;
+  const wH =
+    Array.isArray(h.wind_speed_10m) && h.wind_speed_10m.length === h.time.length ? h.wind_speed_10m : null;
+  return {
+    time: h.time,
+    et0_fao_evapotranspiration: et0,
+    temperature_2m: tH,
+    relative_humidity_2m: rhH,
+    wind_speed_10m: wH || h.time.map(() => NaN),
+  };
+}
+
+function riegoCanReuseSiteWeatherHourly(sw, coords, todayStr) {
+  if (!sw || !coords || !sw.updatedAt) return false;
+  if (Date.now() - new Date(sw.updatedAt).getTime() > RIEGO_REUSE_SITE_WEATHER_MAX_MS) return false;
+  if (!Number.isFinite(sw.lat) || !Number.isFinite(sw.lon)) return false;
+  if (
+    Math.abs(sw.lat - coords.lat) > RIEGO_REUSE_COORD_MATCH_DEG ||
+    Math.abs(sw.lon - coords.lon) > RIEGO_REUSE_COORD_MATCH_DEG
+  ) {
+    return false;
+  }
+  const block = riegoHourlyFromSiteWeather(sw);
+  if (!block) return false;
+  const et0Today = sumHourlyForCalendarDay(block.time, block.et0_fao_evapotranspiration, todayStr);
+  return et0Today != null && Number.isFinite(et0Today);
+}
+
 function riegoHintsExterior({ et0Today, tmax, tmin, windMax, probRain, vpdMean }) {
   const lines = [];
   if (et0Today != null && Number.isFinite(et0Today)) {
@@ -120,6 +160,43 @@ function persistRiegoNativeSnapshot(patch) {
   if (typeof saveGrowState === 'function') saveGrowState();
 }
 
+/** Tras guardar pronóstico en Climatología: recalcula riego nativo sin bloquear la UI. */
+let fusionRiegoRefreshTimer = null;
+function scheduleFusionRiegoRefresh() {
+  if (typeof myGrow === 'undefined' || !myGrow) return;
+  if (fusionRiegoRefreshTimer != null) clearTimeout(fusionRiegoRefreshTimer);
+  fusionRiegoRefreshTimer = window.setTimeout(() => {
+    fusionRiegoRefreshTimer = null;
+    if (typeof myGrow === 'undefined' || !myGrow || riegoUiLoading) return;
+    refreshRiegoNativeData();
+  }, 450);
+}
+
+/** Al abrir la pestaña Riego: refresco suave si el cálculo falta o está viejo (>20 min) o hubo error. */
+let riegoLastTabFocusKickMs = 0;
+function refreshRiegoOnTabFocus() {
+  if (typeof myGrow === 'undefined' || !myGrow || riegoUiLoading) return;
+  const now = Date.now();
+  if (now - riegoLastTabFocusKickMs < 48000) return;
+  const snap = myGrow.fusion?.riegoNative;
+  const age = snap?.updatedAt ? now - new Date(snap.updatedAt).getTime() : Infinity;
+  const stale =
+    !snap?.updatedAt ||
+    snap.error === 'sin-coords' ||
+    !!snap.error ||
+    age > 20 * 60 * 1000;
+  if (!stale) return;
+  riegoLastTabFocusKickMs = now;
+  refreshRiegoNativeData();
+}
+
+function repaintFusionSurfacesAfterRiego() {
+  const h = typeof location !== 'undefined' && location.hash ? location.hash.slice(1) : '';
+  if (h === 'historial' && typeof renderHistorial === 'function') renderHistorial();
+  if (h === 'semanas' && typeof renderSemanas === 'function') renderSemanas();
+  if (h === 'inicio' && typeof renderInicio === 'function') renderInicio();
+}
+
 let riegoUiLoading = false;
 
 async function refreshRiegoNativeData() {
@@ -137,19 +214,43 @@ async function refreshRiegoNativeData() {
       persistRiegoNativeSnapshot({
         updatedAt: new Date().toISOString(),
         error: 'sin-coords',
+        hourlySeriesSource: null,
       });
       riegoUiLoading = false;
       renderRiego();
+      repaintFusionSurfacesAfterRiego();
       return;
     }
-    const wx = await riegoFetchEt0Hourly(coords.lat, coords.lon);
-    const times = wx.hourly?.time;
-    const et0 = wx.hourly?.et0_fao_evapotranspiration;
-    const tH = wx.hourly?.temperature_2m;
-    const rhH = wx.hourly?.relative_humidity_2m;
-    const wH = wx.hourly?.wind_speed_10m;
     const today = riegoLocalDateStr(new Date());
-    const et0Today = sumHourlyForCalendarDay(times, et0, today);
+    const sw = myGrow.siteWeather;
+    let times;
+    let et0;
+    let tH;
+    let rhH;
+    let wH;
+    let hourlySeriesSource = 'api_open_meteo';
+
+    if (riegoCanReuseSiteWeatherHourly(sw, coords, today)) {
+      const b = riegoHourlyFromSiteWeather(sw);
+      times = b.time;
+      et0 = b.et0_fao_evapotranspiration;
+      tH = b.temperature_2m;
+      rhH = b.relative_humidity_2m;
+      wH = b.wind_speed_10m;
+      hourlySeriesSource = 'site_weather_bundle';
+    }
+
+    let et0Today = sumHourlyForCalendarDay(times, et0, today);
+    if (et0Today == null || !Number.isFinite(et0Today)) {
+      const wx = await riegoFetchEt0Hourly(coords.lat, coords.lon);
+      times = wx.hourly?.time;
+      et0 = wx.hourly?.et0_fao_evapotranspiration;
+      tH = wx.hourly?.temperature_2m;
+      rhH = wx.hourly?.relative_humidity_2m;
+      wH = wx.hourly?.wind_speed_10m;
+      hourlySeriesSource = 'api_open_meteo';
+      et0Today = sumHourlyForCalendarDay(times, et0, today);
+    }
     const tMean = meanHourlyForCalendarDay(times, tH, today);
     const rhMean = meanHourlyForCalendarDay(times, rhH, today);
     const wMean = meanHourlyForCalendarDay(times, wH, today);
@@ -241,15 +342,18 @@ async function refreshRiegoNativeData() {
       pulseMinON,
       pulseMinOFF,
       riegoPctCiclo: pctCiclo,
+      hourlySeriesSource,
     });
   } catch (e) {
     persistRiegoNativeSnapshot({
       updatedAt: new Date().toISOString(),
       error: String(e.message || e || 'error'),
+      hourlySeriesSource: null,
     });
   } finally {
     riegoUiLoading = false;
     renderRiego();
+    repaintFusionSurfacesAfterRiego();
   }
 }
 
@@ -275,12 +379,16 @@ function renderRiego() {
   let dataBlock = '';
   if (riegoUiLoading) {
     dataBlock =
-      '<div class="alert info"><i class="ti ti-refresh"></i><p>Consultando Open-Meteo (ET₀ horario)…</p></div>';
+      '<div class="alert info"><i class="ti ti-refresh"></i><p>Calculando ET₀ y VPD (reutiliza pronóstico guardado si aplica)…</p></div>';
   } else if (snap?.error === 'sin-coords') {
     dataBlock = `<div class="alert warn"><i class="ti ti-map-pin"></i><p>Sin coordenadas: abre <strong>Climatología</strong> y pulsa <strong>Actualizar pronóstico</strong> (o indica ciudad en cultivo) para geolocalizar y calcular ET₀.</p></div>
       <button type="button" class="btn btn-ghost" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología</button>`;
   } else if (snap?.error) {
-    dataBlock = `<div class="alert warn"><i class="ti ti-alert-triangle"></i><p>${escRiego(snap.error)}</p></div>`;
+    dataBlock = `<div class="alert warn"><i class="ti ti-alert-triangle"></i><p>${escRiego(snap.error)}</p></div>
+      <div class="riego-toolbar riego-toolbar--after-alert">
+        <button type="button" class="btn btn-primary btn--compact" onclick="refreshRiegoNativeData()" ${riegoUiLoading ? 'disabled' : ''}><i class="ti ti-refresh"></i> Reintentar</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología</button>
+      </div>`;
   } else if (snap?.updatedAt) {
     const et0 = Number.isFinite(snap.et0TodayMm) ? snap.et0TodayMm : null;
     const hints =
@@ -311,6 +419,11 @@ function renderRiego() {
             : '<p class="text-muted">No se pudo sumar ET₀ para el día local (serie incompleta).</p>'
         }
         ${Number.isFinite(snap.vpdMeanKpa) ? `<p class="text-muted">VPD medio estimado (modelo): ~${snap.vpdMeanKpa.toFixed(2)} kPa.</p>` : ''}
+        ${
+          snap.hourlySeriesSource === 'site_weather_bundle'
+            ? '<p class="text-muted riego-reuse-hint"><i class="ti ti-database"></i> Serie horaria reutilizada del pronóstico guardado en <strong>Climatología</strong> (misma rejilla; sin petición duplicada a Open-Meteo).</p>'
+            : ''
+        }
         <ul class="riego-hint-list">${hints.map((h) => `<li>${h}</li>`).join('')}</ul>
       </div>
       ${
@@ -338,7 +451,7 @@ function renderRiego() {
       <p class="body-prose">Emplazamiento: <strong>${escRiego(placement)}</strong> · Sistema: <strong>${escRiego(sys)}</strong>${
     resL != null ? ` · Depósito ~<strong>${resL} L</strong>` : ''
   }.</p>
-      <p class="body-prose body-prose--tight">Incluye <strong>ET₀</strong>, <strong>VPD</strong>, demanda tipo HC y <strong>pulsos ON/OFF</strong> orientativos. Torre vertical, nocturno fino y compatibilidad NFT/DWC avanzada siguen en <strong>Riego completo (HC)</strong>.</p>
+      <p class="body-prose body-prose--tight">Incluye <strong>ET₀</strong>, <strong>VPD</strong>, demanda tipo HC y <strong>pulsos ON/OFF</strong> orientativos. Tras guardar en <strong>Climatología</strong>, el cálculo se sincroniza solo en unos instantes. Torre vertical y compatibilidad avanzada siguen en <strong>Riego completo (HC)</strong>.</p>
       <div class="riego-toolbar">
         <button type="button" class="btn btn-primary" onclick="refreshRiegoNativeData()" ${riegoUiLoading ? 'disabled' : ''}>
           <i class="ti ti-refresh"></i> Actualizar datos
@@ -353,3 +466,5 @@ function renderRiego() {
 
 window.renderRiego = renderRiego;
 window.refreshRiegoNativeData = refreshRiegoNativeData;
+window.scheduleFusionRiegoRefresh = scheduleFusionRiegoRefresh;
+window.refreshRiegoOnTabFocus = refreshRiegoOnTabFocus;

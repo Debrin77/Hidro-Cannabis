@@ -516,6 +516,7 @@ function applyClimaBundleToGrowOrConfig(bundle, geoLabel) {
       myGrow.climate.source = 'Open-Meteo (rejilla + API elevación)';
     }
     saveGrowState();
+    if (typeof window.scheduleFusionRiegoRefresh === 'function') window.scheduleFusionRiegoRefresh();
   } else {
     if (!appConfig) appConfig = {};
     appConfig.climaSnapshot = bundle;
@@ -524,12 +525,13 @@ function applyClimaBundleToGrowOrConfig(bundle, geoLabel) {
 }
 
 /**
- * @param {{ force?: boolean, manageButton?: boolean }} opts
+ * @param {{ force?: boolean, manageButton?: boolean, notifyOnSuccess?: boolean }} opts
  * force: ignorar antirrebote (p. ej. botón Actualizar)
  * manageButton: deshabilitar botón mientras carga
+ * notifyOnSuccess: aviso breve al terminar bien (solo acciones explícitas del usuario)
  */
 async function refreshClimatologiaData(opts = {}) {
-  const { force = false, manageButton = true } = opts;
+  const { force = false, manageButton = true, notifyOnSuccess = false } = opts;
   const label = getClimaLocationLabel();
 
   if (!label) {
@@ -602,6 +604,9 @@ async function refreshClimatologiaData(opts = {}) {
     };
 
     applyClimaBundleToGrowOrConfig(bundle, geo.label);
+    if (notifyOnSuccess && typeof window.showHydroToast === 'function') {
+      window.showHydroToast('Pronóstico guardado en este dispositivo');
+    }
   } catch (e) {
     climaApiErrorMessage = e.message || 'Error al cargar clima.';
   } finally {
@@ -615,7 +620,7 @@ async function refreshClimatologiaData(opts = {}) {
 }
 
 async function refreshClimatologiaFromUi() {
-  await refreshClimatologiaData({ force: true, manageButton: true });
+  await refreshClimatologiaData({ force: true, manageButton: true, notifyOnSuccess: true });
 }
 
 /**
@@ -645,7 +650,7 @@ async function applyClimaManualLocationAndRefresh() {
   saveAppConfig();
 
   climaApiErrorMessage = '';
-  await refreshClimatologiaData({ force: true, manageButton: true });
+  await refreshClimatologiaData({ force: true, manageButton: true, notifyOnSuccess: true });
   if (typeof renderMonitor === 'function') renderMonitor();
   if (typeof renderInicio === 'function') renderInicio();
   if (typeof renderCultivo === 'function') renderCultivo();
@@ -849,7 +854,15 @@ function renderClimatologia() {
       ${gridRows}
       ${elevRow}
       ${altList}
-      <div id="climaError">${climaApiErrorMessage ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${escapeHtmlClima(climaApiErrorMessage)}</p></div>` : ''}</div>
+      <div id="climaError">${
+        climaApiErrorMessage
+          ? `<div class="alert danger"><i class="ti ti-alert-circle"></i><p>${escapeHtmlClima(climaApiErrorMessage)}</p></div>
+        <div class="clima-error-actions">
+          <button type="button" class="btn btn-primary btn--compact" onclick="refreshClimatologiaFromUi()"><i class="ti ti-refresh"></i> Reintentar</button>
+          <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('inicio')"><i class="ti ti-home"></i> Inicio</button>
+        </div>`
+          : ''
+      }</div>
     </div>
 
     ${

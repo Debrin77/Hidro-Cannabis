@@ -149,6 +149,158 @@ function escapeHomeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function getGrowReadinessFlags(grow) {
+  const checklistTotal = expertChecklistItems.length;
+  if (!grow) {
+    return {
+      strainOk: false,
+      locOk: false,
+      climaOk: false,
+      medirOk: false,
+      checklistDone: 0,
+      checklistTotal,
+      checklistPct: 0,
+    };
+  }
+  const locOk = (grow.location || '').trim().length >= 2;
+  const ext = grow.placement === 'exterior';
+  const climaOk = !ext || !!(grow.siteWeather && grow.siteWeather.updatedAt);
+  const strainOk = !!(grow.strain && grow.strain.name);
+  const ms = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const medirOk = ms.length > 0;
+  const map = getExpertChecklistState();
+  const checklistDone = expertChecklistItems.filter((x) => map[x.id]).length;
+  const checklistPct = checklistTotal ? Math.round((checklistDone / checklistTotal) * 100) : 0;
+  return { strainOk, locOk, climaOk, medirOk, checklistDone, checklistTotal, checklistPct };
+}
+
+function hcEmbedHasBeenVisited() {
+  try {
+    return sessionStorage.getItem('hydroCannabis.hcEmbedVisited') === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Alineado con HC_NATIVE_PORT_PHASES (js/hcEmbed.js), según datos guardados en el dispositivo. */
+function getHcNativePortPhaseHits(grow) {
+  const phases = window.HC_NATIVE_PORT_PHASES || [];
+  if (!phases.length) return { hits: 0, total: 0, pct: 0 };
+  if (!grow) return { hits: 0, total: phases.length, pct: 0 };
+
+  const sw = grow.siteWeather;
+  const rn = grow.fusion && grow.fusion.riegoNative;
+  const ms = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const map = getExpertChecklistState();
+  const chk = expertChecklistItems.filter((x) => map[x.id]).length;
+  const fusion = grow.fusion && typeof grow.fusion === 'object' ? grow.fusion : {};
+  const fusionTouched = Object.keys(fusion).some((k) => fusion[k] != null);
+  const ext = grow.placement === 'exterior';
+
+  let hits = 0;
+  for (const ph of phases) {
+    let ok = false;
+    switch (ph.id) {
+      case 'datos':
+        ok =
+          fusionTouched ||
+          !!(grow.fusion?.growContext && typeof grow.fusion.growContext.syncedAt === 'string');
+        break;
+      case 'riego':
+        ok = !!(rn && rn.updatedAt && !rn.error);
+        break;
+      case 'meteo':
+        ok = !!(sw && sw.updatedAt && sw.daily && sw.daily.time && sw.daily.time.length);
+        break;
+      case 'calendario':
+        ok = !!(sw && sw.hourly && sw.hourly.time && sw.hourly.time.length);
+        break;
+      case 'sistema':
+        ok = !!(grow.system && grow.strain);
+        break;
+      case 'inicio':
+        ok = !!(
+          (rn && rn.updatedAt && !rn.error) ||
+          (sw && sw.daily && sw.daily.time && sw.daily.time.length && (!ext || sw.updatedAt))
+        );
+        break;
+      case 'historial':
+        ok = ms.length > 0 || (Array.isArray(grow.log) && grow.log.length > 2);
+        break;
+      case 'consejos':
+        ok = chk >= 2;
+        break;
+      case 'ayuda':
+        ok = chk >= 6;
+        break;
+      case 'mediciones':
+        ok = hcEmbedHasBeenVisited();
+        break;
+      default:
+        ok = false;
+    }
+    if (ok) hits += 1;
+  }
+  const total = phases.length;
+  const pct = total ? Math.round((hits / total) * 100) : 0;
+  return { hits, total, pct };
+}
+
+function buildInicioCultivoSetupPct(gf) {
+  const four = [gf.strainOk, gf.locOk, gf.climaOk, gf.medirOk].filter(Boolean).length;
+  const base = (four / 4) * 78 + (gf.checklistPct / 100) * 22;
+  return Math.min(100, Math.round(base));
+}
+
+function buildInicioAppProgressCardHtml() {
+  if (!myGrow) {
+    return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
+      <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
+      <p class="dash-progress-lead">Activa un cultivo en <strong>Cultivo</strong> para ver barras, el port respecto a HidroCultivo y avisos al guardar medidas o clima.</p>
+      <div class="dash-progress-meter-wrap" aria-hidden="true">
+        <div class="dash-progress-meter"><span style="width:0%"></span></div>
+      </div>
+      <button type="button" class="btn btn-primary btn--compact" onclick="navTo('cultivo')"><i class="ti ti-bucket"></i> Configurar cultivo</button>
+    </section>`;
+  }
+
+  const gf = getGrowReadinessFlags(myGrow);
+  const cultivoPct = buildInicioCultivoSetupPct(gf);
+  const port = getHcNativePortPhaseHits(myGrow);
+  const fourOk = [gf.strainOk, gf.locOk, gf.climaOk, gf.medirOk].filter(Boolean).length;
+
+  return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
+    <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
+    <p class="dash-progress-lead">Resumen de lo que ya enlazaste en este dispositivo: checklist operativo y fases del port nativo (orden en Más → HidroCultivo).</p>
+    <div class="dash-progress-rows">
+      <div>
+        <div class="dash-progress-row__head">
+          <span class="dash-progress-row__label">Tu cultivo</span>
+          <span class="dash-progress-row__val">${cultivoPct}% · ${fourOk}/4 pasos</span>
+        </div>
+        <div class="dash-progress-meter-wrap">
+          <div class="dash-progress-meter"><span style="width:${cultivoPct}%"></span></div>
+        </div>
+        <p class="dash-progress-hint">${escapeHomeHtml(`Buenas prácticas: ${gf.checklistDone}/${gf.checklistTotal} · ${gf.checklistPct}%.`)}</p>
+      </div>
+      <div>
+        <div class="dash-progress-row__head">
+          <span class="dash-progress-row__label">Port HidroCultivo → nativo</span>
+          <span class="dash-progress-row__val">${port.hits}/${port.total} · ${port.pct}%</span>
+        </div>
+        <div class="dash-progress-meter-wrap">
+          <div class="dash-progress-meter dash-progress-meter--secondary"><span style="width:${port.pct}%"></span></div>
+        </div>
+        <p class="dash-progress-hint">Abre al menos una pestaña embebida para contar la fase «Medir HC» (cultivos alimentarios).</p>
+      </div>
+    </div>
+    <div class="dash-progress-actions">
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-ready-card')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Listo para cultivar</button>
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-expert-check-section')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Checklist buenas prácticas</button>
+    </div>
+  </section>`;
+}
+
 function renderConsejosPage() {
   const host = document.getElementById('consejosStrainSpecs');
   if (!host || typeof renderStrainSpecsTableHtml !== 'function') return;
@@ -164,6 +316,16 @@ function renderConsejosPage() {
       <div class="alert info"><i class="ti ti-gauge"></i><p><strong>Qué conviene medir:</strong> pH y EC del líquido y, si puedes, temperatura del agua. En el aire, temperatura y humedad cerca de las plantas. El CO₂ solo aporta en espacio cerrado; la luz (lux o PAR) ayuda a regular la lámpara. Marca en <strong>Cultivo</strong> solo lo que de verdad tienes: así las pantallas no te abruman.</p></div>
       <div class="alert info"><i class="ti ti-wind"></i><p><strong>Dos “aires” distintos:</strong> la bomba de burbujas oxigena el <strong>nutriente</strong>; el extractor renueva el <strong>aire del cuarto o armario</strong>. En <strong>Cultivo</strong> verás referencias para ambos. Los kits de tienda se rellenan como un montaje casero: caudales y litros según la ficha o la placa del equipo.</p></div>
       ${learnBlock}
+    </div>
+    <div class="card consejos-fusion-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-link"></i> Fusión con HidroCultivo</div></div>
+      <p class="body-prose body-prose--tight">Aquí tienes el flujo <strong>cannabis</strong> (Medir, variedades, calendario por cepa). <strong>HidroCultivo</strong> embebido (Más) aporta torre, mallas agrícolas y módulos generales: la misma <strong>ubicación y pronóstico</strong> alimentan ET₀, VPD y riego nativo en esta app.</p>
+      <p class="body-prose body-prose--tight">Al guardar en <strong>Climatología</strong>, el riego nativo se recalcula solo unos instantes después para mantener <strong>Historial</strong>, <strong>Calendario</strong> y <strong>Riego</strong> alineados.</p>
+      <div class="consejos-fusion-actions">
+        <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego nativo</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('historial')"><i class="ti ti-history"></i> Historial</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-layout-dashboard"></i> Panel HC</button>
+      </div>
     </div>
     ${renderStrainSpecsTableHtml()}
   `;
@@ -259,6 +421,52 @@ function buildInicioForecastWidgetHtml() {
         <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología</button>
       </div>
     </div>
+  </section>`;
+}
+
+function buildInicioReadinessCardHtml() {
+  if (!myGrow) return '';
+  const gf = getGrowReadinessFlags(myGrow);
+  const { strainOk, locOk, climaOk, medirOk, checklistDone: done, checklistTotal: total, checklistPct: pct } = gf;
+  const ext = myGrow.placement === 'exterior';
+  const sys = myGrow.system || 'DWC';
+
+  function row(ok, title, hintHtml, view, btnLabel) {
+    const icon = ok ? 'ti-check' : 'ti-circle';
+    const cls = ok ? 'dash-ready-row dash-ready-row--ok' : 'dash-ready-row';
+    const btn =
+      !ok && view
+        ? `<button type="button" class="btn btn-ghost btn--tiny" onclick="navTo('${view}')">${escapeHomeHtml(btnLabel)}</button>`
+        : '';
+    return `<li class="${cls}"><i class="ti ${icon}" aria-hidden="true"></i><div class="dash-ready-row__text"><strong>${escapeHomeHtml(title)}</strong><span class="dash-ready-hint">${hintHtml}</span></div>${btn}</li>`;
+  }
+
+  const strainHint = strainOk
+    ? escapeHomeHtml(`${myGrow.strain.name} · ${sys}`)
+    : escapeHomeHtml('Completa variedad, nutriente y sistema en Cultivo.');
+  const locHint = locOk
+    ? escapeHomeHtml('Ubicación lista para geocódigo y APIs.')
+    : escapeHomeHtml('Indica ciudad o zona en Cultivo o Climatología.');
+  const climaHint = ext
+    ? climaOk
+      ? escapeHomeHtml('Pronóstico guardado para exterior.')
+      : escapeHomeHtml('Actualiza el pronóstico en Climatología.')
+    : escapeHomeHtml('En interior el pronóstico exterior es opcional.');
+  const medirHint = medirOk
+    ? escapeHomeHtml('Ya hay lecturas para tendencias y alertas.')
+    : escapeHomeHtml('Registra pH y EC para cruzar con el plan semanal.');
+
+  const rows = [
+    row(strainOk, 'Cultivo configurado', strainHint, 'cultivo', 'Cultivo'),
+    row(locOk, 'Ubicación', locHint, 'cultivo', 'Cultivo'),
+    row(climaOk, 'Clima', climaHint, 'climatologia', 'Clima'),
+    row(medirOk, 'Medir', medirHint, 'monitor', 'Medir'),
+  ].join('');
+
+  return `<section id="dash-ready-card" class="dash-ready-card" aria-labelledby="dash-ready-title">
+    <h2 id="dash-ready-title" class="dash-ready-title"><i class="ti ti-checklist"></i> Listo para cultivar</h2>
+    <p class="dash-ready-lead">${escapeHomeHtml(`Buenas prácticas (más abajo): ${done}/${total} · ${pct}%.`)}</p>
+    <ul class="dash-ready-list">${rows}</ul>
   </section>`;
 }
 
@@ -408,7 +616,11 @@ function renderInicio() {
       </div>
     </section>
 
+    ${buildInicioAppProgressCardHtml()}
+
     ${inicioPriorityHtml}
+
+    ${buildInicioReadinessCardHtml()}
 
     ${buildInicioFusionStatusHtml()}
 
@@ -433,7 +645,7 @@ function renderInicio() {
     ${weatherAlerts}
     ${growAlertsHtml}
 
-    <details class="dash-check-section">
+    <details class="dash-check-section" id="dash-expert-check-section">
       <summary class="dash-check-summary">
         <div class="dash-check-summary__grow">
           <div class="dash-check-summary__topline">

@@ -1,6 +1,6 @@
 /* Caché ligera del shell para uso offline parcial (PWA / Play).
  * Al cambiar lógica o recursos críticos, sube la versión para vaciar cachés antiguas. */
-const CACHE_NAME = 'hydro-cannabis-shell-v8';
+const CACHE_NAME = 'hydro-cannabis-shell-v13';
 const SHELL = [
   './',
   './index.html',
@@ -10,6 +10,8 @@ const SHELL = [
   './js/data.js',
   './js/state.js',
   './js/navigation.js',
+  './js/hcEmbed.js',
+  './js/ayuda.js',
   './js/systemSizing.js',
   './js/strains.js',
   './js/nutrients.js',
@@ -20,7 +22,9 @@ const SHELL = [
   './js/trendCharts.js',
   './js/semanas.js',
   './js/home.js',
+  './js/meteoRiegoCore.js',
   './js/clima.js',
+  './js/riego.js',
   './js/main.js',
   './manifest.webmanifest',
   './assets/icons/cannabis-start.svg',

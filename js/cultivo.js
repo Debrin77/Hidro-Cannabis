@@ -207,6 +207,7 @@ function saveGrowLocationAndPlacement() {
     saveAppConfig();
   }
   saveGrowState();
+  if (typeof window.showHydroToast === 'function') window.showHydroToast('Ubicación e instalación guardadas');
   renderActiveGrow();
   if (typeof renderMonitor === 'function') renderMonitor();
   if (typeof renderClimatologia === 'function') renderClimatologia();

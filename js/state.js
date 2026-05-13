@@ -73,7 +73,45 @@ function normalizeGrowFusion(f) {
   if (out.riegoNative != null && (typeof out.riegoNative !== 'object' || Array.isArray(out.riegoNative))) {
     delete out.riegoNative;
   }
+  if (out.growContext != null && (typeof out.growContext !== 'object' || Array.isArray(out.growContext))) {
+    delete out.growContext;
+  }
   return out;
+}
+
+/**
+ * Resumen estable del cultivo para alinear fase 0 (modelo compartido / HC).
+ * Se actualiza al guardar estado; no sustituye el cultivo completo en JSON.
+ */
+function syncGrowFusionContext(grow) {
+  if (!grow) return;
+  if (!grow.fusion || typeof grow.fusion !== 'object') grow.fusion = {};
+  let siteCount = 1;
+  try {
+    if (typeof getConfiguredSiteCount === 'function') siteCount = getConfiguredSiteCount(grow);
+  } catch (_) {
+    /* ignore */
+  }
+  const hc =
+    grow.hardwareComplements && typeof grow.hardwareComplements === 'object' && !Array.isArray(grow.hardwareComplements)
+      ? grow.hardwareComplements
+      : {};
+  grow.fusion.growContext = {
+    syncedAt: new Date().toISOString(),
+    system: grow.system || null,
+    placement: grow.placement || null,
+    reservoirL: Number.isFinite(grow.reservoirL) ? grow.reservoirL : null,
+    water: grow.water || null,
+    siteCount: Number.isFinite(siteCount) ? siteCount : 1,
+    strainId: grow.strain && grow.strain.id ? grow.strain.id : null,
+    enclosureType: hc.enclosureType || null,
+    enclosureVolumeM3: Number.isFinite(hc.enclosureVolumeM3) ? hc.enclosureVolumeM3 : null,
+    activeInstallationId:
+      typeof grow.activeInstallationId === 'string' && grow.activeInstallationId.trim()
+        ? grow.activeInstallationId.trim()
+        : null,
+    nutriRank: Number.isFinite(grow.nutri) ? grow.nutri : null,
+  };
 }
 
 function serializeGrow(grow) {
@@ -146,6 +184,7 @@ function saveGrowState() {
       return;
     }
     if (typeof syncCurrentSystemWorkspaceState === 'function') syncCurrentSystemWorkspaceState();
+    syncGrowFusionContext(myGrow);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeGrow(myGrow)));
   } catch (error) {
     console.warn('No se pudo guardar el cultivo localmente.', error);
@@ -167,6 +206,7 @@ function loadGrowState() {
     }
     if (myGrow && typeof ensureSystemWorkspaces === 'function') ensureSystemWorkspaces(myGrow);
     if (myGrow && typeof syncCurrentSystemWorkspaceState === 'function') syncCurrentSystemWorkspaceState();
+    if (myGrow) syncGrowFusionContext(myGrow);
     if (myGrow && hadLegacyRdwcIds) saveGrowState();
   } catch (error) {
     console.warn('No se pudo recuperar el cultivo guardado.', error);

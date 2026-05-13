@@ -73,6 +73,51 @@ function renderSemanasFusionStrip(grow) {
   </section>`;
 }
 
+/** Contexto tiempo + riego en la misma pantalla que el plan semanal (fusión HC). */
+function renderSemanasWeatherFusionBar(grow) {
+  if (!grow) return '';
+  const sw = grow.siteWeather;
+  const rn = grow.fusion?.riegoNative;
+  if (grow.placement === 'exterior' && sw?.daily?.time?.length) {
+    const d = sw.daily;
+    const tLine =
+      Number.isFinite(d.temperature_2m_max?.[0]) && Number.isFinite(d.temperature_2m_min?.[0])
+        ? `${Math.round(d.temperature_2m_min[0])}–${Math.round(d.temperature_2m_max[0])} °C hoy (modelo)`
+        : 'Pronóstico diario guardado';
+    const et0Bit =
+      rn?.updatedAt && !rn.error && Number.isFinite(rn.et0TodayMm)
+        ? ` · ET₀ ~${rn.et0TodayMm.toFixed(1)} mm`
+        : '';
+    const loc = escapeCalendarAttrText(sw.label || grow.location || 'Ubicación');
+    const tEsc = escapeCalendarAttrText(tLine);
+    const eEsc = escapeCalendarAttrText(et0Bit);
+    return `<section class="cal-weather-fusion-bar" aria-label="Tiempo y riego enlazados">
+      <div class="cal-weather-fusion-bar__inner">
+        <div>
+          <span class="cal-weather-fusion-bar__kicker">Fusión · tiempo y riego</span>
+          <p class="cal-weather-fusion-bar__text"><strong>${loc}</strong> · ${tEsc}${eEsc}</p>
+        </div>
+        <div class="cal-weather-fusion-bar__actions">
+          <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego</button>
+          <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Clima</button>
+        </div>
+      </div>
+    </section>`;
+  }
+  if (rn?.updatedAt && !rn.error && Number.isFinite(rn.demandaRel)) {
+    return `<section class="cal-weather-fusion-bar cal-weather-fusion-bar--interior" aria-label="Riego nativo">
+      <div class="cal-weather-fusion-bar__inner cal-weather-fusion-bar__inner--stack">
+        <p class="cal-weather-fusion-bar__text">Demanda relativa guardada <strong>${rn.demandaRel.toFixed(2)}</strong>: cruza con <strong>Medir</strong> (pH/EC/Tª) para el ritmo real de la solución.</p>
+        <div class="cal-weather-fusion-bar__actions">
+          <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego</button>
+          <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
+        </div>
+      </div>
+    </section>`;
+  }
+  return '';
+}
+
 /** Mapa día (YYYY-MM-DD) → lista de eventos */
 function collectGrowCalendarEvents(grow) {
   const s = grow.strain;
@@ -413,6 +458,7 @@ function renderSemanas() {
         : myGrow.system;
   sc.innerHTML = `
     ${renderSemanasFusionStrip(myGrow)}
+    ${renderSemanasWeatherFusionBar(myGrow)}
     ${renderSemanasCurrentWeekCardHtml(totalW, wActive, curWeekSnap)}
     ${renderSemanasUpcomingHitsHtml(myGrow)}
     ${renderGrowCalendarSection(myGrow)}

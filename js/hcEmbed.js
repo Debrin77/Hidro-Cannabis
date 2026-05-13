@@ -4,7 +4,7 @@
  * llamando a goTab() en el iframe cuando el bundle HC ya lo ha definido.
  *
  * Port nativo «poco a poco» — orden de valor (cada fase puede sustituir el iframe de ese módulo):
- * 0) Modelo de datos: qué campos comparten instalación, volumen, clima y mediciones (sin duplicar silos).
+ * 0) Modelo de datos: `fusion.growContext` (instalación, depósito, sitios, recinto) + metadatos riego/clima.
  * 1) Riego: ET₀/VPD nativos en esta app; torre y pulsos en iframe (HC) hasta port 1b.
  * 2) Meteo: pronóstico diario + tabla VPD horaria; widget «hoy» en Inicio lee el bundle guardado.
  * 3) Calendario HC: mallas; strip Medir, semana en curso, lista «próximos hitos» y calendario mensual nativos.
@@ -43,6 +43,27 @@ const HC_EMBED_TAB_LABELS = {
 const HC_EMBED_SESSION_KEY = 'hydroCannabis.hcEmbedTab';
 
 let hcEmbedChildPollId = null;
+let hcEmbedFallbackHideId = null;
+
+function setHcEmbedLoading(on) {
+  const wrap = document.getElementById('hcEmbedFrameWrap');
+  if (wrap) wrap.classList.toggle('is-loading', !!on);
+}
+
+function clearHcEmbedLoadingFallback() {
+  if (hcEmbedFallbackHideId != null) {
+    clearTimeout(hcEmbedFallbackHideId);
+    hcEmbedFallbackHideId = null;
+  }
+}
+
+function scheduleHcEmbedLoadingFallbackHide() {
+  clearHcEmbedLoadingFallback();
+  hcEmbedFallbackHideId = setTimeout(() => {
+    hcEmbedFallbackHideId = null;
+    setHcEmbedLoading(false);
+  }, 8000);
+}
 
 function clearHcEmbedChildPoll() {
   if (hcEmbedChildPollId != null) {
@@ -68,12 +89,18 @@ function pollHcEmbedChildTab(frame) {
       if (w && typeof w.goTab === 'function') {
         w.goTab(tab);
         clearHcEmbedChildPoll();
+        clearHcEmbedLoadingFallback();
+        window.setTimeout(() => setHcEmbedLoading(false), 350);
         return;
       }
     } catch (_) {
       /* file:// u origen distinto: no se puede acceder al iframe */
     }
-    if (tries >= 120) clearHcEmbedChildPoll();
+    if (tries >= 120) {
+      clearHcEmbedChildPoll();
+      clearHcEmbedLoadingFallback();
+      setHcEmbedLoading(false);
+    }
   }, 100);
 }
 
@@ -95,14 +122,24 @@ function applyHcEmbedView() {
     const src =
       'reference-hidrocultivo-web/index.html?hydroEmbedTab=' + encodeURIComponent(tab);
     if (frame.getAttribute('data-current-src') !== src) {
+      setHcEmbedLoading(true);
       frame.setAttribute('data-current-src', src);
       frame.src = src;
     } else {
+      setHcEmbedLoading(true);
       pollHcEmbedChildTab(frame);
+      scheduleHcEmbedLoadingFallbackHide();
     }
     if (frame.dataset.hcEmbedLoadHook !== '1') {
       frame.dataset.hcEmbedLoadHook = '1';
-      frame.addEventListener('load', () => pollHcEmbedChildTab(frame));
+      frame.addEventListener('load', () => {
+        pollHcEmbedChildTab(frame);
+        scheduleHcEmbedLoadingFallbackHide();
+      });
+      frame.addEventListener('error', () => {
+        clearHcEmbedLoadingFallback();
+        setHcEmbedLoading(false);
+      });
     }
   }
 }
@@ -112,6 +149,7 @@ function navToHcEmbed(tab) {
     tab && Object.prototype.hasOwnProperty.call(HC_EMBED_TAB_LABELS, tab) ? tab : 'inicio';
   try {
     sessionStorage.setItem(HC_EMBED_SESSION_KEY, t);
+    sessionStorage.setItem('hydroCannabis.hcEmbedVisited', '1');
   } catch (_) {}
   if (typeof closeMoreMenu === 'function') closeMoreMenu();
   const cur = location.hash.slice(1);

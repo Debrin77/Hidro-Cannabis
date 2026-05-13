@@ -2,8 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0f766e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="Checklist y monitor de cultivo hidropónico: DWC, RDWC, nutrición, pH/EC, clima y calendario. Herramienta orientativa para autoconsumo responsable.">
 <title>Hydro Cannabis — Hidrocultivo</title>
 <link rel="icon" type="image/svg+xml" href="assets/icons/cannabis-start.svg">
@@ -24,7 +28,7 @@
     <p class="splash-kicker">Cultivo inteligente</p>
     <h1 id="splashTitle">Hydro Cannabis</h1>
     <p class="splash-sub">Controla tu cultivo hidropónico, nutrición y seguimiento diario desde una sola app.</p>
-    <p class="splash-timer" id="splashTimer">Entrando automaticamente en 3s...</p>
+    <p class="splash-timer" id="splashTimer">Entrando automáticamente en 2s...</p>
     <button class="btn btn-primary splash-enter-btn" onclick="enterApp()" type="button">
       <i class="ti ti-playstation-circle"></i>
       Entrar ahora
@@ -149,9 +153,12 @@
       <i class="ti ti-info-circle" aria-hidden="true"></i>
       <p>Aquí se carga la app <strong>HidroCultivo</strong> (hidroponía general: torre, riego, cultivos alimentarios). El port a pantallas nativas seguirá el orden <strong>1–9</strong> en <code>HC_NATIVE_PORT_PHASES</code> (<code>js/hcEmbed.js</code>); la fase <strong>0</strong> es alinear modelo de datos. Tus <strong>variedades</strong> y <strong>Medir</strong> cannabis siguen en la barra inferior. Los datos aquí usan otras claves de almacenaje (<code>cultiva_v1</code>, etc.) que el cultivo cannabis.</p>
     </div>
-    <iframe id="hcEmbedFrame" class="hc-embed-frame" title="HidroCultivo — módulos de referencia"
-      loading="lazy"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
+    <div class="hc-embed-frame-wrap" id="hcEmbedFrameWrap">
+      <div class="hc-embed-loading" id="hcEmbedLoading" role="status" aria-live="polite">Cargando HidroCultivo…</div>
+      <iframe id="hcEmbedFrame" class="hc-embed-frame" title="HidroCultivo — módulos de referencia"
+        loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
+    </div>
   </div>
 </div>
 
@@ -556,6 +563,8 @@
     </div>
   </div>
 </div>
+
+<div id="hydroToastHost" class="hydro-toast-host" aria-live="polite"></div>
 
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>

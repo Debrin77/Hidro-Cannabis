@@ -22,6 +22,7 @@ function renderAyudaPage() {
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i> Datos y modelos</div></div>
       <p class="body-prose body-prose--tight">Open-Meteo y geocodificación son servicios públicos; los valores son orientativos. No sustituyen medición real ni asesoramiento jurídico.</p>
+      <p class="body-prose body-prose--tight">En cada guardado del cultivo se actualiza un resumen interno (<code>fusion.growContext</code>) con sistema, emplazamiento, depósito, sitios y recinto, para alinear la app con el port de HidroCultivo. Si el pronóstico en <strong>Climatología</strong> es reciente y coincide la rejilla, <strong>Riego</strong> reutiliza esa serie horaria para ET₀/VPD sin repetir la misma petición a la API.</p>
     </div>
   `;
 }

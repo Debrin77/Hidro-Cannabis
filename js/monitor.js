@@ -944,6 +944,7 @@ function addMeasurement() {
     type: correctionNote ? 'warn' : 'ok',
   });
   saveGrowState();
+  if (typeof window.showHydroToast === 'function') window.showHydroToast('Medición guardada');
   if (typeof renderHistorial === 'function') renderHistorial();
   if (typeof renderInicio === 'function') renderInicio();
   renderMonitor();
@@ -1705,14 +1706,57 @@ function renderHistorialFusionCardHtml(grow) {
     lines.push('Climatología: ' + new Date(sw.updatedAt).toLocaleString('es-ES'));
   }
   const rn = grow.fusion && grow.fusion.riegoNative;
-  if (rn?.updatedAt) {
+  if (rn?.updatedAt && !rn.error) {
     const dr = Number.isFinite(rn.demandaRel) ? rn.demandaRel.toFixed(2) : '—';
     lines.push('Riego nativo: demanda rel. ' + dr + ' · ' + new Date(rn.updatedAt).toLocaleString('es-ES'));
+  } else if (rn?.updatedAt && rn.error) {
+    lines.push('Riego nativo (error): ' + String(rn.error));
   }
   const body =
     lines.length > 0
       ? `<p class="body-prose body-prose--tight">${escapeMonitorHtml(lines.join(' · '))}</p>`
-      : '<p class="body-prose body-prose--tight">Cuando actualices <strong>Climatología</strong> y <strong>Riego</strong>, aquí verás marcas de tiempo para cruzar con mediciones y bitácora.</p>';
+      : '<p class="body-prose body-prose--tight">Cuando actualices <strong>Climatología</strong> y <strong>Riego</strong>, aquí verás marcas de tiempo para cruzar con mediciones y bitácora. Tras guardar clima, el riego nativo se recalcula en segundo plano.</p>';
+
+  let metricsHtml = '';
+  if (rn?.updatedAt && !rn.error) {
+    const bits = [];
+    if (Number.isFinite(rn.et0TodayMm)) {
+      bits.push(
+        `<div class="historial-fusion-metric"><span>ET₀ hoy</span><strong>${escapeMonitorHtml(rn.et0TodayMm.toFixed(1))} mm</strong></div>`,
+      );
+    }
+    if (Number.isFinite(rn.vpdMeanKpa)) {
+      bits.push(
+        `<div class="historial-fusion-metric"><span>VPD medio</span><strong>${escapeMonitorHtml(rn.vpdMeanKpa.toFixed(2))} kPa</strong></div>`,
+      );
+    }
+    if (Number.isFinite(rn.demandaRel)) {
+      bits.push(
+        `<div class="historial-fusion-metric"><span>Demanda</span><strong>${escapeMonitorHtml(rn.demandaRel.toFixed(2))}</strong></div>`,
+      );
+    }
+    if (Number.isFinite(rn.pulseMinON) && Number.isFinite(rn.pulseMinOFF)) {
+      bits.push(
+        `<div class="historial-fusion-metric"><span>Pulso ON/OFF</span><strong>${escapeMonitorHtml(String(rn.pulseMinON))}/${escapeMonitorHtml(String(rn.pulseMinOFF))} min</strong></div>`,
+      );
+    }
+    const d0 = sw?.daily;
+    const prob0 = Array.isArray(d0?.precipitation_probability_mean) ? Number(d0.precipitation_probability_mean[0]) : NaN;
+    if (Number.isFinite(prob0)) {
+      bits.push(
+        `<div class="historial-fusion-metric"><span>Lluvia hoy (modelo)</span><strong>~${escapeMonitorHtml(String(Math.round(prob0)))}%</strong></div>`,
+      );
+    }
+    if (rn.hourlySeriesSource === 'site_weather_bundle') {
+      bits.push(
+        `<div class="historial-fusion-metric"><span>ET₀ horario</span><strong>Clima guardado</strong></div>`,
+      );
+    }
+    if (bits.length) metricsHtml = `<div class="historial-fusion-metrics">${bits.join('')}</div>`;
+  } else if (rn?.error && rn.error !== 'sin-coords') {
+    metricsHtml = `<div class="alert warn historial-fusion-alert"><i class="ti ti-alert-triangle"></i><p>${escapeMonitorHtml(String(rn.error))}</p></div>`;
+  }
+
   const m0 = Array.isArray(grow.measurements) && grow.measurements[0] ? grow.measurements[0] : null;
   let measureLine = '';
   if (m0 && m0.date && Number.isFinite(m0.ph) && Number.isFinite(m0.ec)) {
@@ -1731,8 +1775,10 @@ function renderHistorialFusionCardHtml(grow) {
   return `<div class="card historial-fusion-card">
     <div class="card-header"><div class="card-title"><i class="ti ti-link"></i> Cruce Meteo + Riego</div></div>
     ${body}
+    ${metricsHtml}
     ${measureLine}
     <div class="historial-fusion-card__actions">
+      <button type="button" class="btn btn-primary btn--compact" onclick="refreshRiegoNativeData()"><i class="ti ti-refresh"></i> Recalcular riego</button>
       <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
       <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Clima</button>
       <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego</button>
