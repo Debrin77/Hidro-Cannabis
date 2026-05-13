@@ -20,9 +20,13 @@ App web para planificar y monitorizar cultivos de **cannabis en hidrocultivo** (
 - `js/main.js`: inicialización de la app.
 - `assets/icons/`: iconos, favicon y logo splash.
 
+### Copia de HidroCultivo (`reference-hidrocultivo-web/`)
+
+Mantén esta carpeta **alineada con el repositorio original de HidroCultivo**, sin parches propios. El módulo embebido se controla desde **Hydro Cannabis** (`js/hcEmbed.js`): el iframe carga HC con `?hydroEmbedTab=…` y la app padre invoca `goTab()` en el documento del iframe cuando el bundle HC ya está listo (requiere **mismo origen**, p. ej. servir la raíz del proyecto con `npx serve`).
+
 ## Desarrollo local
 
-Abre `index.html` en el navegador o usa Live Server.
+Abre `index.html` desde un **servidor HTTP en la raíz del repo** (Live Server, `npx serve`, etc.) para que el iframe de `reference-hidrocultivo-web/` y el salto de pestaña funcionen; con `file://` el navegador suele bloquear el acceso al iframe.
 
 Atajos útiles en la URL:
 

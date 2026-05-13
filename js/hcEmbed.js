@@ -1,5 +1,7 @@
 /**
  * Embebe la copia local de HidroCultivo (reference-hidrocultivo-web) con salto a pestaña vía ?hydroEmbedTab=
+ * No se modifica el código de HidroCultivo: el salto a la pestaña se aplica desde el padre (mismo origen)
+ * llamando a goTab() en el iframe cuando el bundle HC ya lo ha definido.
  *
  * Port nativo «poco a poco» — orden de valor (cada fase puede sustituir el iframe de ese módulo):
  * 0) Modelo de datos: qué campos comparten instalación, volumen, clima y mediciones (sin duplicar silos).
@@ -40,6 +42,41 @@ const HC_EMBED_TAB_LABELS = {
 
 const HC_EMBED_SESSION_KEY = 'hydroCannabis.hcEmbedTab';
 
+let hcEmbedChildPollId = null;
+
+function clearHcEmbedChildPoll() {
+  if (hcEmbedChildPollId != null) {
+    clearInterval(hcEmbedChildPollId);
+    hcEmbedChildPollId = null;
+  }
+}
+
+/**
+ * Tras cargar el documento HC, invoca goTab(tab) en el contexto del iframe (mismo origen).
+ * Sustituye cualquier script dentro de la copia de referencia de HC.
+ */
+function pollHcEmbedChildTab(frame) {
+  clearHcEmbedChildPoll();
+  if (!frame?.contentWindow) return;
+  const tab = getHcEmbedTab();
+  if (!tab || !Object.prototype.hasOwnProperty.call(HC_EMBED_TAB_LABELS, tab)) return;
+  let tries = 0;
+  hcEmbedChildPollId = setInterval(() => {
+    tries += 1;
+    try {
+      const w = frame.contentWindow;
+      if (w && typeof w.goTab === 'function') {
+        w.goTab(tab);
+        clearHcEmbedChildPoll();
+        return;
+      }
+    } catch (_) {
+      /* file:// u origen distinto: no se puede acceder al iframe */
+    }
+    if (tries >= 120) clearHcEmbedChildPoll();
+  }, 100);
+}
+
 function getHcEmbedTab() {
   try {
     const t = sessionStorage.getItem(HC_EMBED_SESSION_KEY);
@@ -60,6 +97,12 @@ function applyHcEmbedView() {
     if (frame.getAttribute('data-current-src') !== src) {
       frame.setAttribute('data-current-src', src);
       frame.src = src;
+    } else {
+      pollHcEmbedChildTab(frame);
+    }
+    if (frame.dataset.hcEmbedLoadHook !== '1') {
+      frame.dataset.hcEmbedLoadHook = '1';
+      frame.addEventListener('load', () => pollHcEmbedChildTab(frame));
     }
   }
 }
