@@ -5,6 +5,7 @@ const MORE_VIEWS = [
   'variedades',
   'nutrientes',
   'ambiental',
+  'ayuda',
   'legal',
   'accesibilidad',
 ];
@@ -112,6 +113,7 @@ function applyNavView(view) {
   if (view === 'cultivo' && typeof renderCultivo === 'function') renderCultivo();
   if (view === 'monitor' && typeof renderMonitor === 'function') renderMonitor();
   if (view === 'semanas' && typeof renderSemanas === 'function') renderSemanas();
+  if (view === 'riego' && typeof renderRiego === 'function') renderRiego();
   if (view === 'nutrientes' && typeof renderNutrientes === 'function') renderNutrientes();
   if (view === 'historial' && typeof renderHistorial === 'function') renderHistorial();
   if (view === 'climatologia') {
@@ -121,6 +123,7 @@ function applyNavView(view) {
     });
   }
   if (view === 'consejos' && typeof renderConsejosPage === 'function') renderConsejosPage();
+  if (view === 'ayuda' && typeof renderAyudaPage === 'function') renderAyudaPage();
   if (view === 'accesibilidad' && typeof renderAccesibilidad === 'function') renderAccesibilidad();
   if (view === 'hc-embed' && typeof window.applyHcEmbedView === 'function') window.applyHcEmbedView();
 }

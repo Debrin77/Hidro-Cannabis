@@ -50,12 +50,15 @@ const OPEN_METEO_CURRENT =
   'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index';
 const OPEN_METEO_DAILY =
   'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_mean,wind_speed_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset';
+const OPEN_METEO_HOURLY =
+  'temperature_2m,relative_humidity_2m,wind_speed_10m,uv_index,et0_fao_evapotranspiration';
 
 async function fetchOpenMeteoForecast(lat, lon, cellSelection) {
   const cell = cellSelection ? `&cell_selection=${encodeURIComponent(cellSelection)}` : '';
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-    `&current=${OPEN_METEO_CURRENT}&daily=${OPEN_METEO_DAILY}&forecast_days=8&timezone=auto${cell}`;
+    `&current=${OPEN_METEO_CURRENT}&daily=${OPEN_METEO_DAILY}` +
+    `&hourly=${OPEN_METEO_HOURLY}&forecast_days=8&timezone=auto${cell}`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error('No se pudo obtener el pronóstico');
   return resp.json();
@@ -595,6 +598,7 @@ async function refreshClimatologiaData(opts = {}) {
           : null,
       current: wxLand.current || null,
       daily: wxLand.daily || null,
+      hourly: wxLand.hourly || null,
     };
 
     applyClimaBundleToGrowOrConfig(bundle, geo.label);
@@ -606,6 +610,7 @@ async function refreshClimatologiaData(opts = {}) {
       btn.innerHTML = '<i class="ti ti-refresh"></i> Actualizar pronóstico';
     }
     renderClimatologia();
+    if (typeof renderRiego === 'function') renderRiego();
   }
 }
 
@@ -644,6 +649,7 @@ async function applyClimaManualLocationAndRefresh() {
   if (typeof renderMonitor === 'function') renderMonitor();
   if (typeof renderInicio === 'function') renderInicio();
   if (typeof renderCultivo === 'function') renderCultivo();
+  if (typeof renderRiego === 'function') renderRiego();
 }
 
 function climaManualLocationKeydown(ev) {
@@ -656,6 +662,65 @@ function climaManualLocationKeydown(ev) {
 /** Llamado al abrir la pestaña Climatología: consulta APIs con la ubicación configurada. */
 function refreshClimatologiaOnTabFocus() {
   refreshClimatologiaData({ force: false, manageButton: true });
+}
+
+/** Fecha local YYYY-MM-DD (zona del dispositivo). */
+function climaLocalYmd(d) {
+  const x = d instanceof Date ? d : new Date();
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+}
+
+function buildClimaHourlyVpdBlock(snap) {
+  if (!snap?.hourly?.time || typeof hydroRiegoVPDkPa !== 'function') {
+    return '';
+  }
+  const times = snap.hourly.time;
+  const temp = snap.hourly.temperature_2m;
+  const rh = snap.hourly.relative_humidity_2m;
+  const ymd = climaLocalYmd();
+  const rows = [];
+  for (let i = 0; i < times.length && rows.length < 24; i++) {
+    if (String(times[i]).slice(0, 10) < ymd) continue;
+    const tc = Number(temp?.[i]);
+    const rhp = Number(rh?.[i]);
+    if (!Number.isFinite(tc) || !Number.isFinite(rhp)) continue;
+    rows.push({
+      iso: times[i],
+      t: tc,
+      rh: rhp,
+      vpd: hydroRiegoVPDkPa(tc, rhp),
+    });
+  }
+  if (!rows.length) {
+    return `<div class="card clima-hourly-vpd-card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-chart-line"></i>VPD horario (modelo)</div></div>
+      <p class="text-muted">Pulsa <strong>Actualizar pronóstico</strong> para cargar la serie horaria (Tª, HR, ET₀) usada también en <strong>Riego</strong>.</p>
+    </div>`;
+  }
+  const tableRows = rows
+    .map((r) => {
+      const d = new Date(r.iso);
+      const hh = d.toLocaleString('es-ES', {
+        weekday: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const flag = r.vpd > 1.25 ? 'high' : r.vpd < 0.5 ? 'low' : '';
+      return `<tr class="${flag ? 'clima-vpd-row--' + flag : ''}"><td>${escapeHtmlClima(hh)}</td><td>${r.t.toFixed(1)}</td><td>${Math.round(r.rh)}</td><td><strong>${r.vpd.toFixed(2)}</strong></td></tr>`;
+    })
+    .join('');
+  return `<div class="card clima-hourly-vpd-card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-droplet-half-2"></i>VPD horario (desde hoy, modelo)</div></div>
+    <p class="text-muted clima-hourly-vpd-hint">Magnus–Tetens (misma base que HidroCultivo). Cruza con <strong>Riego</strong> para demanda y pulsos orientativos.</p>
+    <div class="clima-hourly-vpd-scroll">
+      <table class="clima-hourly-vpd-table">
+        <thead><tr><th>Hora</th><th>T (°C)</th><th>HR %</th><th>VPD kPa</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Ir a Riego</button>
+  </div>`;
 }
 
 function renderClimatologia() {
@@ -684,6 +749,8 @@ function renderClimatologia() {
   const locPlanEsc = escapeHtmlClima((myGrow?.location || label || '').trim() || 'tu zona');
 
   const forecast7 = renderDailyForecastIconStrip(snap);
+
+  const hourlyVpdBlock = buildClimaHourlyVpdBlock(snap);
 
   const cur0 = snap?.current;
   const curVis = cur0 && Number.isFinite(cur0.temperature_2m) ? getDailyWeatherVisual(cur0.weather_code) : null;
@@ -815,6 +882,8 @@ function renderClimatologia() {
 
     ${nearestBlock}
 
+    ${hourlyVpdBlock}
+
     <div class="card clima-forecast-card">
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar-week"></i>Pronóstico 7 días</div></div>
       <p class="text-muted clima-forecast-hint">Desliza horizontalmente · iconos según código meteorológico WMO (Open-Meteo).</p>
@@ -839,4 +908,7 @@ window.applyClimaManualLocationAndRefresh = applyClimaManualLocationAndRefresh;
 window.climaManualLocationKeydown = climaManualLocationKeydown;
 window.renderClimatologia = renderClimatologia;
 window.siteWeatherMatchesGrow = siteWeatherMatchesGrow;
+window.getDailyWeatherVisual = getDailyWeatherVisual;
 window.buildExteriorHydroSolutions = buildExteriorHydroSolutions;
+window.geocodeForClima = geocodeForClima;
+window.fetchOpenMeteoForecast = fetchOpenMeteoForecast;

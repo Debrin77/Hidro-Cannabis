@@ -1,6 +1,30 @@
 /**
  * Embebe la copia local de HidroCultivo (reference-hidrocultivo-web) con salto a pestaña vía ?hydroEmbedTab=
+ *
+ * Port nativo «poco a poco» — orden de valor (cada fase puede sustituir el iframe de ese módulo):
+ * 0) Modelo de datos: qué campos comparten instalación, volumen, clima y mediciones (sin duplicar silos).
+ * 1) Riego: ET₀/VPD nativos en esta app; torre y pulsos en iframe (HC) hasta port 1b.
+ * 2) Meteo: pronóstico diario + tabla VPD horaria; widget «hoy» en Inicio lee el bundle guardado.
+ * 3) Calendario HC: mallas; strip Medir, semana en curso, lista «próximos hitos» y calendario mensual nativos.
+ * 4) Sistema / torre: NFT, DWC, multi-instalación; banner en Cultivo nativo.
+ * 5) Inicio HC: panel torre; en Hydro Cannabis: widget pronóstico hoy + bloque riego nativo.
+ * 6) Historial HC: tarjeta cruce + última medición; gráficos torre en iframe.
+ * 7) Consejos HC: paso 5 en pantalla Consejos nativo aclara alimentario vs cannabis.
+ * 8) Ayuda: pantalla nativa + manual largo en iframe HC.
+ * 9) Medir HC: opcional al final (tu Medir cannabis sigue siendo el principal).
  */
+const HC_NATIVE_PORT_PHASES = [
+  { phase: 0, embedTab: null, id: 'datos', title: 'Modelo de datos compartido' },
+  { phase: 1, embedTab: 'riego', id: 'riego', title: 'Riego (ET₀ + demanda + pulsos nativos; HC torre)' },
+  { phase: 2, embedTab: 'meteo', id: 'meteo', title: 'Meteo (VPD horario en Clima; widget hoy en Inicio; HC avanzado)' },
+  { phase: 3, embedTab: 'calendario', id: 'calendario', title: 'Calendario (HC mallas; semana en curso + próximos hitos nativos)' },
+  { phase: 4, embedTab: 'sistema', id: 'sistema', title: 'Cultivo e instalación / torre (banner HC en Cultivo)' },
+  { phase: 5, embedTab: 'inicio', id: 'inicio', title: 'Inicio HC (panel torre; widget clima + riego en Inicio nativo)' },
+  { phase: 6, embedTab: 'historial', id: 'historial', title: 'Historial (Meteo+Riego+Medir nativos; HC torre)' },
+  { phase: 7, embedTab: 'consejos', id: 'consejos', title: 'Consejos HC (paso 5 en Consejos nativo)' },
+  { phase: 8, embedTab: 'ayuda', id: 'ayuda', title: 'Ayuda (nativa + manual HC)' },
+  { phase: 9, embedTab: 'mediciones', id: 'mediciones', title: 'Medir HC (alimentario)' },
+];
 
 const HC_EMBED_TAB_LABELS = {
   inicio: 'Inicio (panel torre, meteo exterior, operativa)',
@@ -58,3 +82,4 @@ function navToHcEmbed(tab) {
 window.applyHcEmbedView = applyHcEmbedView;
 window.navToHcEmbed = navToHcEmbed;
 window.getHcEmbedTab = getHcEmbedTab;
+window.HC_NATIVE_PORT_PHASES = HC_NATIVE_PORT_PHASES;

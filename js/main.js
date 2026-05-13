@@ -68,6 +68,7 @@ renderInicio();
 renderCultivo();
 renderMonitor();
 renderSemanas();
+if (typeof renderRiego === 'function') renderRiego();
 renderHistorial();
 renderClimatologia();
 if (typeof renderConsejosPage === 'function') renderConsejosPage();

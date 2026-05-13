@@ -62,7 +62,18 @@ function setUiExperienceMode(mode) {
   if (typeof renderCultivo === 'function') renderCultivo();
   if (typeof renderMonitor === 'function') renderMonitor();
   if (typeof renderSemanas === 'function') renderSemanas();
+  if (typeof renderRiego === 'function') renderRiego();
   if (typeof renderConsejosPage === 'function') renderConsejosPage();
+}
+
+/** Metadatos opcionales (p. ej. caché de módulos fusionados con HidroCultivo). */
+function normalizeGrowFusion(f) {
+  if (!f || typeof f !== 'object' || Array.isArray(f)) return {};
+  const out = { ...f };
+  if (out.riegoNative != null && (typeof out.riegoNative !== 'object' || Array.isArray(out.riegoNative))) {
+    delete out.riegoNative;
+  }
+  return out;
 }
 
 function serializeGrow(grow) {
@@ -124,6 +135,7 @@ function restoreGrow(payload) {
       }
       return hc;
     })(),
+    fusion: normalizeGrowFusion(payload.fusion),
   };
 }
 

@@ -1697,6 +1697,50 @@ function renderHistorialMeasurementsCardHtml() {
     </div>`;
 }
 
+function renderHistorialFusionCardHtml(grow) {
+  if (!grow) return '';
+  const lines = [];
+  const sw = grow.siteWeather;
+  if (sw?.updatedAt) {
+    lines.push('Climatología: ' + new Date(sw.updatedAt).toLocaleString('es-ES'));
+  }
+  const rn = grow.fusion && grow.fusion.riegoNative;
+  if (rn?.updatedAt) {
+    const dr = Number.isFinite(rn.demandaRel) ? rn.demandaRel.toFixed(2) : '—';
+    lines.push('Riego nativo: demanda rel. ' + dr + ' · ' + new Date(rn.updatedAt).toLocaleString('es-ES'));
+  }
+  const body =
+    lines.length > 0
+      ? `<p class="body-prose body-prose--tight">${escapeMonitorHtml(lines.join(' · '))}</p>`
+      : '<p class="body-prose body-prose--tight">Cuando actualices <strong>Climatología</strong> y <strong>Riego</strong>, aquí verás marcas de tiempo para cruzar con mediciones y bitácora.</p>';
+  const m0 = Array.isArray(grow.measurements) && grow.measurements[0] ? grow.measurements[0] : null;
+  let measureLine = '';
+  if (m0 && m0.date && Number.isFinite(m0.ph) && Number.isFinite(m0.ec)) {
+    measureLine =
+      '<p class="body-prose body-prose--tight historial-fusion-measure">' +
+      escapeMonitorHtml(
+        'Última medición (' +
+          new Date(m0.date).toLocaleString('es-ES') +
+          '): pH ' +
+          m0.ph.toFixed(1) +
+          ' · EC ' +
+          m0.ec.toFixed(2),
+      ) +
+      '</p>';
+  }
+  return `<div class="card historial-fusion-card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-link"></i> Cruce Meteo + Riego</div></div>
+    ${body}
+    ${measureLine}
+    <div class="historial-fusion-card__actions">
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Clima</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('historial')"><i class="ti ti-chart-line"></i> Historial HC</button>
+    </div>
+  </div>`;
+}
+
 function renderHistorialQuickRefCard() {
   return `<div class="card historial-quick-ref">
       <div class="card-header"><div class="card-title"><i class="ti ti-book-2"></i> Referencia rápida</div></div>
@@ -1718,6 +1762,7 @@ function renderHistorial() {
     <div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay bitácora ni mediciones sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Cultivo</button></div>`;
     return;
   }
+  const fusionCard = renderHistorialFusionCardHtml(myGrow);
   const logHtml = (myGrow.log || [])
     .slice(0, 50)
     .map(
@@ -1743,6 +1788,7 @@ function renderHistorial() {
       <div class="cultivo-fold-card__body historial-trends-details__body">${trendBody}</div>
     </details>`;
   host.innerHTML = `${quickRef}
+    ${fusionCard}
     ${measureCard}
     ${trendsSection}
     <div class="card">

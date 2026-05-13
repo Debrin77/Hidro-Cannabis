@@ -106,6 +106,7 @@ function requestFullSystemReset() {
   if (typeof renderCultivo === 'function') renderCultivo();
   if (typeof renderMonitor === 'function') renderMonitor();
   if (typeof renderSemanas === 'function') renderSemanas();
+  if (typeof renderRiego === 'function') renderRiego();
   if (typeof renderHistorial === 'function') renderHistorial();
   if (typeof renderClimatologia === 'function') renderClimatologia();
   if (typeof renderConsejosPage === 'function') renderConsejosPage();
@@ -166,6 +167,99 @@ function renderConsejosPage() {
     </div>
     ${renderStrainSpecsTableHtml()}
   `;
+}
+
+function buildInicioFusionStatusHtml() {
+  if (!myGrow) return '';
+  const bits = [];
+  const sw = myGrow.siteWeather;
+  if (sw?.updatedAt) {
+    bits.push('Clima · ' + new Date(sw.updatedAt).toLocaleDateString('es-ES'));
+  }
+  const r = myGrow.fusion && myGrow.fusion.riegoNative;
+  if (r?.updatedAt) {
+    const dr = Number.isFinite(r.demandaRel) ? r.demandaRel.toFixed(2) : '—';
+    bits.push('Riego · demanda ' + dr + ' (' + new Date(r.updatedAt).toLocaleDateString('es-ES') + ')');
+  }
+  if (!bits.length) return '';
+  return `<section class="dash-fusion-status" aria-label="Estado Meteo y Riego">
+    <p class="dash-fusion-status__text">${escapeHomeHtml(bits.join(' · '))}</p>
+    <div class="dash-fusion-status__row">
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="navTo('riego')">Riego</button>
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="navTo('climatologia')">Clima</button>
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="navTo('ayuda')">Ayuda</button>
+    </div>
+  </section>`;
+}
+
+function buildInicioHcOpsRowHtml() {
+  if (!myGrow) return '';
+  const snap = myGrow.fusion && myGrow.fusion.riegoNative;
+  if (!snap || !snap.updatedAt || snap.error) {
+    return `<section class="dash-hc-ops" aria-label="Operativa de riego">
+      <h3 class="dash-hc-ops__title"><i class="ti ti-droplet"></i> Riego y torre</h3>
+      <p class="dash-hc-ops__text">Abre <strong>Riego</strong> para calcular ET₀, demanda y pulsos con el tiempo, o el módulo completo de HidroCultivo si usas <strong>torre</strong> u otro esquema.</p>
+      <div class="dash-hc-ops__btns">
+        <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')">Riego (nativo)</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('riego')">Riego HC</button>
+      </div>
+    </section>`;
+  }
+  const parts = [];
+  if (Number.isFinite(snap.et0TodayMm)) parts.push('ET₀ hoy ~' + snap.et0TodayMm.toFixed(2) + ' mm');
+  if (Number.isFinite(snap.vpdMeanKpa)) parts.push('VPD ~' + snap.vpdMeanKpa.toFixed(2) + ' kPa');
+  if (Number.isFinite(snap.demandaRel)) parts.push('Demanda ' + snap.demandaRel.toFixed(2));
+  if (Number.isFinite(snap.pulseMinON) && Number.isFinite(snap.pulseMinOFF)) {
+    parts.push('Pulso ~' + snap.pulseMinON + '/' + snap.pulseMinOFF + ' min');
+  }
+  const line = escapeHomeHtml(parts.join(' · ') || 'Cálculo guardado');
+  return `<section class="dash-hc-ops" aria-label="Resumen riego nativo">
+    <h3 class="dash-hc-ops__title"><i class="ti ti-droplet"></i> Riego (último cálculo)</h3>
+    <p class="dash-hc-ops__text">${line}</p>
+    <div class="dash-hc-ops__btns">
+      <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')">Abrir Riego</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('riego')">Torre · HC</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')">Panel HC</button>
+    </div>
+  </section>`;
+}
+
+function buildInicioForecastWidgetHtml() {
+  if (!myGrow?.siteWeather?.daily?.time?.length) return '';
+  const snap = myGrow.siteWeather;
+  const d = snap.daily;
+  const tmax = d.temperature_2m_max?.[0];
+  const tmin = d.temperature_2m_min?.[0];
+  const rainMm = d.precipitation_sum?.[0];
+  const pcode = d.weather_code?.[0];
+  const prob = d.precipitation_probability_mean?.[0];
+  const viz =
+    typeof window.getDailyWeatherVisual === 'function'
+      ? window.getDailyWeatherVisual(pcode)
+      : { icon: 'ti ti-cloud', label: 'Pronóstico hoy', tone: 'neutral' };
+  const loc = escapeHomeHtml(snap.label || myGrow.location || 'Ubicación');
+  const sub = [];
+  if (Number.isFinite(tmin) && Number.isFinite(tmax)) {
+    sub.push(`${Math.round(tmin)}–${Math.round(tmax)}°C`);
+  }
+  if (Number.isFinite(prob)) sub.push(`prob. lluvia ~${Math.round(prob)}%`);
+  if (Number.isFinite(rainMm) && rainMm > 0.05) sub.push(`~${rainMm.toFixed(1)} mm`);
+  const subline = escapeHomeHtml(sub.join(' · ') || 'Pronóstico del modelo');
+  const when = snap.updatedAt ? escapeHomeHtml(new Date(snap.updatedAt).toLocaleString('es-ES')) : '';
+  const tit = escapeHomeHtml(viz.label);
+  const tone = /^[a-z]+$/i.test(viz.tone) ? viz.tone : 'neutral';
+  return `<section class="dash-clima-widget dash-clima-widget--${tone}" aria-label="Hoy en el pronóstico">
+    <div class="dash-clima-widget__row">
+      <div class="dash-clima-widget__icon" aria-hidden="true"><i class="ti ${escapeHomeHtml(viz.icon)}"></i></div>
+      <div class="dash-clima-widget__body">
+        <div class="dash-clima-widget__title">Hoy · ${loc}</div>
+        <div class="dash-clima-widget__viz">${tit}</div>
+        <p class="dash-clima-widget__metrics">${subline}</p>
+        ${when ? `<p class="dash-clima-widget__meta">Actualizado ${when}</p>` : ''}
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Climatología</button>
+      </div>
+    </div>
+  </section>`;
 }
 
 function renderInicio() {
@@ -316,20 +410,26 @@ function renderInicio() {
 
     ${inicioPriorityHtml}
 
+    ${buildInicioFusionStatusHtml()}
+
+    ${buildInicioHcOpsRowHtml()}
+
     <section class="dash-hc-strip" aria-labelledby="dash-hc-title">
       <h2 id="dash-hc-title" class="dash-hc-strip__title"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> HidroCultivo (referencia)</h2>
-      <p class="dash-hc-strip__lead">Mismas pantallas que la app general de hidroponía: torre, riego, meteo avanzado… El <strong>Medir</strong> de cannabis sigue en la barra inferior.</p>
+      <p class="dash-hc-strip__lead">Mismas pantallas que HidroCultivo; el port nativo irá en este orden de valor (1→9). El <strong>Medir</strong> de cannabis sigue en la barra inferior.</p>
       <div class="dash-hc-grid">
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('inicio')">Inicio HC</button>
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('sistema')">Sistema</button>
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('riego')">Riego</button>
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('meteo')">Meteo</button>
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('calendario')">Cal. HC</button>
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('ayuda')">Ayuda</button>
+        <button type="button" class="dash-hc-btn" onclick="navTo('riego')">1 Riego</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('meteo')">2 Meteo</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('calendario')">3 Cal.</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('sistema')">4 Sistema</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('inicio')">5 Inicio</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('historial')">6 Hist.</button>
       </div>
     </section>
 
     ${weatherLabel}
+    ${buildInicioForecastWidgetHtml()}
+
     ${weatherAlerts}
     ${growAlertsHtml}
 

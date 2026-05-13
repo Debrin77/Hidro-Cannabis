@@ -1466,7 +1466,16 @@ function renderActiveGrow(){
     return `<div class="tl-seg ${cls} ${i<weekNum-1?'past':''}" title="S${i+1}: ${i===0?'Germinación':i<s.vegW?'Vegetación':i<s.vegW+2?'Prefloración':i<s.vegW+s.flowerW?'Floración':'Flush'}"></div>`;
   }).join('');
 
-  document.getElementById('cultivoContent').innerHTML=`
+  const cultivoHcFusionBanner = `<div class="card cultivo-hc-fusion-banner">
+      <div class="card-header"><div class="card-title"><i class="ti ti-layout-grid"></i> HidroCultivo · torre y sistemas generales</div></div>
+      <p class="body-prose body-prose--tight">Aquí el foco es cannabis en DWC, RDWC o NFT. Para la <strong>torre de lechugas</strong>, checklist post-instalación y NFT avanzado de HC, abre el módulo embebido.</p>
+      <div class="cultivo-hc-fusion-banner__actions">
+        <button type="button" class="btn btn-primary btn--compact" onclick="navToHcEmbed('sistema')"><i class="ti ti-external-link"></i> Sistema HC</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-home"></i> Inicio HC</button>
+      </div>
+    </div>`;
+
+  document.getElementById('cultivoContent').innerHTML=`${cultivoHcFusionBanner}
     <div class="card">
       <div class="grow-summary">
         <div class="grow-summary-main">

@@ -26,6 +26,53 @@ function escapeCalendarAttrText(s) {
     .replace(/>/g, '&gt;');
 }
 
+function renderSemanasCurrentWeekCardHtml(totalW, wActive, snap) {
+  if (!snap) return '';
+  return `<div class="card cal-current-week-card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-focus"></i>Semana en curso (S${wActive} de ${totalW})</div></div>
+    <p class="cal-current-week-meta"><span class="phase-pill ${snap.phClass}">${escapeCalendarAttrText(snap.phase)}</span>
+    <span class="cal-current-week-meta__mini">${escapeCalendarAttrText(snap.light)} · ${escapeCalendarAttrText(snap.temp)} · HR ${escapeCalendarAttrText(snap.hum)}</span></p>
+    <p class="body-prose body-prose--tight">${escapeCalendarAttrText(snap.accion)}</p>
+    <div class="cal-current-week-card__actions">
+      <button type="button" class="btn btn-primary btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Malla HC</button>
+    </div>
+  </div>`;
+}
+
+function renderSemanasFusionStrip(grow) {
+  if (!grow) return '';
+  const ms = Array.isArray(grow.measurements) ? grow.measurements : [];
+  let lastIso = '';
+  for (let i = ms.length - 1; i >= 0; i--) {
+    if (ms[i]?.date) {
+      lastIso = ms[i].date;
+      break;
+    }
+  }
+  const last = lastIso ? new Date(lastIso) : null;
+  const daysSince = last ? Math.floor((Date.now() - last.getTime()) / 86400000) : null;
+  const streakHint = last
+    ? daysSince === 0
+      ? 'Hoy hay lecturas en Medir: cruza con la acción de la semana.'
+      : daysSince === 1
+        ? 'Última lectura ayer: mantén el ritmo con esta fila.'
+        : `Última lectura hace ${daysSince} días: conviene volver a Medir.`
+    : 'Aún sin lecturas guardadas: Medir ancla EC y pH a esta tabla.';
+  return `<section class="cal-fusion-strip" aria-label="Fusión con HidroCultivo">
+    <div class="cal-fusion-strip__inner">
+      <div>
+        <span class="cal-fusion-strip__label">Rutina · Medir + calendario HC</span>
+        <p class="cal-fusion-strip__text">${escapeCalendarAttrText(streakHint)} En HidroCultivo tienes mallas agrícolas y otros cultivos.</p>
+      </div>
+      <div class="cal-fusion-strip__actions">
+        <button type="button" class="btn btn-primary btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Cal. HC</button>
+      </div>
+    </div>
+  </section>`;
+}
+
 /** Mapa día (YYYY-MM-DD) → lista de eventos */
 function collectGrowCalendarEvents(grow) {
   const s = grow.strain;
@@ -81,6 +128,42 @@ function collectGrowCalendarEvents(grow) {
   add(addDays(start, wk * 7), { type: 'task', label: 'PK / engorde según tabla', icon: 'flask' });
 
   return byDay;
+}
+
+function collectUpcomingGrowCalendarItems(grow, limit) {
+  const byDay = collectGrowCalendarEvents(grow);
+  const todayK = localDateKey(new Date());
+  const keys = Object.keys(byDay).sort();
+  const out = [];
+  for (const k of keys) {
+    if (k < todayK) continue;
+    for (const ev of byDay[k] || []) {
+      out.push({ dayKey: k, ...ev });
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+
+function renderSemanasUpcomingHitsHtml(grow) {
+  const items = collectUpcomingGrowCalendarItems(grow, 5);
+  if (!items.length) return '';
+  const rows = items
+    .map((it) => {
+      const d = new Date(it.dayKey + 'T12:00:00');
+      const short = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+      return `<li class="cal-upcoming__li">
+        <span class="cal-upcoming__date">${escapeCalendarAttrText(short)}</span>
+        <i class="ti ti-${it.icon}" aria-hidden="true"></i>
+        <span class="cal-upcoming__label">${escapeCalendarAttrText(it.label)}</span>
+      </li>`;
+    })
+    .join('');
+  return `<div class="card cal-upcoming-card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-flag"></i>Próximos hitos y tareas</div></div>
+    <ul class="cal-upcoming__list">${rows}</ul>
+    <p class="form-hint cal-upcoming__hint">Pulsa un día con marca en el calendario de abajo para ver el detalle.</p>
+  </div>`;
 }
 
 function renderMonthGrid(year, month, eventMap) {
@@ -207,6 +290,10 @@ function renderSemanas() {
   const s = myGrow.strain;
   const n = nutrients.find((x) => x.rank === myGrow.nutri) || nutrients[0];
   const totalW = s.vegW + s.flowerW + 2;
+  const daysSince0 = Math.floor((Date.now() - new Date(myGrow.startDate).getTime()) / 86400000);
+  const weekNumCur = Math.max(1, Math.ceil((daysSince0 + 1) / 7));
+  const wActive = Math.min(weekNumCur, totalW);
+  let curWeekSnap = null;
   const rows = [];
   for (let w = 1; w <= totalW; w++) {
     let phase,
@@ -303,6 +390,9 @@ function renderSemanas() {
       nutri = n.phases.flush;
     }
     const ecPct = Math.min(100, Math.round(((parseFloat(ec) || 0) / 3) * 100));
+    if (w === wActive) {
+      curWeekSnap = { phase, phClass, accion, light, temp, hum };
+    }
     rows.push(`<tr>
       <td data-label="Sem" class="td-week-num">${w}</td>
       <td data-label="Fase"><span class="phase-pill ${phClass}">${phase}</span></td>
@@ -322,6 +412,9 @@ function renderSemanas() {
         ? sysProf.label
         : myGrow.system;
   sc.innerHTML = `
+    ${renderSemanasFusionStrip(myGrow)}
+    ${renderSemanasCurrentWeekCardHtml(totalW, wActive, curWeekSnap)}
+    ${renderSemanasUpcomingHitsHtml(myGrow)}
     ${renderGrowCalendarSection(myGrow)}
     <div class="card card--table">
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar"></i>${s.name} — Plan semanal (${totalW} sem) · ${n.name.split(' ').slice(0, 2).join(' ')}</div></div>

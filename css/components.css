@@ -945,6 +945,97 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 .dash-hc-btn:hover{border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.06)}
 [data-theme='light'] .dash-hc-btn:hover{border-color:rgba(5,150,105,0.35)}
 
+.dash-fusion-status{
+  border-radius:var(--radius2);
+  border:1px solid rgba(52,211,153,0.22);
+  background:rgba(52,211,153,0.06);
+  padding:12px 14px;
+  margin-bottom:1rem;
+}
+[data-theme='light'] .dash-fusion-status{background:rgba(5,150,105,0.06);border-color:rgba(5,150,105,0.22)}
+.dash-fusion-status__text{font-size:13px;color:var(--text2);margin:0 0 8px;line-height:1.45}
+.dash-fusion-status__row{display:flex;flex-wrap:wrap;gap:6px}
+
+.cal-fusion-strip{
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:linear-gradient(165deg,rgba(52,211,153,0.08),var(--surface));
+  margin-bottom:1rem;
+  padding:12px 14px;
+}
+.cal-fusion-strip__inner{display:flex;flex-direction:column;gap:10px}
+@media(min-width:520px){
+  .cal-fusion-strip__inner{flex-direction:row;align-items:center;justify-content:space-between;gap:14px}
+}
+.cal-fusion-strip__label{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);font-weight:600}
+.cal-fusion-strip__text{font-size:13px;color:var(--text2);margin:4px 0 0;line-height:1.45}
+.cal-fusion-strip__actions{display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0}
+
+.historial-fusion-card{margin-bottom:1rem}
+.historial-fusion-card__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.historial-fusion-measure{margin-top:8px!important}
+
+.cal-current-week-card{margin-bottom:1rem}
+.cal-current-week-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 8px}
+.cal-current-week-meta__mini{font-size:13px;color:var(--text2)}
+.cal-current-week-card__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+.dash-hc-ops{
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:var(--surface);
+  padding:12px 14px 14px;
+  margin-bottom:1rem;
+}
+.dash-hc-ops__title{
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin:0 0 6px;
+  display:flex;align-items:center;gap:8px;color:var(--text);
+}
+.dash-hc-ops__text{font-size:13px;color:var(--text2);margin:0 0 10px;line-height:1.45}
+.dash-hc-ops__btns{display:flex;flex-wrap:wrap;gap:8px}
+
+.dash-clima-widget{
+  border-radius:var(--radius2);
+  border:1px solid var(--border);
+  background:var(--surface);
+  padding:12px 14px;
+  margin-bottom:1rem;
+}
+.dash-clima-widget__row{display:flex;gap:14px;align-items:flex-start}
+.dash-clima-widget__icon{
+  flex-shrink:0;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;background:rgba(52,211,153,0.12);color:var(--hydro-teal);border:1px solid rgba(52,211,153,0.2);
+}
+.dash-clima-widget--storm .dash-clima-widget__icon{background:rgba(251,191,36,0.12);color:#fbbf24;border-color:rgba(251,191,36,0.25)}
+.dash-clima-widget--rain .dash-clima-widget__icon{background:rgba(56,189,248,0.12);color:#38bdf8;border-color:rgba(56,189,248,0.22)}
+.dash-clima-widget--snow .dash-clima-widget__icon{background:rgba(226,232,240,0.2);color:#e2e8f0;border-color:rgba(148,163,184,0.35)}
+.dash-clima-widget--fog .dash-clima-widget__icon{background:rgba(148,163,184,0.15);color:#94a3b8}
+.dash-clima-widget__title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin:0 0 2px}
+.dash-clima-widget__viz{font-size:13px;color:var(--text2);margin:0 0 6px}
+.dash-clima-widget__metrics{font-size:14px;color:var(--text);margin:0 0 4px;line-height:1.45}
+.dash-clima-widget__meta{font-size:12px;color:var(--text3);margin:0 0 8px}
+
+.cal-upcoming-card{margin-bottom:1rem}
+.cal-upcoming__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.cal-upcoming__li{
+  display:grid;grid-template-columns:88px 22px 1fr;gap:10px;align-items:start;
+  font-size:13px;color:var(--text2);line-height:1.4;
+}
+.cal-upcoming__date{color:var(--text3);font-weight:600;text-transform:capitalize}
+.cal-upcoming__li i{color:var(--hydro-teal);margin-top:2px}
+.cal-upcoming__label{color:var(--text)}
+.cal-upcoming__hint{margin-top:10px!important}
+
+.consejos-hc-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+.cultivo-hc-fusion-banner{margin-bottom:1rem}
+.cultivo-hc-fusion-banner__actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+.ayuda-flow-list{margin:0 0 1rem;padding-left:1.2rem;color:var(--text2);font-size:14px;line-height:1.55}
+.ayuda-flow-list li{margin-bottom:6px}
+.ayuda-action-grid{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:420px){.ayuda-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 .empty-state{
   text-align:center;padding:2.5rem 1.35rem;border-radius:var(--radius2);
   border:1px dashed rgba(52,211,153,0.28);background:rgba(52,211,153,0.04);
@@ -978,6 +1069,23 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 [data-theme='light'] .consejo-num{box-shadow:0 4px 12px rgba(5,150,105,0.2)}
 .consejo-card strong{display:block;font-size:14px;color:var(--text);margin-bottom:4px}
 .consejo-card p{font-size:13px;color:var(--text2);line-height:1.5;margin:0}
+
+.riego-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.riego-meta{font-size:13px;margin:0 0 10px;color:var(--text2)}
+.riego-hint-list{margin:10px 0 0;padding-left:1.15rem;color:var(--text2);font-size:14px;line-height:1.55}
+.riego-hint-list li{margin-bottom:6px}
+.riego-hint-list strong{color:var(--text)}
+.riego-disclaimer{font-size:12px!important;margin:12px 0 0!important;line-height:1.45}
+
+.clima-hourly-vpd-card{margin-bottom:1rem}
+.clima-hourly-vpd-hint{font-size:13px;margin:0 0 8px}
+.clima-hourly-vpd-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:4px;border-radius:12px;border:1px solid var(--border)}
+.clima-hourly-vpd-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface)}
+.clima-hourly-vpd-table th,.clima-hourly-vpd-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.clima-hourly-vpd-table th{color:var(--text3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em}
+.clima-hourly-vpd-table tr:last-child td{border-bottom:none}
+.clima-vpd-row--high td:last-child{color:#fb923c}
+.clima-vpd-row--low td:last-child{color:#38bdf8}
 
 .monitor-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
 
