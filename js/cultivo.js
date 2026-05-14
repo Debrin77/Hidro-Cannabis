@@ -32,6 +32,78 @@ function escapeHtmlText(s) {
     .replace(/"/g, '&quot;');
 }
 
+function getCultivoHydroChipOrder() {
+  return typeof getOrderedCannabisHydroSystemCodesForChips === 'function'
+    ? getOrderedCannabisHydroSystemCodesForChips()
+    : WORK_SYSTEM_OPTIONS.slice();
+}
+
+/** Tarjeta fase 4: contexto nativo por tier (RDWC/DWC núcleo vs resto). */
+function buildCultivoNativeHydroContextCardHtml(grow) {
+  if (!grow) return '';
+  const prof = typeof getSystemProfile === 'function' ? getSystemProfile(grow.system) : null;
+  const tier = (prof && prof.cannabisPortTier) || 'core';
+  const tierLabel =
+    tier === 'core' ? 'Núcleo cannabis' : tier === 'extended' ? 'Extendido (más práctica)' : 'Avanzado';
+  const tierClass =
+    tier === 'core' ? 'cannabis-tier-pill--core' : tier === 'extended' ? 'cannabis-tier-pill--extended' : 'cannabis-tier-pill--advanced';
+  const displayName =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? getResolvedSystemDisplayName(grow, grow.system)
+      : prof?.label || grow.system || '';
+  const notes = Array.isArray(prof?.checklistNotes) ? prof.checklistNotes : [];
+  const notesHtml = notes.map((h) => `<li>${escapeHtmlText(h)}</li>`).join('');
+  const hint = prof?.optimalHint
+    ? `<p class="body-prose body-prose--tight cultivo-native-hydro-hint">${escapeHtmlText(prof.optimalHint)}</p>`
+    : '';
+  const typeLabel = escapeHtmlText(prof?.label || grow.system || '');
+  const foot =
+    tier === 'core'
+      ? `<div class="cultivo-native-hydro-foot"><p class="form-hint">Calendario, mezclas, esquema cenital y dimensionado están alineados con <strong>${typeLabel}</strong>. <strong>HidroCultivo</strong> aporta <strong>torre</strong>, cultivos alimentarios y checklist NFT con diagramas de referencia.</p></div>`
+      : `<div class="cultivo-native-hydro-foot"><p class="form-hint">Este tipo exige más control de caudal, raíces y EC. Aquí tienes resumen, alertas y <strong>Medir</strong> por planta; usa la tarjeta <strong>HidroCultivo</strong> de abajo para diagramas y procedimientos al estilo «instalación completa».</p></div>`;
+
+  return `<article class="card cultivo-native-hydro-card" aria-labelledby="cultivo-native-hydro-title">
+    <div class="card-header card-header--split">
+      <h2 id="cultivo-native-hydro-title" class="card-title"><i class="ti ti-droplet"></i> Sistema hidro · cannabis</h2>
+      <span class="cannabis-tier-pill ${tierClass}">${escapeHtmlText(tierLabel)}</span>
+    </div>
+    <p class="body-prose body-prose--tight">Instalación activa: <strong>${escapeHtmlText(displayName)}</strong>.</p>
+    <ul class="legal-list cultivo-native-hydro-checklist">${notesHtml}</ul>
+    ${hint}
+    ${foot}
+  </article>`;
+}
+
+function buildCultivoHcFusionBannerHtml(grow) {
+  const tier =
+    typeof getCannabisHydroPortTier === 'function' && grow?.system
+      ? getCannabisHydroPortTier(grow.system)
+      : 'core';
+  const actions = `<div class="cultivo-hc-fusion-banner__actions">
+        <button type="button" class="btn btn-primary btn--compact" onclick="navToHcEmbed('sistema')"><i class="ti ti-external-link"></i> Sistema HC</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-home"></i> Inicio HC</button>
+      </div>`;
+  if (tier === 'core') {
+    return `<div class="card cultivo-hc-fusion-banner cultivo-hc-fusion-banner--muted">
+      <div class="card-header"><div class="card-title"><i class="ti ti-layout-grid"></i> HidroCultivo · complemento</div></div>
+      <p class="body-prose body-prose--tight">Con <strong>RDWC/DWC</strong>, el núcleo operativo vive en esta app. Abre HC para <strong>torre</strong>, cultivos <strong>alimentarios</strong> o checklist NFT con diagramas de referencia comercial.</p>
+      ${actions}
+    </div>`;
+  }
+  if (tier === 'extended') {
+    return `<div class="card cultivo-hc-fusion-banner">
+      <div class="card-header"><div class="card-title"><i class="ti ti-layout-grid"></i> HidroCultivo · canales, NFT y torre</div></div>
+      <p class="body-prose body-prose--tight">Tu montaje es habitual en cannabis con más atención al caudal y a la homogeneidad. En HC hay <strong>NFT avanzado</strong>, cálculos de depósito y el hilo de <strong>torre</strong> que aquí no replicamos al mismo nivel.</p>
+      ${actions}
+    </div>`;
+  }
+  return `<div class="card cultivo-hc-fusion-banner cultivo-hc-fusion-banner--warn">
+      <div class="card-header"><div class="card-title"><i class="ti ti-layout-grid"></i> HidroCultivo · aeroponía y referencias</div></div>
+      <p class="body-prose body-prose--tight">La aeroponía exige higiene y temporalización finos. Usa HC para boquillas, cámaras y biblioteca alimentaria; aquí prioriza pH/EC y lecturas frecuentes en <strong>Medir</strong>.</p>
+      ${actions}
+    </div>`;
+}
+
 /** Volumen útil del espacio de cultivo (m³) para afinar solo la fila del extractor; vacío = estimación automática. */
 function parseEnclosureVolumeM3Input(elementId) {
   const el = document.getElementById(elementId);
@@ -708,7 +780,7 @@ function renderInitialOnboarding() {
         <div class="form-group">
           <label>Tipos de cultivo hidropónico disponibles (elige uno o varios)</label>
           <div class="pill-tag-row pill-tag-row--install-chips">
-            ${['RDWC', 'DWC', 'NFT', 'FLOAT', 'AERO']
+            ${getCultivoHydroChipOrder()
               .map((s) => {
                 const insts = Array.isArray(cfg.systemInstallations) ? cfg.systemInstallations : [];
                 const n = insts.filter((i) => i.type === s).length;
@@ -725,8 +797,9 @@ function renderInitialOnboarding() {
         </div>
         <div class="form-group">
           <label>Cultivo hidropónico activo al inicio</label>
-          <select id="onbSystem" onchange="onOnboardingSystemTypeChange()"><option value="RDWC" ${(cfg.system||'RDWC')==='RDWC'?'selected':''}>RDWC</option><option value="DWC" ${cfg.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${cfg.system==='NFT'?'selected':''}>NFT</option><option value="FLOAT" ${cfg.system==='FLOAT'?'selected':''}>Mesa flotante</option><option value="AERO" ${cfg.system==='AERO'?'selected':''}>Aeroponía</option></select>
+          <select id="onbSystem" onchange="onOnboardingSystemTypeChange()">${typeof buildCannabisHydroSystemOptionsHtml === 'function' ? buildCannabisHydroSystemOptionsHtml(cfg.system || 'RDWC') : '<option value="RDWC" selected>RDWC</option>'}</select>
         </div>
+        <p class="form-hint">Fusión cannabis: <strong>RDWC</strong> y <strong>DWC</strong> son el núcleo que integraremos primero con HidroCultivo. NFT, mesa flotante y aeroponía siguen disponibles (compatibilidad y comparación con HC).</p>
         <div class="form-group">
           <label>Ubicación (ciudad o zona)</label>
           <input id="onbLocation" type="text" value="${cfg.location||''}" placeholder="Ej: Castelló de la Plana" autocomplete="address-level2">
@@ -1198,8 +1271,9 @@ function renderWizStep(){
       ${errorBox}
       <div class="grid2">
         <div class="form-group"><label>Tipo de cultivo hidropónico</label>
-          <select id="wSys"><option value="RDWC" ${wizData.system==='RDWC'?'selected':''}>RDWC (recomendado)</option><option value="DWC" ${wizData.system==='DWC'?'selected':''}>DWC</option><option value="NFT" ${wizData.system==='NFT'?'selected':''}>NFT</option><option value="FLOAT" ${wizData.system==='FLOAT'?'selected':''}>Mesa flotante</option><option value="AERO" ${wizData.system==='AERO'?'selected':''}>Aeroponía</option></select>
+          <select id="wSys">${typeof buildCannabisHydroSystemOptionsHtml === 'function' ? buildCannabisHydroSystemOptionsHtml(wizData.system || 'RDWC') : '<option value="RDWC" selected>RDWC</option>'}</select>
         </div>
+        <p class="form-hint form-hint--full-width">La app prioriza <strong>RDWC/DWC</strong> para cannabis; torre y formatos alimentarios amplios siguen en <strong>HidroCultivo</strong> embebido.</p>
         <div class="form-group"><label>Metros cuadrados</label>
           <input type="number" id="wM2" min="0.5" max="10" step="0.25" value="${wizData.m2||1.2}">
         </div>
@@ -1467,16 +1541,11 @@ function renderActiveGrow(){
     return `<div class="tl-seg ${cls} ${i<weekNum-1?'past':''}" title="S${i+1}: ${i===0?'Germinación':i<s.vegW?'Vegetación':i<s.vegW+2?'Prefloración':i<s.vegW+s.flowerW?'Floración':'Flush'}"></div>`;
   }).join('');
 
-  const cultivoHcFusionBanner = `<div class="card cultivo-hc-fusion-banner">
-      <div class="card-header"><div class="card-title"><i class="ti ti-layout-grid"></i> HidroCultivo · torre y sistemas generales</div></div>
-      <p class="body-prose body-prose--tight">Aquí el foco es cannabis en DWC, RDWC o NFT. Para la <strong>torre de lechugas</strong>, checklist post-instalación y NFT avanzado de HC, abre el módulo embebido.</p>
-      <div class="cultivo-hc-fusion-banner__actions">
-        <button type="button" class="btn btn-primary btn--compact" onclick="navToHcEmbed('sistema')"><i class="ti ti-external-link"></i> Sistema HC</button>
-        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-home"></i> Inicio HC</button>
-      </div>
-    </div>`;
+  const cultivoNativeHydroCard = buildCultivoNativeHydroContextCardHtml(myGrow);
+  const cultivoHcFusionBanner = buildCultivoHcFusionBannerHtml(myGrow);
 
-  document.getElementById('cultivoContent').innerHTML=`${cultivoHcFusionBanner}
+  document.getElementById('cultivoContent').innerHTML=`${cultivoNativeHydroCard}
+${cultivoHcFusionBanner}
     <div class="card">
       <div class="grow-summary">
         <div class="grow-summary-main">

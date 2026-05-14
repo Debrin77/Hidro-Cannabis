@@ -6,7 +6,7 @@ function renderAyudaPage() {
   host.innerHTML = `
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-help"></i> Ayuda en esta app</div></div>
-      <p class="body-prose">Esta app prioriza <strong>cannabis en hidro</strong> (Medir, variedades, calendario por cepa). Los módulos de <strong>HidroCultivo</strong> (torre, riego por pulsos avanzado, meteo alimentario) se abren embebidos desde <strong>Más</strong> o desde las tarjetas de fusión en Cultivo / Calendario / Historial.</p>
+      <p class="body-prose">Esta app prioriza <strong>cannabis en hidro</strong> con núcleo <strong>RDWC/DWC</strong> (Medir, variedades, calendario por cepa); NFT, mesa flotante y aeroponía siguen disponibles con aviso de mayor complejidad. Los módulos de <strong>HidroCultivo</strong> (torre, riego por pulsos avanzado, meteo alimentario) se abren embebidos desde <strong>Más</strong> o desde las tarjetas de fusión en Cultivo / Calendario / Historial.</p>
       <ul class="ayuda-flow-list">
         <li><strong>1.</strong> Configura el cultivo en <strong>Cultivo</strong> y actualiza <strong>Climatología</strong> si cultivas fuera.</li>
         <li><strong>2.</strong> Registra lecturas en <strong>Medir</strong>; revisa <strong>Riego</strong> (ET₀ + demanda) y el <strong>Calendario</strong> semanal.</li>
@@ -22,7 +22,7 @@ function renderAyudaPage() {
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-info-circle"></i> Datos y modelos</div></div>
       <p class="body-prose body-prose--tight">Open-Meteo y geocodificación son servicios públicos; los valores son orientativos. No sustituyen medición real ni asesoramiento jurídico.</p>
-      <p class="body-prose body-prose--tight">En cada guardado del cultivo se actualiza un resumen interno (<code>fusion.growContext</code>) con sistema, emplazamiento, depósito, sitios y recinto, para alinear la app con el port de HidroCultivo. Si el pronóstico en <strong>Climatología</strong> es reciente y coincide la rejilla, <strong>Riego</strong> reutiliza esa serie horaria para ET₀/VPD sin repetir la misma petición a la API.</p>
+      <p class="body-prose body-prose--tight">En cada guardado del cultivo se actualiza un resumen interno (<code>fusion.growContext</code>) con sistema, emplazamiento, depósito, sitios, recinto y prioridad de port (<code>hydroCannabisPortTier</code>), para alinear la app con HidroCultivo. Si el pronóstico en <strong>Climatología</strong> es reciente y coincide la rejilla, <strong>Riego</strong> reutiliza esa serie horaria para ET₀/VPD sin repetir la misma petición a la API.</p>
     </div>
   `;
 }

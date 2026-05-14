@@ -268,6 +268,16 @@ function buildInicioAppProgressCardHtml() {
   const cultivoPct = buildInicioCultivoSetupPct(gf);
   const port = getHcNativePortPhaseHits(myGrow);
   const fourOk = [gf.strainOk, gf.locOk, gf.climaOk, gf.medirOk].filter(Boolean).length;
+  const hydroTier =
+    typeof getCannabisHydroPortTier === 'function' && myGrow.system
+      ? getCannabisHydroPortTier(myGrow.system)
+      : 'core';
+  const hydroTierHint =
+    hydroTier === 'extended'
+      ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>extendido</strong> (NFT/mesa): medición frecuente y, si hace falta, diagramas en HidroCultivo.</p>'
+      : hydroTier === 'advanced'
+        ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>avanzado</strong> (aeroponía): revisa boquillas y ciclos; el embed HC aporta referencias técnicas.</p>'
+        : '';
 
   return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
     <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
@@ -294,6 +304,7 @@ function buildInicioAppProgressCardHtml() {
         <p class="dash-progress-hint">Abre al menos una pestaña embebida para contar la fase «Medir HC» (cultivos alimentarios).</p>
       </div>
     </div>
+    ${hydroTierHint}
     <div class="dash-progress-actions">
       <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-ready-card')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Listo para cultivar</button>
       <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-expert-check-section')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Checklist buenas prácticas</button>
@@ -628,7 +639,7 @@ function renderInicio() {
 
     <section class="dash-hc-strip" aria-labelledby="dash-hc-title">
       <h2 id="dash-hc-title" class="dash-hc-strip__title"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> HidroCultivo (referencia)</h2>
-      <p class="dash-hc-strip__lead">Mismas pantallas que HidroCultivo; el port nativo irá en este orden de valor (1→9). El <strong>Medir</strong> de cannabis sigue en la barra inferior.</p>
+      <p class="dash-hc-strip__lead">Mismas pantallas que HidroCultivo; el port nativo va en orden de valor (1→9), priorizando <strong>RDWC/DWC</strong> para cannabis. Torre y hidro alimentario amplio siguen en HC. El <strong>Medir</strong> de cannabis sigue en la barra inferior.</p>
       <div class="dash-hc-grid">
         <button type="button" class="dash-hc-btn" onclick="navTo('riego')">1 Riego</button>
         <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('meteo')">2 Meteo</button>

@@ -8,7 +8,7 @@
  * 1) Riego: ET₀/VPD nativos en esta app; torre y pulsos en iframe (HC) hasta port 1b.
  * 2) Meteo: pronóstico diario + tabla VPD horaria; widget «hoy» en Inicio lee el bundle guardado.
  * 3) Calendario HC: mallas; strip Medir, semana en curso, lista «próximos hitos» y calendario mensual nativos.
- * 4) Sistema / torre: NFT, DWC, multi-instalación; banner en Cultivo nativo.
+ * 4) Sistema: integración nativa prioriza RDWC/DWC (cannabis hidro con trayectoria clara); HC sigue cubriendo torre y formatos alimentarios amplios (NFT, multi-instalación…).
  * 5) Inicio HC: panel torre; en Hydro Cannabis: widget pronóstico hoy + bloque riego nativo.
  * 6) Historial HC: tarjeta cruce + última medición; gráficos torre en iframe.
  * 7) Consejos HC: paso 5 en pantalla Consejos nativo aclara alimentario vs cannabis.
@@ -20,7 +20,7 @@ const HC_NATIVE_PORT_PHASES = [
   { phase: 1, embedTab: 'riego', id: 'riego', title: 'Riego (ET₀ + demanda + pulsos nativos; HC torre)' },
   { phase: 2, embedTab: 'meteo', id: 'meteo', title: 'Meteo (VPD horario en Clima; widget hoy en Inicio; HC avanzado)' },
   { phase: 3, embedTab: 'calendario', id: 'calendario', title: 'Calendario (HC mallas; semana en curso + próximos hitos nativos)' },
-  { phase: 4, embedTab: 'sistema', id: 'sistema', title: 'Cultivo e instalación / torre (banner HC en Cultivo)' },
+  { phase: 4, embedTab: 'sistema', id: 'sistema', title: 'Sistema (RDWC/DWC nativos; torre y hidro amplio en HC)' },
   { phase: 5, embedTab: 'inicio', id: 'inicio', title: 'Inicio HC (panel torre; widget clima + riego en Inicio nativo)' },
   { phase: 6, embedTab: 'historial', id: 'historial', title: 'Historial (Meteo+Riego+Medir nativos; HC torre)' },
   { phase: 7, embedTab: 'consejos', id: 'consejos', title: 'Consejos HC (paso 5 en Consejos nativo)' },
@@ -31,7 +31,7 @@ const HC_NATIVE_PORT_PHASES = [
 const HC_EMBED_TAB_LABELS = {
   inicio: 'Inicio (panel torre, meteo exterior, operativa)',
   mediciones: 'Medir (versión HidroCultivo / cultivos alimentarios)',
-  sistema: 'Cultivo e instalación (torre, NFT, DWC…)',
+  sistema: 'Cultivo e instalación (HC: torre y hidro amplio; nativo: RDWC/DWC cannabis)',
   calendario: 'Calendario (HidroCultivo)',
   riego: 'Riego (HidroCultivo)',
   meteo: 'Meteorología (HidroCultivo)',

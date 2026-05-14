@@ -111,6 +111,10 @@ function syncGrowFusionContext(grow) {
         ? grow.activeInstallationId.trim()
         : null,
     nutriRank: Number.isFinite(grow.nutri) ? grow.nutri : null,
+    hydroCannabisPortTier:
+      typeof getSystemProfile === 'function' && grow.system
+        ? getSystemProfile(grow.system).cannabisPortTier || null
+        : null,
   };
 }
 

@@ -1,8 +1,10 @@
 // Perfiles por tipo de sistema: gráficos, checklist y pistas de nutrientes.
+// cannabisPortTier: prioridad de fusión nativa «cannabis» (core = núcleo; extended; advanced).
 
 const HYDRO_SYSTEM_PROFILES = {
   RDWC: {
     label: 'RDWC',
+    cannabisPortTier: 'core',
     solutionSubtitle: 'Circuito recirculante · una solución común',
     chartModes: [
       { id: 'solution', label: 'pH + EC (circuito)' },
@@ -18,6 +20,7 @@ const HYDRO_SYSTEM_PROFILES = {
   },
   DWC: {
     label: 'DWC',
+    cannabisPortTier: 'core',
     solutionSubtitle: 'Depósito independiente por sitio',
     chartModes: [
       { id: 'solution', label: 'pH + EC por cubo' },
@@ -33,6 +36,7 @@ const HYDRO_SYSTEM_PROFILES = {
   },
   FLOAT: {
     label: 'Mesa flotante',
+    cannabisPortTier: 'extended',
     solutionSubtitle: 'Balsa · volumen común · macetas flotantes',
     chartModes: [
       { id: 'solution', label: 'pH + EC (balsa)' },
@@ -48,6 +52,7 @@ const HYDRO_SYSTEM_PROFILES = {
   },
   NFT: {
     label: 'NFT',
+    cannabisPortTier: 'extended',
     solutionSubtitle: 'Película en canal · depósito mezclado',
     chartModes: [
       { id: 'solution', label: 'pH + EC (depósito)' },
@@ -63,6 +68,7 @@ const HYDRO_SYSTEM_PROFILES = {
   },
   AERO: {
     label: 'Aeroponía',
+    cannabisPortTier: 'advanced',
     solutionSubtitle: 'Cámara de raíces · nebulización',
     chartModes: [
       { id: 'solution', label: 'pH + EC (reserva)' },
@@ -77,6 +83,56 @@ const HYDRO_SYSTEM_PROFILES = {
     optimalHint: 'Prioriza higiene y ciclos húmedo/seco del diseño; EC muy alta aumenta riesgo de quemadura radicular.',
   },
 };
+
+/**
+ * Agrupación para selects: priorizar esquemas con trayectoria clara en cannabis (hidro casero).
+ * NFT/FLOAT/AERO se mantienen por compatibilidad; la fusión nativa y copy priorizan el núcleo.
+ */
+const CANNABIS_HYDRO_PORT_TIERS = [
+  { id: 'core', label: 'Recomendados — cannabis hidro (éxito habitual)', systems: ['RDWC', 'DWC'] },
+  { id: 'extended', label: 'También usados en cannabis (más práctica)', systems: ['NFT', 'FLOAT'] },
+  { id: 'advanced', label: 'Avanzado — viable, exige más dominio', systems: ['AERO'] },
+];
+
+function escHydroSelectText(txt) {
+  return String(txt ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
+function buildCannabisHydroSystemOptionsHtml(selectedCode) {
+  const sel = selectedCode || 'RDWC';
+  let html = '';
+  for (const tier of CANNABIS_HYDRO_PORT_TIERS) {
+    html += `<optgroup label="${escHydroSelectText(tier.label)}">`;
+    for (const code of tier.systems) {
+      const p = HYDRO_SYSTEM_PROFILES[code];
+      if (!p) continue;
+      const isSel = code === sel ? ' selected' : '';
+      const suffix = tier.id === 'core' && code === 'RDWC' ? ' · recomendado' : '';
+      html += `<option value="${code}"${isSel}>${escHydroSelectText(p.label)}${suffix}</option>`;
+    }
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+/** Orden estable para chips de onboarding (núcleo → extendido → avanzado). */
+function getOrderedCannabisHydroSystemCodesForChips() {
+  const out = [];
+  for (const tier of CANNABIS_HYDRO_PORT_TIERS) {
+    for (const code of tier.systems) {
+      if (HYDRO_SYSTEM_PROFILES[code]) out.push(code);
+    }
+  }
+  return out;
+}
+
+/** `core` | `extended` | `advanced` según catálogo; desconocidos heredan perfil DWC. */
+function getCannabisHydroPortTier(systemCode) {
+  return getSystemProfile(systemCode).cannabisPortTier || 'core';
+}
 
 function getSystemProfile(system) {
   return HYDRO_SYSTEM_PROFILES[system] || HYDRO_SYSTEM_PROFILES.DWC;
@@ -269,3 +325,7 @@ window.getInstrumentPolicy = getInstrumentPolicy;
 window.sanitizeHardwareComplementsForContext = sanitizeHardwareComplementsForContext;
 window.getMinimumHydroInstrumentSnippets = getMinimumHydroInstrumentSnippets;
 window.getLearningRecintoEquipmentNarrativeHtml = getLearningRecintoEquipmentNarrativeHtml;
+window.CANNABIS_HYDRO_PORT_TIERS = CANNABIS_HYDRO_PORT_TIERS;
+window.buildCannabisHydroSystemOptionsHtml = buildCannabisHydroSystemOptionsHtml;
+window.getOrderedCannabisHydroSystemCodesForChips = getOrderedCannabisHydroSystemCodesForChips;
+window.getCannabisHydroPortTier = getCannabisHydroPortTier;
