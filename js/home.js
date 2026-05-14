@@ -771,7 +771,7 @@ function buildInicioAppProgressCardHtml() {
         <div class="dash-progress-meter-wrap">
           <div class="dash-progress-meter"><span style="width:${cultivoPct}%"></span></div>
         </div>
-        <p class="dash-progress-hint">${escapeHomeHtml(`Buenas prácticas: ${gf.checklistDone}/${gf.checklistTotal} · ${gf.checklistPct}%.`)}</p>
+        <p class="dash-progress-hint">${escapeHomeHtml(`Lista inferior: ${gf.checklistDone}/${gf.checklistTotal} · ${gf.checklistPct}%.`)}</p>
       </div>
       <div>
         <div class="dash-progress-row__head">
@@ -787,7 +787,7 @@ function buildInicioAppProgressCardHtml() {
     ${hydroTierHint}
     <div class="dash-progress-actions">
       <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-ready-card')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Listo para cultivar</button>
-      <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-expert-check-section')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Checklist buenas prácticas</button>
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-expert-check-section')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Ir a la lista</button>
     </div>
   </section>`;
 }
@@ -970,7 +970,7 @@ function buildInicioReadinessCardHtml() {
 
   return `<section id="dash-ready-card" class="dash-ready-card" aria-labelledby="dash-ready-title">
     <h2 id="dash-ready-title" class="dash-ready-title"><i class="ti ti-checklist"></i> Listo para cultivar</h2>
-    <p class="dash-ready-lead">${escapeHomeHtml(`Buenas prácticas (más abajo): ${done}/${total} · ${pct}%.`)}</p>
+    <p class="dash-ready-lead">${escapeHomeHtml(`Lista inferior: ${done}/${total} · ${pct}%.`)}</p>
     <ul class="dash-ready-list">${rows}</ul>
   </section>`;
 }
@@ -1085,16 +1085,9 @@ function renderInicio() {
     ${buildInicioNutrientBlockHtml()}
 
     <details class="dash-check-section" id="dash-inicio-more-section">
-      <summary class="dash-check-summary">
-        <div class="dash-check-summary__grow">
-          <div class="dash-check-summary__topline">
-            <div>
-              <h2 class="dash-section-title">Progreso, checklist y más</h2>
-              <p class="dash-section-sub">Resumen de configuración, integración y buenas prácticas</p>
-            </div>
-            <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
-          </div>
-        </div>
+      <summary class="dash-check-summary dash-check-summary--bare">
+        <span class="sr-only">Más contenido: progreso, integración y accesos rápidos</span>
+        <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
       </summary>
       <div class="dash-check-section__body dash-check-section__body--loose">
     ${buildInicioAppProgressCardHtml()}
@@ -1129,16 +1122,11 @@ function renderInicio() {
     </details>
 
     <details class="dash-check-section" id="dash-expert-check-section">
-      <summary class="dash-check-summary">
-        <div class="dash-check-summary__grow">
-          <div class="dash-check-summary__topline">
-            <div>
-              <h2 class="dash-section-title">Buenas prácticas</h2>
-              <p class="dash-section-sub">Referencia rápida · ${done}/${total} revisados</p>
-            </div>
-            <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
-          </div>
+      <summary class="dash-check-summary dash-check-summary--expert-bare">
+        <span class="sr-only">Lista de comprobación, ${done} de ${total} revisados</span>
+        <div class="dash-check-expert-summary-row">
           <div class="dash-mini-bar dash-mini-bar--in-summary" style="--dash-pct:${pct}%"><span></span></div>
+          <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
         </div>
       </summary>
       <div class="dash-check-section__toolbar">

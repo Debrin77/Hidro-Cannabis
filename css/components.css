@@ -766,6 +766,16 @@ details.dash-check-section > summary.dash-check-summary{
   list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:10px;
   padding:1.1rem 1.15rem;margin:0;user-select:none;-webkit-tap-highlight-color:transparent;
 }
+details.dash-check-section > summary.dash-check-summary--bare{
+  justify-content:flex-end;padding:0.55rem 1.15rem;
+}
+details.dash-check-section > summary.dash-check-summary--expert-bare{
+  flex-direction:column;align-items:stretch;gap:0;padding:0.65rem 1.15rem 0.85rem;
+}
+.dash-check-expert-summary-row{
+  display:flex;align-items:center;gap:12px;width:100%;
+}
+.dash-check-expert-summary-row .dash-mini-bar--in-summary{margin-top:0;flex:1;max-width:none}
 details.dash-check-section > summary::-webkit-details-marker{display:none}
 .dash-check-summary__grow{flex:1;min-width:0;width:100%}
 .dash-check-summary__topline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;width:100%}
