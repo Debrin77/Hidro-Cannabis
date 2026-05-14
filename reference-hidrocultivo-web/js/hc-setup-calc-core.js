@@ -1343,7 +1343,7 @@ async function detectarCiudadSetup() {
     const { latitude, longitude } = pos.coords;
     const url = 'https://nominatim.openstreetmap.org/reverse?lat=' + latitude +
       '&lon=' + longitude + '&format=json&accept-language=es';
-    const data = await (await fetch(url, { headers: { 'User-Agent': 'HidroCultivo/1.0' } })).json();
+    const data = await (await fetch(url, { headers: { 'User-Agent': 'HydroCannabis-embed/1.0' } })).json();
     const ad = data.address || {};
     const ciudad = ad.city || ad.town || ad.village || ad.municipality || '';
     const prov = ad.state || ad.region || '';

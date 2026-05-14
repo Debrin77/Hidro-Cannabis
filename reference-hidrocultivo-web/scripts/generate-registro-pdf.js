@@ -6,17 +6,17 @@ const outputPath = path.resolve(
   __dirname,
   '..',
   'docs',
-  'memoria_tecnica_registro_propiedad_intelectual_hidrocultivo_v1_0.pdf'
+  'memoria_tecnica_registro_hydro_cannabis_integracion_v1_0.pdf'
 );
 
 const doc = new PDFDocument({
   size: 'A4',
   margins: { top: 54, bottom: 54, left: 54, right: 54 },
   info: {
-    Title: 'Memoria Tecnica - HidroCultivo v1.0',
+    Title: 'Memoria técnica — Hydro Cannabis integración v1.0',
     Author: 'Jose Caruana Reina',
     Subject: 'Registro de la Propiedad Intelectual',
-    Keywords: 'HidroCultivo, software, propiedad intelectual',
+    Keywords: 'Hydro Cannabis, hidroponía, software, propiedad intelectual',
   },
 });
 
@@ -56,7 +56,7 @@ h1('MEMORIA TECNICA DE OBRA SOFTWARE');
 p('Registro de la Propiedad Intelectual - Ministerio de Cultura (Espana)');
 
 h2('1. Identificacion de la obra');
-kv('Titulo', 'HidroCultivo');
+kv('Titulo', 'Hydro Cannabis — integración hidropónica (componente web)');
 kv('Tipo de obra', 'Programa de ordenador');
 kv('Version depositada', '1.0');
 kv('Autor y titular', 'Jose Caruana Reina');
@@ -64,7 +64,7 @@ kv('NIF', '19002112H');
 kv('Fecha de deposito', '[completar dd/mm/aaaa]');
 
 h2('2. Objeto y finalidad');
-p('HidroCultivo es una aplicacion software orientada a la gestion integral de cultivos hidroponicos, con foco en el seguimiento tecnico del sistema, la toma de decisiones operativas y la trazabilidad de tareas de mantenimiento.');
+p('Hydro Cannabis — integración hidropónica es un componente software orientado a la gestion integral de cultivos hidroponicos, con foco en el seguimiento tecnico del sistema, la toma de decisiones operativas y la trazabilidad de tareas de mantenimiento.');
 p('Su finalidad es asistir al usuario en la configuracion del sistema de cultivo, control de parametros de solucion nutritiva, planificacion de recargas, seguimiento de fases de cultivo y consulta tecnica contextualizada.');
 
 h2('3. Descripcion funcional');
@@ -99,7 +99,7 @@ bullet('Documentacion tecnica y material de apoyo aportado por el autor.');
 doc.moveDown(0.35);
 
 h2('8. Declaracion de autoria');
-p('Yo, Jose Caruana Reina, con NIF 19002112H, manifiesto ser autor y titular de los derechos de explotacion de la obra software "HidroCultivo", version 1.0, aportada a efectos de su inscripcion en el Registro de la Propiedad Intelectual.');
+p('Yo, Jose Caruana Reina, con NIF 19002112H, manifiesto ser autor y titular de los derechos de explotacion de la obra software "Hydro Cannabis — integración hidropónica", version 1.0, aportada a efectos de su inscripcion en el Registro de la Propiedad Intelectual.');
 
 h2('9. Lugar, fecha y firma');
 kv('Lugar', 'Castellón de la Plana');
@@ -113,7 +113,7 @@ doc.font('Helvetica').fontSize(10.8).text('NIF 19002112H');
 doc.moveDown(0.4);
 
 h2('Anexo breve para formulario (descripcion resumida)');
-p('Programa de ordenador denominado HidroCultivo (version 1.0), desarrollado por Jose Caruana Reina (NIF 19002112H) en JavaScript, HTML y CSS, con funcionalidad de gestion hidroponica: configuracion de sistemas, registro de mediciones, checklist de recarga, historial, calendario y recomendaciones contextuales por fase/cultivo/nutriente.');
+p('Programa de ordenador denominado Hydro Cannabis — integración hidropónica (version 1.0), desarrollado por Jose Caruana Reina (NIF 19002112H) en JavaScript, HTML y CSS, con funcionalidad de gestion hidroponica: configuracion de sistemas, registro de mediciones, checklist de recarga, historial, calendario y recomendaciones contextuales por fase/cultivo/nutriente.');
 
 doc.end();
 

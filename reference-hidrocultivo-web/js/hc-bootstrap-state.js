@@ -292,7 +292,7 @@ function crearPuntoRestauracionLocal(opts = {}) {
       } catch (_) {}
     });
     const snapshot = {
-      hidrocultivoAutoRestore: true,
+      hydroIntegrationAutoRestore: true,
       capturedAt: new Date().toISOString(),
       reason: opts.reason || 'version-change',
       fromVersion: opts.fromVersion || null,
@@ -329,7 +329,7 @@ function gestionarCambioVersionEnArranque() {
   } catch (_) {}
 }
 
-async function exportarEstadoHidroCultivo() {
+async function exportarEstadoIntegracion() {
   try {
     if (state && state.torres && state.torres.length > 0) guardarEstadoTorreActual();
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -346,15 +346,15 @@ async function exportarEstadoHidroCultivo() {
       } catch (e) {}
     });
     const bundle = {
-      hidrocultivoBackup: true,
+      hydroCannabisIntegrationBackup: true,
       version: 1,
       exportedAt: new Date().toISOString(),
-      app: 'HidroCultivo',
+      app: 'Hydro Cannabis · integración',
       main: raw,
       extraKeys,
     };
     const json = JSON.stringify(bundle, null, 2);
-    const fname = 'hidrocultivo-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    const fname = 'hydro-cannabis-integracion-backup-' + new Date().toISOString().slice(0, 10) + '.json';
 
     const cap = window.hcCapacitorBackup;
     if (cap && typeof cap.isNative === 'function' && typeof cap.exportAndShare === 'function') {
@@ -385,18 +385,6 @@ async function exportarEstadoHidroCultivo() {
   }
 }
 
-function importarEstadoHidroCultivoClick() {
-  const el = document.getElementById('inputImportEstado');
-  if (!el) return;
-  try {
-    if (typeof el.showPicker === 'function') {
-      el.showPicker();
-      return;
-    }
-  } catch (e) {}
-  el.click();
-}
-
 async function onImportEstadoFileSelected(ev) {
   const input = ev.target;
   const f = input && input.files && input.files[0];
@@ -406,7 +394,11 @@ async function onImportEstadoFileSelected(ev) {
     const text = await f.text();
     const parsed = JSON.parse(text);
     let mainStr = null;
-    if (parsed && parsed.hidrocultivoBackup === true && typeof parsed.main === 'string') {
+    if (
+      parsed &&
+      (parsed.hydroCannabisIntegrationBackup === true || parsed.hidrocultivoBackup === true) &&
+      typeof parsed.main === 'string'
+    ) {
       mainStr = parsed.main;
     } else if (parsed && Array.isArray(parsed.torre)) {
       mainStr = JSON.stringify(parsed);

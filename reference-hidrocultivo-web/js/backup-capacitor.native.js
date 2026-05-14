@@ -12,8 +12,8 @@ async function isNative() {
 }
 
 function safeName(name) {
-  const base = (name || 'hidrocultivo-backup.json').split(/[/\\]/).pop();
-  return base.replace(/[^a-zA-Z0-9._-]/g, '_') || 'hidrocultivo-backup.json';
+  const base = (name || 'hydro-cannabis-integracion-backup.json').split(/[/\\]/).pop();
+  return base.replace(/[^a-zA-Z0-9._-]/g, '_') || 'hydro-cannabis-integracion-backup.json';
 }
 
 /**
@@ -32,7 +32,7 @@ async function exportAndShare(jsonString, filename) {
     directory: Directory.Cache,
   });
   await Share.share({
-    title: 'Copia HidroCultivo',
+    title: 'Copia Hydro Cannabis (integración)',
     text: 'Copia de seguridad (.json)',
     url: uri,
     dialogTitle: 'Compartir copia',

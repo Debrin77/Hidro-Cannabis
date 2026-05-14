@@ -18,7 +18,7 @@
     });
   }
 
-  function initHidroCultivoTabBarA11y() {
+  function initIntegrationTabBarA11y() {
     var bar = document.querySelector('.tab-bar');
     if (!bar || bar._hcTabA11y) return;
     bar._hcTabA11y = true;
@@ -61,7 +61,7 @@
   }
 
   window._hcSyncMainTabTabIndex = syncTabIndex;
-  window.initHidroCultivoTabBarA11y = initHidroCultivoTabBarA11y;
+  window.initIntegrationTabBarA11y = initIntegrationTabBarA11y;
 })();
 
 /** Subpestañas Historial (misma idea: ← → Home End). */

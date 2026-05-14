@@ -568,7 +568,7 @@ async function detectarMunicipio() {
       try {
         // Usar Nominatim (OpenStreetMap) para geocodificación inversa — sin API key
         const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es`;
-        const res  = await fetch(url, { headers: { 'User-Agent': 'HidroCultivo/1.0' } });
+        const res  = await fetch(url, { headers: { 'User-Agent': 'HydroCannabis-embed/1.0' } });
         const data = await res.json();
 
         const ciudad = data.address?.city

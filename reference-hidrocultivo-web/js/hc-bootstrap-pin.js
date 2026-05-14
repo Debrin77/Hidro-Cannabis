@@ -139,7 +139,7 @@ async function tryBiometricUnlock() {
     if (statusEl) statusEl.textContent = 'Intentando desbloqueo biométrico…';
 
     await biom.verifyIdentity({
-      reason: 'Desbloquear HidroCultivo',
+      reason: 'Desbloquear integración',
       title: 'Identificación biométrica',
       subtitle: 'Usa la biometría de tu dispositivo',
       description: 'Si cancelas, podrás entrar con PIN',

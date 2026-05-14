@@ -142,7 +142,7 @@ function initApp() {
     window._a11yEscapeBound = true;
     document.addEventListener('keydown', a11yEscapeTopDialog);
   }
-  if (typeof initHidroCultivoTabBarA11y === 'function') initHidroCultivoTabBarA11y();
+  if (typeof initIntegrationTabBarA11y === 'function') initIntegrationTabBarA11y();
   if (typeof window._hcSyncMainTabTabIndex === 'function') window._hcSyncMainTabTabIndex();
   if (typeof initHistorialTabBarA11y === 'function') initHistorialTabBarA11y();
   if (typeof window._hcSyncHistorialTabTabIndex === 'function') window._hcSyncHistorialTabTabIndex();

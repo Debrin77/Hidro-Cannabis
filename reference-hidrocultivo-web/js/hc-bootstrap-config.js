@@ -35,7 +35,7 @@ async function hcPostSheets(payload) {
     });
     return true;
   } catch (e) {
-    console.error('HidroCultivo Sheets:', e);
+    console.error('Hydro Cannabis integración (Sheets):', e);
     hcSheetsNotifyFailure();
     return false;
   }

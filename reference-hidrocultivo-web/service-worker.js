@@ -1,8 +1,8 @@
 /**
- * HidroCultivo — Service Worker ligero (PWA).
+ * Service Worker ligero (PWA) — Hydro Cannabis · integración.
  * Precache: shell offline básico. APIs (Open-Meteo, etc.) siguen yendo a red.
  */
-const CACHE_NAME = 'hidrocultivo-shell-v26';
+const CACHE_NAME = 'hydro-cannabis-embed-shell-v1';
 const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
@@ -22,14 +22,14 @@ self.addEventListener('install', (event) => {
         Promise.all(
           PRECACHE_URLS.map((url) =>
             cache.add(url).catch((err) => {
-              console.warn('[HidroCultivo SW] precache omitido:', url, err);
+              console.warn('[HydroCannabis-embed SW] precache omitido:', url, err);
               return null;
             })
           )
         )
       )
       .then(() => self.skipWaiting())
-      .catch((err) => console.warn('[HidroCultivo SW] install', err))
+      .catch((err) => console.warn('[HydroCannabis-embed SW] install', err))
   );
 });
 

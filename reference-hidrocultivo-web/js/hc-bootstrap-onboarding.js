@@ -281,7 +281,7 @@ function _medicionObjetoTieneDatosReales(u) {
   return false;
 }
 
-function hayDatosHidrocultivoRelevantes() {
+function hayDatosIntegracionRelevantes() {
   try {
     if (!state || typeof state !== 'object') return false;
     const plantilla = !!(state.configTorre && state.configTorre.hcPlantillaAutogenerada);
@@ -355,7 +355,7 @@ function mostrarBienvenidaOContinuarArranque(opts) {
     scheduleTabBarCoach(1100);
     return;
   }
-  if (!forceShow && hayDatosHidrocultivoRelevantes()) {
+  if (!forceShow && hayDatosIntegracionRelevantes()) {
     try { localStorage.setItem(HC_BIENVENIDA_KEY, '1'); } catch (_) {}
     lanzarSetupOChecklistSiCorresponde();
     scheduleTabBarCoach(1100);

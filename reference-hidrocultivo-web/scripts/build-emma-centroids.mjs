@@ -12,7 +12,7 @@ const outPath = path.join(__dirname, '..', 'data', 'meteoalarm-emma-centroids.js
 
 function get(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'HidroCultivo-build/1.0' } }, (res) => {
+    https.get(url, { headers: { 'User-Agent': 'HydroCannabis-embed-build/1.0' } }, (res) => {
       let d = '';
       res.on('data', (c) => (d += c));
       res.on('end', () => resolve(d));

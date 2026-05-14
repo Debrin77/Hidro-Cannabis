@@ -469,7 +469,7 @@ function enviarNotificacionSiAcordado(titulo, cuerpo, icono) {
       body: cuerpo || '',
       icon: icono || 'icons/icon-192.png',
       badge: 'icons/icon-192.png',
-      tag: 'hidrocultivo-meteo',
+      tag: 'hydro-cannabis-meteo',
     });
   } catch (_) {}
 }
@@ -499,7 +499,7 @@ function maybeNotificarMeteoalarmRelevantes(relevantes) {
     : relevantes.some(r => r.tipo === 'severe') ? '🟠' : '🟡';
   const cuerpo = relevantes.map(r => r.titulo).slice(0, 3).join(' · ');
   enviarNotificacionSiAcordado(
-    iconoNivel + ' HidroCultivo — Aviso meteorológico (tu zona)',
+    iconoNivel + ' Hydro Cannabis — Aviso meteorológico (tu zona)',
     cuerpo + (relevantes.length > 3 ? '…' : ''),
     'icons/icon-192.png'
   );

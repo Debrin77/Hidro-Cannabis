@@ -11,15 +11,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="HidroCultivo">
+<meta name="apple-mobile-web-app-title" content="Hydro Cannabis">
 
 <!-- SEO y descripción -->
-<meta name="description" content="HidroCultivo — Hidroponía inteligente: varias instalaciones (torre, NFT, DWC), EC, pH, riego y clima por sistema.">
-<meta name="keywords" content="HidroCultivo, hidropónico, torre vertical, NFT, DWC, cultivo, EC, pH, riego, VPD, lechugas">
-<meta name="author" content="HidroCultivo">
+<meta name="description" content="Hydro Cannabis — integración hidropónica: varias instalaciones (torre, NFT, DWC), EC, pH, riego y clima por sistema.">
+<meta name="keywords" content="hidroponía, torre vertical, NFT, DWC, cultivo, EC, pH, riego, VPD, lechugas, Hydro Cannabis">
+<meta name="author" content="Hydro Cannabis">
 
 <!-- Open Graph (para compartir en redes) -->
-<meta property="og:title" content="HidroCultivo — Cultivo Hidropónico">
+<meta property="og:title" content="Hydro Cannabis — integración hidropónica">
 <meta property="og:description" content="Gestiona tu cultivo hidropónico (torre, NFT o DWC) con inteligencia meteorológica">
 <meta property="og:type" content="website">
 <meta property="og:image" content="icons/icon-512.png">
@@ -29,11 +29,11 @@
 <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
 
 <!-- Accesibilidad: lang ya en <html lang="es"> -->
-<title>HidroCultivo — Cultivo Hidropónico</title>
+<title>Hydro Cannabis — integración hidropónica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Syne:wght@400;600;700;800&family=Inconsolata:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=2026-05-13-setup-cesta-var">
+  <link rel="stylesheet" href="css/main.css?v=2026-05-13-hydro-embed-rebrand">
 </head>
 <body>
   <script src="js/hc-theme.js?v=2"></script>
@@ -136,7 +136,7 @@
   </div>
   <div class="splash-title-wrap">
     <div class="splash-title">
-      <span class="t-hydro">HIDRO</span><span class="t-caru">Cultivo</span>
+      <span class="t-hydro">Hydro</span><span class="t-caru">Cannabis</span>
     </div>
     <div class="splash-sub splash-sub--tagline">HIDROPONÍA FÁCIL E INTELIGENTE</div>
   </div>
@@ -151,7 +151,7 @@
     <img class="pin-brand-img" alt="" src="icons/splash-brand.svg?v=2026-04-09-brand-c1" width="96" height="96" decoding="async"
       onerror="this.src='icons/splash-brand-icon.png?v=2026-04-09-brand-c1';">
   </div>
-  <div class="pin-logo" id="pinTitulo"><span class="t-hydro">HIDRO</span><span class="t-caru">Cultivo</span></div>
+  <div class="pin-logo" id="pinTitulo"><span class="t-hydro">Hydro</span><span class="t-caru">Cannabis</span></div>
   <div class="pin-sub pin-sub--tagline">HIDROPONÍA FÁCIL E INTELIGENTE</div>
   <div class="pin-sub pin-sub--status" id="pinAuthStatus" aria-live="polite"></div>
   <div class="pin-dots">
@@ -183,10 +183,10 @@
 
   <!-- HEADER -->
   <div class="header">
-    <div class="header-logo">HIDRO<span>Cultivo</span></div>
+    <div class="header-logo">Hydro<span>Cannabis</span></div>
     <div class="header-status">
       <button id="installPWABtn" class="install-pwa-btn" onclick="instalarPWA()"
-        aria-label="Instalar HidroCultivo">
+        aria-label="Instalar aplicación (PWA)">
         <svg class="hc-ico hc-ico--inline" aria-hidden="true" focusable="false"><use href="#hc-i-download"/></svg>
         Instalar
       </button>
@@ -1803,7 +1803,7 @@
           <strong>Exportar</strong> guarda un archivo en tu dispositivo; <strong>importar</strong> recupera una copia hecha con esta app y vuelve a cargar la página.
         </p>
         <div class="hc-grid-2">
-          <button type="button" class="hc-btn-tap hc-btn-backup-export" onclick="exportarEstadoHidroCultivo()">
+          <button type="button" class="hc-btn-tap hc-btn-backup-export" onclick="exportarEstadoIntegracion()">
             <svg class="hc-ico hc-ico--inline" aria-hidden="true" focusable="false"><use href="#hc-i-download"/></svg> Exportar estado
           </button>
           <!-- Safari iOS: input superpuesto al botón abre mejor el selector que input oculto + .click() -->
@@ -2307,7 +2307,7 @@
           </details>
           <details>
             <summary>¿Para qué sirve el conversor EC (µS/cm y mS/cm)?</summary>
-            <div class="ayuda-faq-a">Algunos medidores muestran <strong>mS/cm</strong> y en HidroCultivo trabajas sobre todo con <strong>µS/cm</strong>. El conversor te evita hacer el cambio a mano (la herramienta pasa de microsiemens a milisiemens y al revés en un clic).</div>
+            <div class="ayuda-faq-a">Algunos medidores muestran <strong>mS/cm</strong> y aquí trabajas sobre todo con <strong>µS/cm</strong>. El conversor te evita hacer el cambio a mano (la herramienta pasa de microsiemens a milisiemens y al revés en un clic).</div>
           </details>
           <details>
             <summary>¿Cómo uso la calculadora de EC objetivo y la comparación de nutrientes?</summary>
@@ -2550,7 +2550,7 @@
   aria-labelledby="welcomeGuideTitle" aria-hidden="true">
   <div class="welcome-card welcome-card--guide">
     <div class="welcome-brand" aria-hidden="true">
-      <span class="t-hydro">HIDRO</span><span class="t-caru">Cultivo</span>
+      <span class="t-hydro">Hydro</span><span class="t-caru">Cannabis</span>
     </div>
     <p class="welcome-eyebrow">Planifica · Mide · Ajusta</p>
     <div class="welcome-theme-switch" role="group" aria-label="Aspecto de la guía">
@@ -2560,7 +2560,7 @@
         onclick="setWelcomeTheme('dark')" aria-pressed="false">Dark</button>
     </div>
     <h2 id="welcomeGuideTitle" class="welcome-title">Controla tu cultivo hidropónico sin perderte</h2>
-    <p class="welcome-lead">HIDROCultivo centraliza tu operativa diaria para decidir mejor: <strong>configuración del sistema</strong>, <strong>asistente de mediciones</strong>, <strong>herramientas PRO</strong>, <strong>cálculo por cultivo</strong>, <strong>nutrientes populares en hidroponía</strong> y <strong>meteorología local</strong> en una experiencia única.</p>
+    <p class="welcome-lead">Esta integración centraliza tu operativa diaria para decidir mejor: <strong>configuración del sistema</strong>, <strong>asistente de mediciones</strong>, <strong>herramientas PRO</strong>, <strong>cálculo por cultivo</strong>, <strong>nutrientes populares en hidroponía</strong> y <strong>meteorología local</strong> en una experiencia única.</p>
     <div class="welcome-kpis" aria-label="Resumen de utilidad">
       <span class="welcome-kpi"><svg class="hc-ico" aria-hidden="true" focusable="false"><use href="#hc-i-grid"/></svg><strong>1</strong> panel operativo</span>
       <span class="welcome-kpi"><svg class="hc-ico" aria-hidden="true" focusable="false"><use href="#hc-i-layers"/></svg><strong>3</strong> sistemas hidropónicos</span>
@@ -2640,7 +2640,7 @@
   <!-- Header con progreso -->
   <div class="setup-header">
     <div class="setup-header-top">
-      <div class="setup-logo">HIDRO<span>Cultivo</span></div>
+      <div class="setup-logo">Hydro<span>Cannabis</span></div>
       <button type="button" onclick="cerrarSetup()" class="setup-close-btn"
         aria-label="Volver al inicio"><svg class="hc-ico hc-ico--inline" aria-hidden="true" focusable="false"><use href="#hc-i-x"/></svg></button>
     </div>

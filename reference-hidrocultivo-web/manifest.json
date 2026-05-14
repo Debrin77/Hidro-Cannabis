@@ -1,7 +1,7 @@
 {
-  "name": "HidroCultivo — Cultivo hidropónico",
-  "short_name": "HidroCultivo",
-  "description": "Cultivo hidropónico (torre vertical, NFT o DWC): EC, pH, riego, clima e instalaciones independientes.",
+  "name": "Hydro Cannabis — integración hidropónica",
+  "short_name": "Integración",
+  "description": "Módulos extendidos de hidroponía (torre, NFT, DWC): EC, pH, riego, clima e instalaciones. Incluido en Hydro Cannabis.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -10,8 +10,8 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js?v=2026-05-05-tab-active-icon-color')
-      .then(reg => console.log('[HidroCultivo] SW registrado:', reg.scope))
-      .catch(err => console.warn('[HidroCultivo] SW error:', err));
+      .then(reg => console.log('[HydroCannabis-embed] SW registrado:', reg.scope))
+      .catch(err => console.warn('[HydroCannabis-embed] SW error:', err));
   });
 }
 
@@ -28,7 +28,7 @@ function instalarPWA() {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(result => {
       if (result.outcome === 'accepted') {
-        showToast('✅ Instalando HidroCultivo…');
+        showToast('✅ Instalando aplicación…');
       }
       deferredPrompt = null;
     });
@@ -61,7 +61,7 @@ window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   const installBtn = document.getElementById('installPWABtn');
   if (installBtn) installBtn.style.display = 'none';
-  showToast('✅ HidroCultivo instalada correctamente');
+  showToast('✅ Aplicación instalada correctamente');
 });
 
 const SPLASH_MIN_VISIBLE_MS = 2600;
@@ -215,7 +215,7 @@ async function migrarFotosAIDB() {
   }
   if (migradas > 0) {
     saveState();
-    console.log('[HidroCultivo] Migradas', migradas, 'fotos a IndexedDB');
+    console.log('[HydroCannabis-embed] Migradas', migradas, 'fotos a IndexedDB');
   }
   return migradas;
 }

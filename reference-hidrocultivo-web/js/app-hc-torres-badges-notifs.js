@@ -1277,7 +1277,7 @@ async function enviarNotificacion(titulo, cuerpo, icono) {
     body:  cuerpo,
     icon:  icono || '/icon-192.png',
     badge: '/icon-72.png',
-    tag:   'hidrocultivo-' + Date.now(),
+    tag:   'hydro-cannabis-' + Date.now(),
   });
 }
 
@@ -1360,7 +1360,7 @@ function programarRecordatorios() {
       const diasDesde = Math.floor((ahora - ultima) / 86400000);
       if (diasDesde >= 14) {
         enviarNotificacion(
-          '💧 HidroCultivo — Recarga pendiente · ' + nombreTorre,
+          '💧 Hydro Cannabis — Recarga pendiente · ' + nombreTorre,
           sisTxt +
             'En «' +
             nombreTorre +
@@ -1383,7 +1383,7 @@ function programarRecordatorios() {
           : 0;
         if (diasSinMedir >= 2) {
           enviarNotificacion(
-            '📊 HidroCultivo — Mide hoy · ' + nombreTorre,
+            '📊 Hydro Cannabis — Mide hoy · ' + nombreTorre,
             'En «' +
               nombreTorre +
               '» llevas ' +
@@ -1430,7 +1430,7 @@ function programarRecordatorios() {
             ? ' Ejemplos: ' + muestras.join(', ') + (cultivosListos > muestras.length ? '…' : '') + '.'
             : '';
         enviarNotificacion(
-          '✂️ HidroCultivo — Cosecha lista · ' + nombreTorre,
+          '✂️ Hydro Cannabis — Cosecha lista · ' + nombreTorre,
           'En «' +
             nombreTorre +
             '» tienes ' +

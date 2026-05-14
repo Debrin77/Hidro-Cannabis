@@ -1296,7 +1296,7 @@ async function ensureMeteoCoordsAuto() {
           if (changed) {
             invalidateMeteoNomiCache();
             const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`;
-            const nomOpts = { headers: { 'User-Agent': 'HidroCultivo/1.0' } };
+            const nomOpts = { headers: { 'User-Agent': 'HydroCannabis-embed/1.0' } };
             if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
               nomOpts.signal = AbortSignal.timeout(6500);
             }

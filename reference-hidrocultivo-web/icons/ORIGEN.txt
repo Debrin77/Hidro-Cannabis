@@ -5,5 +5,5 @@ Splash de arranque:
   splash-brand-icon.png   ← export típico; esquinas blancas se recortan vía CSS (border-radius ~22.37%)
   splash-brand.svg        ← alternativa vectorial sin lienzo blanco
 
-Para regenerar tras cambiar el diseño (desde HidroCultivo-web con sharp instalado):
+Para regenerar tras cambiar el diseño (desde esta carpeta con sharp instalado):
   node scripts\resize-icons.js   (crear script si lo necesitas)
