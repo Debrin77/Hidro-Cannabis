@@ -1,4 +1,4 @@
-# HidroCultivo — Capacitor: pruebas internas (sin publicar en tienda)
+# Hydro Cannabis integración — Capacitor: pruebas internas (sin publicar en tienda)
 
 La web en `index.html` puede usarse como **PWA** (icono en pantalla de inicio en iPhone). Capacitor empaqueta la misma UI en **`www/`** para **Android APK/AAB** e **iOS** con **WKWebView**, útil para TestFlight interno o APK de depuración **sin** pasar por revisión pública de tienda.
 

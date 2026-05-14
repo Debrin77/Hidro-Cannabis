@@ -1,4 +1,4 @@
-package es.hidrocultivo.app;
+package es.hydrocannabis.integration;
 
 import com.getcapacitor.BridgeActivity;
 

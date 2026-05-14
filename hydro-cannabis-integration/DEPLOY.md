@@ -1,4 +1,4 @@
-# Subir HidroCultivo a HTTPS (hosting gratuito)
+# Subir Hydro Cannabis integración a HTTPS (hosting gratuito)
 
 Tu app debe servirse por **HTTPS** con `index.html` en la **raíz del sitio** (o en una subcarpeta; los enlaces del proyecto ya son relativos `./`).
 
@@ -8,11 +8,11 @@ Tu app debe servirse por **HTTPS** con `index.html` en la **raíz del sitio** (o
 
 1. Entra en **https://app.netlify.com** y crea cuenta (email o GitHub).
 2. En el panel: **Add new site** → **Deploy manually** (o arrastra la carpeta a la zona “Want to deploy a new site without connecting to Git?”).
-3. Arrastra **toda la carpeta** `HidroCultivo-web` (o comprímela en ZIP y súbela).
+3. Arrastra **toda la carpeta** `hydro-cannabis-integration` (o comprímela en ZIP y súbela).
 4. Espera unos segundos. Te darán una URL tipo **`https://nombre-random-123.netlify.app`** — ya es **HTTPS**.
 5. Abre esa URL en el móvil: debe cargar la app. En Chrome menú → **Instalar app** o **Añadir a pantalla de inicio**.
 
-**Renombrar sitio (opcional):** Site settings → Change site name → ej. `hidrocultivo-demo`.
+**Renombrar sitio (opcional):** Site settings → Change site name → ej. `hydro-cannabis-demo`.
 
 **Actualizar la web:** Vuelve a arrastrar la carpeta (o ZIP) en **Deploys** → **Deploy manually**.
 
@@ -21,7 +21,7 @@ Tu app debe servirse por **HTTPS** con `index.html` en la **raíz del sitio** (o
 ## Opción B — Cloudflare Pages (sin Git, con cuenta Cloudflare)
 
 1. **https://dash.cloudflare.com** → **Workers & Pages** → **Create** → **Pages** → **Upload assets**.
-2. Sube un **ZIP** de `HidroCultivo-web` (contenido dentro del zip: `index.html`, `manifest.json`, `service-worker.js`, `icons/`, etc.).
+2. Sube un **ZIP** de `hydro-cannabis-integration` (contenido dentro del zip: `index.html`, `manifest.json`, `service-worker.js`, `icons/`, etc.).
 3. Te asignan `https://xxxx.pages.dev` con HTTPS.
 
 ---
@@ -32,22 +32,22 @@ Tu app debe servirse por **HTTPS** con `index.html` en la **raíz del sitio** (o
 
 1. Inicia sesión en **https://github.com**.
 2. Arriba a la derecha **+** → **New repository**.
-3. **Repository name:** por ejemplo `hidrocultivo` o `hidrocultivo-web` (solo letras, números, guiones).
-4. **Description (opcional):** *HidroCultivo — PWA hidroponía*.
+3. **Repository name:** por ejemplo `hydro-cannabis-integration` (solo letras, números, guiones).
+4. **Description (opcional):** *Hydro Cannabis integración — PWA hidroponía*.
 5. Elige **Public** (GitHub Pages gratuito para repos públicos) o **Private** (Pages en cuentas que lo permitan según tu plan).
 6. **No marques** “Add a README” si vas a subir código local ya existente con Git (evita conflictos en el primer push). Si ya creaste el repo con README, en C.3 verás la nota del primer pull.
 7. Pulsa **Create repository**. GitHub te mostrará la URL del repo, por ejemplo:  
-   `https://github.com/TU-USUARIO/hidrocultivo.git`
+   `https://github.com/TU-USUARIO/hydro-cannabis-integration.git`
 
-### C.2 — Subir la carpeta `HidroCultivo-web` desde tu PC (Windows / PowerShell)
+### C.2 — Subir la carpeta `hydro-cannabis-integration` desde tu PC (Windows / PowerShell)
 
 Abre **PowerShell** y ejecuta (ajusta la ruta si tu carpeta está en otro sitio):
 
 ```powershell
-cd "C:\Users\carua\Downloads\HidroCultivo-web"
+cd "C:\Users\carua\Downloads\hydro-cannabis-integration"
 git init
 git add .
-git commit -m "HidroCultivo: sitio estático PWA (index, manifest, service worker, icons)"
+git commit -m "Hydro Cannabis integración: sitio estático PWA (index, manifest, service worker, icons)"
 git branch -M main
 git remote add origin https://github.com/TU-USUARIO/NOMBRE-REPO.git
 git push -u origin main
@@ -90,12 +90,12 @@ Comprueba también el recuadro verde/azul arriba del todo en **Settings → Page
 
 ### C.5 — Actualizar la web cuando cambies la app
 
-1. Copia tu `HidroCultivo.html` actualizado a `HidroCultivo-web\index.html` (si trabajas así).
-2. En la carpeta `HidroCultivo-web`:
+1. Copia tu `index.html` actualizado a la carpeta `hydro-cannabis-integration` (si trabajas con un único HTML de partida).
+2. En la carpeta `hydro-cannabis-integration`:
 
 ```powershell
 git add -A
-git commit -m "Actualización HidroCultivo"
+git commit -m "Actualización Hydro Cannabis integración"
 git push
 ```
 

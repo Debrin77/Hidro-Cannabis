@@ -1,10 +1,10 @@
-# HidroCultivo — Paquete web PWA + checklist Bubblewrap (Google Play)
+# Hydro Cannabis integración — Paquete web PWA + checklist Bubblewrap (Google Play)
 
 ## Estructura de esta carpeta
 
 ```
-HidroCultivo-web/
-├── index.html          ← copia de HidroCultivo.html (actualizar cuando edites el original)
+hydro-cannabis-integration/
+├── index.html          ← entrada principal del bundle web
 ├── manifest.json
 ├── service-worker.js
 ├── icons/
@@ -14,12 +14,12 @@ HidroCultivo-web/
 └── BUBBLEWRAP.md         ← este archivo
 ```
 
-### Sincronizar con tu `HidroCultivo.html` principal
+### Sincronizar con tu `index.html` principal
 
-Si sigues editando `../HidroCultivo.html` en Descargas, vuelve a copiar:
+Si editas un HTML de partida aparte, vuelve a copiar:
 
 ```powershell
-Copy-Item -Force ..\HidroCultivo.html .\index.html
+Copy-Item -Force ..\index.html .\index.html
 ```
 
 ---
@@ -31,7 +31,7 @@ Copy-Item -Force ..\HidroCultivo.html .\index.html
 Para **regenerar** tras cambiar el diseño maestro:
 
 ```powershell
-cd HidroCultivo-web
+cd hydro-cannabis-integration
 npm install
 node scripts\resize-icons.js
 ```
@@ -47,7 +47,7 @@ Bubblewrap necesita una **URL pública** del `manifest.json` (y de la app).
 Opciones típicas:
 
 - **GitHub Pages** (repo público o Pages privado según plan)
-- **Netlify / Cloudflare Pages / Vercel** (arrastra la carpeta `HidroCultivo-web`)
+- **Netlify / Cloudflare Pages / Vercel** (arrastra la carpeta `hydro-cannabis-integration`)
 
 Comprueba en el móvil:
 

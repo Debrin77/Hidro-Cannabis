@@ -1,4 +1,4 @@
-# Hoja de ruta PWA → app nativa (HidroCultivo)
+# Hoja de ruta PWA → app nativa (Hydro Cannabis integración)
 
 Objetivo: app usable instalada, copias de seguridad claras y menos fricción en móvil (sobre todo iPhone).
 
@@ -9,7 +9,7 @@ Objetivo: app usable instalada, copias de seguridad claras y menos fricción en 
 | Ítem | Estado |
 |------|--------|
 | `manifest.json` | Presente (nombre, iconos, `standalone`, tema). |
-| `service-worker.js` | Precache ligero del shell; HTML red primero, fallback offline. Caché versionada (`hidrocultivo-shell-v3`…). |
+| `service-worker.js` | Precache ligero del shell; HTML red primero, fallback offline. Caché versionada (`hydro-cannabis-embed-shell-v1`…). |
 | Registro del SW | Al cargar la página. |
 | Botón **Instalar** | Visible cuando el navegador emite `beforeinstallprompt` (p. ej. Chrome/Android). |
 | iPhone sin ese evento | Toast al pulsar Instalar: Safari → Compartir → **Añadir a la pantalla de inicio**. |

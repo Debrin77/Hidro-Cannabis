@@ -2,7 +2,7 @@
 
 ## 1) Objetivo de esta fase
 
-Definir una base técnica sólida para incorporar `RDWC` en HidroCultivo sin romper la metodología actual de `Torre`, `NFT` y `DWC`.
+Definir una base técnica sólida para incorporar `RDWC` en la vista de integración sin romper la metodología actual de `Torre`, `NFT` y `DWC`.
 
 Esta fase **no incluye implementación**. Su salida es un contrato funcional/técnico para las siguientes fases.
 

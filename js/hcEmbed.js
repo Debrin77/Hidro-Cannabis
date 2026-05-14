@@ -1,5 +1,5 @@
 /**
- * Embebe la copia local en `reference-hidrocultivo-web/` con salto a pestaña vía ?hydroEmbedTab=
+ * Embebe la copia local en `hydro-cannabis-integration/` con salto a pestaña vía ?hydroEmbedTab=
  * El documento del iframe no se modifica desde aquí: el padre invoca goTab(tab) en el iframe (mismo origen)
  * cuando el bundle interno ya expone esa función.
  *
@@ -119,7 +119,7 @@ function applyHcEmbedView() {
   if (sub) sub.textContent = HC_EMBED_TAB_LABELS[tab] || tab;
   if (frame) {
     const src =
-      'reference-hidrocultivo-web/index.html?hydroEmbedTab=' + encodeURIComponent(tab);
+      'hydro-cannabis-integration/index.html?hydroEmbedTab=' + encodeURIComponent(tab);
     if (frame.getAttribute('data-current-src') !== src) {
       setHcEmbedLoading(true);
       frame.setAttribute('data-current-src', src);

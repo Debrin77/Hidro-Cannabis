@@ -20,13 +20,13 @@ App web para planificar y monitorizar cultivos de **cannabis en hidroponía** (R
 - `js/main.js`: inicialización de la app.
 - `assets/icons/`: iconos, favicon y logo splash.
 
-### Carpeta `reference-hidrocultivo-web/`
+### Carpeta `hydro-cannabis-integration/`
 
 Código de referencia hidropónico general (torre, cultivos alimentarios, etc.) que Hydro Cannabis carga en iframe. Mantén esta carpeta **sincronizada con su repositorio de origen**, sin parches propios si quieres poder actualizarla en bloque. El shell la controla desde `js/hcEmbed.js`: el iframe usa `?hydroEmbedTab=…` y la app padre invoca `goTab()` en el documento del iframe cuando el bundle interno ya está listo (requiere **mismo origen**, p. ej. servir la raíz del proyecto con `npx serve`).
 
 ## Desarrollo local
 
-Abre `index.html` desde un **servidor HTTP en la raíz del repo** (Live Server, `npx serve`, etc.) para que el iframe de `reference-hidrocultivo-web/` y el salto de pestaña funcionen; con `file://` el navegador suele bloquear el acceso al iframe.
+Abre `index.html` desde un **servidor HTTP en la raíz del repo** (Live Server, `npx serve`, etc.) para que el iframe de `hydro-cannabis-integration/` y el salto de pestaña funcionen; con `file://` el navegador suele bloquear el acceso al iframe.
 
 Atajos útiles en la URL:
 

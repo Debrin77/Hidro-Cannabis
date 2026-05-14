@@ -1,4 +1,4 @@
-# HidroCultivo — Capacitor (Android / iOS)
+# Hydro Cannabis integración — Capacitor (Android / iOS)
 
 La web/PWA sigue yendo en la **raíz del repo** (`index.html`, GitHub Pages, etc.). Para la **app nativa**, Capacitor sirve el contenido de la carpeta **`www/`**, generada en local (no está en git).
 
