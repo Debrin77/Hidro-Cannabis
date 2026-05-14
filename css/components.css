@@ -646,7 +646,14 @@
   background:linear-gradient(165deg,rgba(167,139,250,0.08),var(--surface));
 }
 .inicio-nutri-card--muted{opacity:0.72}
-.inicio-nutri-card__label{font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-family:'DM Mono',monospace;margin:0 0 0.35rem}
+.inicio-nutri-card__label{font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-family:'DM Mono',monospace;margin:0 0 0.35rem;display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;line-height:1.35}
+.inicio-nutri-card__sel{
+  display:inline-flex;align-items:center;font-size:0.625rem;font-weight:700;letter-spacing:0.06em;
+  padding:0.15rem 0.45rem;border-radius:999px;background:rgba(167,139,250,0.22);border:1px solid rgba(167,139,250,0.35);color:var(--text);
+  text-transform:uppercase;font-family:'DM Mono',monospace;
+}
+.inicio-nutri-card__label-sep{color:var(--text3);font-weight:400}
+.inicio-nutri-card__label-line{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;color:var(--text);text-transform:none;letter-spacing:0}
 .inicio-nutri-card__name{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;margin:0;color:var(--text)}
 .inicio-nutri-card__brand{font-size:0.8125rem;color:var(--text2);margin:0.2rem 0 0}
 .inicio-nutri-card__phase{margin:0.65rem 0 0;font-size:0.8125rem;color:var(--text2);line-height:1.5}
@@ -655,6 +662,23 @@
   background:rgba(0,0,0,0.2);font-size:0.8125rem;line-height:1.45;color:var(--text2);border:1px solid var(--border2);
 }
 [data-theme='light'] .inicio-nutri-card__rec{background:rgba(5,150,105,0.06)}
+.inicio-nutri-advice-stack{display:flex;flex-direction:column;gap:0.5rem;margin:0.65rem 0 0}
+.inicio-nutri-advice{
+  border-radius:var(--radius);padding:0.55rem 0.65rem;border:1px solid var(--border2);
+  font-size:0.8125rem;line-height:1.45;color:var(--text2);background:rgba(0,0,0,0.12);
+}
+[data-theme='light'] .inicio-nutri-advice{background:rgba(0,0,0,0.03)}
+.inicio-nutri-advice__tag{
+  display:block;font-size:0.625rem;text-transform:uppercase;letter-spacing:0.07em;font-weight:600;
+  color:var(--text3);font-family:'DM Mono',monospace;margin:0 0 0.25rem;
+}
+.inicio-nutri-advice__txt{margin:0;color:var(--text2)}
+.inicio-nutri-advice--ok{border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.08)}
+[data-theme='light'] .inicio-nutri-advice--ok{background:rgba(5,150,105,0.08)}
+.inicio-nutri-advice--warn{border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.1)}
+.inicio-nutri-advice--danger{border-color:rgba(248,113,113,0.45);background:rgba(248,113,113,0.1)}
+.inicio-nutri-advice--neutral{border-color:var(--border2)}
+.inicio-nutri-advice-foot{font-size:0.6875rem;color:var(--text3);margin:0.35rem 0 0;line-height:1.35}
 .inicio-pause-banner{
   font-size:0.8125rem;color:var(--text2);padding:0.5rem 0.65rem;border-radius:var(--radius);
   background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.28);margin-bottom:1rem;

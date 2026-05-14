@@ -165,14 +165,18 @@ function formatInicioLongDate() {
   });
 }
 
-/** Semana y fase alineadas con Cultivo; nutPhaseKey enlaza con `nutrients[].phases`. */
+/** Semana y fase alineadas con Cultivo; nutPhaseKey enlaza con `nutrients[].phases`. Usa edad efectiva del sitio (modal planta) si existe. */
 function getGrowPhaseSummaryForInicio(grow) {
   if (!grow || !grow.strain || !grow.startDate) {
     return { weekNum: 1, phaseLabel: 'Sin ciclo', nutPhaseKey: 'veg' };
   }
   const s = grow.strain;
   const sd = grow.startDate instanceof Date ? grow.startDate : new Date(grow.startDate);
-  const daysSince = Math.floor((Date.now() - sd.getTime()) / 86400000);
+  const plantIdx = Number.isFinite(grow.selectedPlant) && grow.selectedPlant >= 1 ? grow.selectedPlant : 1;
+  const daysSince =
+    typeof getEffectivePlantAgeDays === 'function'
+      ? Math.max(0, getEffectivePlantAgeDays(grow, plantIdx))
+      : Math.floor((Date.now() - sd.getTime()) / 86400000);
   const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
   let phaseLabel = '';
   let nutPhaseKey = 'veg';
@@ -203,6 +207,258 @@ function getNutrientPhaseDoseLine(n, nutPhaseKey) {
   const k =
     nutPhaseKey === 'germ' ? 'germ' : nutPhaseKey === 'veg' ? 'veg' : nutPhaseKey === 'flush' ? 'flush' : 'flower';
   return n.phases[k] || n.phases.veg || '';
+}
+
+function nutrientPhaseLineDiscouraged(phaseLine) {
+  const t = String(phaseLine || '').trim();
+  if (!t) return false;
+  if (/^no\s+usar\b/i.test(t)) return true;
+  if (/demasiado\s+potente/i.test(t)) return true;
+  return false;
+}
+
+/** Normaliza marca para emparejar alternativas del mismo fabricante. */
+function nutrientBrandKey(brand) {
+  const s = String(brand || '')
+    .trim()
+    .toLowerCase();
+  if (!s) return '';
+  const cut = s.split(/[(/]/)[0].trim();
+  return cut.replace(/\s+/g, ' ');
+}
+
+function nutPhaseToPhasesKey(nutPhaseKey) {
+  return nutPhaseKey === 'germ' ? 'germ' : nutPhaseKey === 'veg' ? 'veg' : nutPhaseKey === 'flush' ? 'flush' : 'flower';
+}
+
+/** Alternativa en catálogo para la fase; primero misma marca, si no hay, cualquiera. */
+function findAlternateNutrientForPhase(nutPhaseKey, excludeRank, preferBrandKey) {
+  if (typeof nutrients === 'undefined' || !Array.isArray(nutrients)) return null;
+  const k = nutPhaseToPhasesKey(nutPhaseKey);
+  const tryPick = (brandMatch) => {
+    for (const cand of nutrients) {
+      if (cand.rank === excludeRank) continue;
+      if (brandMatch && nutrientBrandKey(cand.brand) !== brandMatch) continue;
+      const line = cand.phases?.[k] || cand.phases?.veg || '';
+      if (!nutrientPhaseLineDiscouraged(line) && String(line).trim().length > 0) return cand;
+    }
+    return null;
+  };
+  if (preferBrandKey) {
+    const same = tryPick(preferBrandKey);
+    if (same) return { nutrient: same, sameBrand: true };
+  }
+  const any = tryPick(null);
+  return any ? { nutrient: any, sameBrand: false } : null;
+}
+
+function findFirstMineralNutrient(excludeRank) {
+  if (typeof nutrients === 'undefined' || !Array.isArray(nutrients)) return null;
+  return nutrients.find((c) => c.rank !== excludeRank && !c.organic) || null;
+}
+
+function findFirstMineralNutrientPreferBrand(excludeRank, brandKey) {
+  if (typeof nutrients === 'undefined' || !Array.isArray(nutrients)) return null;
+  const min = nutrients.filter((c) => c.rank !== excludeRank && !c.organic);
+  const same = min.find((c) => nutrientBrandKey(c.brand) === brandKey);
+  return same || min[0] || null;
+}
+
+/**
+ * Aviso corto: líneas con Vega/Flores o Grow/Bloom en el mismo fabricante según fase vegetativa vs floración.
+ */
+function getSameBrandVegFlowerFormulationHint(n, nutPhaseKey) {
+  if (!n || nutrientPhaseLineDiscouraged(getNutrientPhaseDoseLine(n, nutPhaseKey))) return '';
+  if (nutPhaseKey === 'germ') return '';
+  const isVeg = nutPhaseKey === 'veg';
+  const isFlo = nutPhaseKey === 'flower' || nutPhaseKey === 'flush';
+  if (!isVeg && !isFlo) return '';
+  const r = n.rank;
+  if (r === 1 && (isVeg || isFlo)) {
+    return isFlo
+      ? 'En <strong>floración / fructificación</strong> usa la pauta <strong>Aqua Flores A+B</strong> de CANNA, no la de Vega.'
+      : 'En <strong>vegetación / arranque</strong> usa <strong>Aqua Vega A+B</strong> de CANNA, no la dosificación de Flores.';
+  }
+  if (r === 3 && (isVeg || isFlo)) {
+    return isFlo
+      ? 'En <strong>floración</strong> usa <strong>Sensi Bloom A+B</strong> (Advanced Nutrients), no Sensi Grow.'
+      : 'En <strong>vegetación</strong> usa <strong>Sensi Grow A+B</strong> (Advanced Nutrients), no Bloom.';
+  }
+  if (r === 7 && (isVeg || isFlo)) {
+    return isFlo
+      ? 'En <strong>floración</strong> prioriza <strong>Bloom + Magnifical</strong> (Remo), no la pauta SuperVeg.'
+      : 'En <strong>vegetación</strong> usa <strong>SuperVeg</strong> (Remo), no la mezcla de floración.';
+  }
+  if (r === 9 && (isVeg || isFlo)) {
+    return isFlo
+      ? 'En <strong>floración</strong> usa <strong>Shogun Bloom A+B</strong>, no Grow.'
+      : 'En <strong>vegetación</strong> usa <strong>Shogun Grow A+B</strong>, no Bloom.';
+  }
+  if (r === 2 && (isVeg || isFlo)) {
+    return isFlo
+      ? 'En <strong>floración</strong> sube <strong>FloraBloom</strong> y reduce FloraGro en la proporción GHE (misma línea).'
+      : 'En <strong>vegetación</strong> prioriza <strong>FloraGro</strong> + Micro; Bloom solo en baja proporción (GHE).';
+  }
+  return '';
+}
+
+function buildInicioNutrientAdvisoryHtml(grow, strain, n, phSum) {
+  const blocks = [];
+  const dose = getNutrientPhaseDoseLine(n, phSum.nutPhaseKey);
+  const vbHint = getSameBrandVegFlowerFormulationHint(n, phSum.nutPhaseKey);
+  if (vbHint) {
+    blocks.push(
+      `<div class="inicio-nutri-advice inicio-nutri-advice--warn" role="note"><span class="inicio-nutri-advice__tag">Misma marca · fase</span><p class="inicio-nutri-advice__txt">${vbHint}</p></div>`,
+    );
+  }
+  if (nutrientPhaseLineDiscouraged(dose)) {
+    const pref = nutrientBrandKey(n.brand);
+    const pack = findAlternateNutrientForPhase(phSum.nutPhaseKey, n.rank, pref);
+    let altHtml = '';
+    if (pack) {
+      const { nutrient: alt, sameBrand } = pack;
+      if (sameBrand) {
+        altHtml = ` Puedes valorar <strong>${escapeHomeHtml(alt.name)}</strong> de la <strong>misma marca</strong> con pauta para esta etapa.`;
+      } else {
+        altHtml = ` Otra línea con pauta en esta etapa: <strong>${escapeHomeHtml(alt.name)}</strong> (${escapeHomeHtml(alt.brand)}). Si prefieres no cambiar de fabricante, revisa el manual de ${escapeHomeHtml(
+          n.brand.split('(')[0].trim(),
+        )}.`;
+      }
+    } else {
+      altHtml = ` Revisa el manual de ${escapeHomeHtml(n.brand.split('(')[0].trim())} para esta etapa o una referencia compatible de la misma marca.`;
+    }
+    blocks.push(
+      `<div class="inicio-nutri-advice inicio-nutri-advice--danger" role="status"><span class="inicio-nutri-advice__tag">Pauta fase</span><p class="inicio-nutri-advice__txt">Con <strong>${escapeHomeHtml(
+        n.name,
+      )}</strong>, el fabricante desaconseja esta línea tal cual en la etapa actual.${altHtml}</p></div>`,
+    );
+  }
+
+  const sys = String(grow.system || 'DWC').toUpperCase();
+  const recirc = /RDWC|DWC|NFT/.test(sys);
+  if (n.organic && recirc) {
+    const bk = nutrientBrandKey(n.brand);
+    const minAlt = findFirstMineralNutrientPreferBrand(n.rank, bk) || findFirstMineralNutrient(n.rank);
+    const tail = minAlt
+      ? nutrientBrandKey(minAlt.brand) === bk
+        ? ` Referencia mineral de la <strong>misma marca</strong> en catálogo: <strong>${escapeHomeHtml(minAlt.name)}</strong>.`
+        : ` Referencia mineral orientativa: <strong>${escapeHomeHtml(minAlt.name)}</strong> (${escapeHomeHtml(minAlt.brand)}).`
+      : '';
+    blocks.push(
+      `<div class="inicio-nutri-advice inicio-nutri-advice--warn" role="note"><span class="inicio-nutri-advice__tag">Línea orgánica</span><p class="inicio-nutri-advice__txt">En ${escapeHomeHtml(
+        grow.system || 'DWC',
+      )} con recirculación, lo orgánico añade complejidad microbiológica.${tail}</p></div>`,
+    );
+  }
+
+  const weekNum = phSum.weekNum;
+  const phaseRef =
+    typeof getPhaseReference === 'function' ? getPhaseReference(strain, weekNum) : { ecMin: 0.8, ecMax: 1.4, phMin: 5.6, phMax: 6.2 };
+  const band =
+    typeof getStrainTargetsForWeek === 'function'
+      ? getStrainTargetsForWeek(strain, weekNum, phaseRef)
+      : phaseRef;
+  const sel = grow.selectedPlant || 1;
+  const latest =
+    typeof getLatestMeasurementForPlant === 'function' ? getLatestMeasurementForPlant(grow, sel) : null;
+  const ecLive = latest && Number.isFinite(latest.ec) ? latest.ec : null;
+  const phLive = latest && Number.isFinite(latest.ph) ? latest.ph : null;
+  const waterLive = latest && Number.isFinite(latest.waterTemp) ? latest.waterTemp : null;
+  const hasLive = ecLive != null || phLive != null;
+
+  if (!hasLive) {
+    blocks.push(
+      `<div class="inicio-nutri-advice inicio-nutri-advice--neutral" role="note"><span class="inicio-nutri-advice__tag">Depósito</span><p class="inicio-nutri-advice__txt">Sin <strong>pH/EC recientes</strong> en Monitor; el cotejo con la tabla de la cepa será más fiable cuando registres la última lectura.</p></div>`,
+    );
+  } else {
+    const ecHi = ecLive != null && Number.isFinite(band.ecMax) && ecLive > band.ecMax * 1.12;
+    const ecLo = ecLive != null && Number.isFinite(band.ecMin) && ecLive < band.ecMin * 0.85;
+    const phOut =
+      phLive != null &&
+      Number.isFinite(band.phMin) &&
+      Number.isFinite(band.phMax) &&
+      (phLive < band.phMin - 0.15 || phLive > band.phMax + 0.15);
+    if (ecHi) {
+      let extra = ' Prioriza bajar concentración o diluir con la <strong>misma línea</strong> antes de cambiar de marca.';
+      if (n.organic) {
+        const minAlt = findFirstMineralNutrientPreferBrand(n.rank, nutrientBrandKey(n.brand)) || findFirstMineralNutrient(n.rank);
+        if (minAlt)
+          extra += ` En recirculación, una línea mineral puede ser más sencilla: <strong>${escapeHomeHtml(minAlt.name)}</strong>${nutrientBrandKey(minAlt.brand) === nutrientBrandKey(n.brand) ? ' (misma marca en catálogo)' : ''}.`;
+      }
+      blocks.push(
+        `<div class="inicio-nutri-advice inicio-nutri-advice--danger" role="status"><span class="inicio-nutri-advice__tag">Última medición</span><p class="inicio-nutri-advice__txt">EC <strong>${ecLive.toFixed(
+          2,
+        )}</strong> mS/cm por encima del rango orientativo (~${Number(band.ecMin).toFixed(2)}–${Number(band.ecMax).toFixed(
+          2,
+        )}) para ${escapeHomeHtml(String(band.phase || phaseRef.phase))}.${extra}</p></div>`,
+      );
+    } else if (ecLo) {
+      blocks.push(
+        `<div class="inicio-nutri-advice inicio-nutri-advice--warn" role="status"><span class="inicio-nutri-advice__tag">Última medición</span><p class="inicio-nutri-advice__txt">EC <strong>${ecLive.toFixed(
+          2,
+        )}</strong> mS/cm por debajo del rango orientativo (~${Number(band.ecMin).toFixed(2)}–${Number(band.ecMax).toFixed(
+          2,
+        )}). Sube la dosis <strong>gradualmente</strong> según la tabla de la cepa y el fabricante.</p></div>`,
+      );
+    }
+    if (phOut && phLive != null) {
+      blocks.push(
+        `<div class="inicio-nutri-advice inicio-nutri-advice--warn" role="status"><span class="inicio-nutri-advice__tag">Última medición</span><p class="inicio-nutri-advice__txt">pH <strong>${phLive.toFixed(
+          2,
+        )}</strong> fuera de la banda orientativa (~${Number(band.phMin).toFixed(2)}–${Number(band.phMax).toFixed(
+          2,
+        )}). Corrige pH antes de interpretar la EC; si el drift es constante, valora líneas con mejor buffer en tu agua.</p></div>`,
+      );
+    }
+    if (!ecHi && !ecLo && !phOut) {
+      blocks.push(
+        `<div class="inicio-nutri-advice inicio-nutri-advice--ok" role="status"><span class="inicio-nutri-advice__tag">Última medición</span><p class="inicio-nutri-advice__txt">Sin desvíos fuertes de <strong>pH/EC</strong> respecto a la banda orientativa de la cepa para la etapa actual; mantén la pauta y registra tendencias.</p></div>`,
+      );
+    }
+  }
+  if (waterLive != null && waterLive > 23) {
+    blocks.push(
+      `<div class="inicio-nutri-advice inicio-nutri-advice--warn" role="note"><span class="inicio-nutri-advice__tag">Agua</span><p class="inicio-nutri-advice__txt">Temperatura del depósito <strong>${waterLive.toFixed(
+        1,
+      )} °C</strong>: por encima de ~23 °C baja el oxígeno disuelto; evita subir EC de golpe y mejora enfriamiento/burbujas.</p></div>`,
+    );
+  }
+
+  if (grow.placement === 'exterior') {
+    const cur = grow.siteWeather?.current;
+    const t = cur && Number.isFinite(cur.temperature_2m) ? cur.temperature_2m : null;
+    const rh = cur && Number.isFinite(cur.relative_humidity_2m) ? cur.relative_humidity_2m : null;
+    const vpd =
+      t != null && rh != null && typeof computeVpdKpa === 'function' ? computeVpdKpa(t, rh) : null;
+    if (t != null && rh != null) {
+      let msg = '';
+      let cls = 'inicio-nutri-advice--neutral';
+      if (t >= 32 && rh <= 42) {
+        cls = 'inicio-nutri-advice--warn';
+        msg = `Aire seco y calor (${t.toFixed(1)} °C, HR ${Math.round(rh)} %): mayor transpiración; no subas EC de golpe y vigila riego de raíz.`;
+      } else if (t <= 11) {
+        cls = 'inicio-nutri-advice--warn';
+        msg = `Frío exterior (${t.toFixed(1)} °C): metabolismo más lento; sube EC con más cautela que en banda cálida.`;
+      } else if (vpd != null && vpd >= 1.75) {
+        cls = 'inicio-nutri-advice--warn';
+        msg = `VPD alto (~${vpd.toFixed(2)} kPa) con el tiempo actual (${t.toFixed(1)} °C, HR ${Math.round(
+          rh,
+        )} %): estrés transpirativo; ajusta pauta y microclima antes de empujar nutriente.`;
+      } else {
+        msg = `Condiciones actuales (Open-Meteo): ${t.toFixed(1)} °C, HR ${Math.round(
+          rh,
+        )} % — úsalas como contexto junto a pH/EC del depósito.`;
+      }
+      blocks.push(
+        `<div class="inicio-nutri-advice ${cls}" role="note"><span class="inicio-nutri-advice__tag">Clima · tiempo real</span><p class="inicio-nutri-advice__txt">${escapeHomeHtml(
+          msg,
+        )}</p></div>`,
+      );
+    }
+  }
+
+  if (!blocks.length) return '';
+  return `<div class="inicio-nutri-advice-stack">${blocks.join('')}<p class="inicio-nutri-advice-foot">Avisos orientativos; no sustituyen el criterio profesional ni el manual del fabricante.</p></div>`;
 }
 
 function inicioStrainNutriHint(strain, nutPhaseKey) {
@@ -346,11 +602,11 @@ function buildInicioNutrientBlockHtml() {
       : phSum.nutPhaseKey === 'flush'
         ? 'lavado final'
         : 'floración y fructificación';
+  const advisory = buildInicioNutrientAdvisoryHtml(myGrow, myGrow.strain, n, phSum);
   return `<section class="${cls}" aria-labelledby="inicio-nutri-h">
-    <p id="inicio-nutri-h" class="inicio-nutri-card__label">Nutriente seleccionado</p>
-    <h2 class="inicio-nutri-card__name">${escapeHomeHtml(n.name)}</h2>
+    <p id="inicio-nutri-h" class="inicio-nutri-card__label"><span class="inicio-nutri-card__sel">Seleccionado</span><span class="inicio-nutri-card__label-sep" aria-hidden="true">·</span><span class="inicio-nutri-card__label-line">${escapeHomeHtml(n.name)}</span></p>
     <p class="inicio-nutri-card__brand">${escapeHomeHtml(n.brand)}</p>
-    <p class="inicio-nutri-card__phase">Fase del calendario: <strong>${escapeHomeHtml(phSum.phaseLabel)}</strong>. En fase de <strong>${escapeHomeHtml(phaseHuman)}</strong> conviene priorizar la pauta de abono correspondiente (más énfasis en N en vegetación; más P-K en floración / fructificación).</p>
+    ${advisory}
     ${doseLine ? `<div class="inicio-nutri-card__rec"><strong>${escapeHomeHtml(n.name)}</strong> (${escapeHomeHtml(phaseHuman)}): ${escapeHomeHtml(doseLine)}</div>` : ''}
     ${strainHint ? `<p class="form-hint" style="margin:0.5rem 0 0"><strong>Cepa:</strong> ${escapeHomeHtml(strainHint)}</p>` : ''}
     <div style="margin-top:0.65rem"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('nutrientes')">Ver líneas y catálogo</button></div>
