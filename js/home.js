@@ -257,30 +257,22 @@ function buildInicioInstallAndControlsHtml() {
     <p class="inicio-install-card__label">Instalación activa</p>
     <h2 class="inicio-install-card__name">${escapeHomeHtml(label)}</h2>
     <p class="inicio-install-card__sub"><strong>${escapeHomeHtml(typ)}</strong> · ${escapeHomeHtml(place)} · ${escapeHomeHtml(loc)}</p>
-    <p class="form-hint" style="margin:0.5rem 0 0">Cada instalación mantiene sus datos de cultivo, sistema, localización y cálculos por separado. Usa <strong>Cambiar instalación</strong> cuando tengas más de una.</p>
-    <div class="inicio-install-card__row">
-      ${changeBtn}
-      <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')" title="ET₀, demanda y pulsos"><i class="ti ti-calculator"></i> Cálculos</button>
-      <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('cultivo')"><i class="ti ti-settings"></i> Cultivo</button>
-    </div>
+    ${changeBtn ? `<div class="inicio-install-card__row">${changeBtn}</div>` : ''}
   </div>`;
 }
 
 function buildInicioCultivationToggleHtml() {
   if (!myGrow) return '';
   const paused = !!myGrow.cultivationPaused;
+  const stateLabel = paused ? 'Desactivado' : 'Activado';
+  const stateClass = paused ? 'inicio-toggle-row__state inicio-toggle-row__state--off' : 'inicio-toggle-row__state inicio-toggle-row__state--on';
   return `<div class="inicio-toggle-row" role="group" aria-labelledby="inicio-cult-toggle-label">
     <div class="inicio-toggle-row__text">
-      <p id="inicio-cult-toggle-label" class="inicio-toggle-row__title">Cultivo en esta instalación</p>
-      <p class="inicio-toggle-row__hint">Desactívalo al limpiar el sistema o cuando no haya plantas; los datos no se borran.</p>
+      <p id="inicio-cult-toggle-label" class="inicio-toggle-row__title">Estado del sistema</p>
+      <p class="${stateClass}" aria-live="polite">${escapeHomeHtml(stateLabel)}</p>
     </div>
-    <button type="button" class="inicio-switch" role="switch" aria-checked="${paused ? 'true' : 'false'}" aria-label="Cultivo activo en esta instalación" onclick="toggleInicioCultivationPaused()"></button>
-  </div>
-  ${
-    paused
-      ? `<div class="inicio-pause-banner" role="status"><i class="ti ti-player-pause" aria-hidden="true"></i> Instalación en pausa: las rutinas diarias quedan en espera hasta que reactives.</div>`
-      : ''
-  }`;
+    <button type="button" class="inicio-switch" role="switch" aria-checked="${paused ? 'false' : 'true'}" aria-label="Estado del sistema: ${paused ? 'desactivado' : 'activado'}. Pulsa para cambiar." onclick="toggleInicioCultivationPaused()"></button>
+  </div>`;
 }
 
 function buildInicioMeteoMiniHtml() {

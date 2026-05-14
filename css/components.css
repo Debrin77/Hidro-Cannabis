@@ -609,6 +609,11 @@
 .inicio-toggle-row__text{flex:1;min-width:0}
 .inicio-toggle-row__title{font-weight:600;font-size:0.875rem;margin:0;color:var(--text)}
 .inicio-toggle-row__hint{font-size:0.75rem;color:var(--text3);margin:0.2rem 0 0;line-height:1.35}
+.inicio-toggle-row__state{
+  font-size:0.875rem;font-weight:600;margin:0.35rem 0 0;line-height:1.3;
+}
+.inicio-toggle-row__state--on{color:var(--hydro-teal)}
+.inicio-toggle-row__state--off{color:var(--text3)}
 .inicio-switch{
   position:relative;width:3rem;height:1.65rem;flex-shrink:0;border:none;padding:0;cursor:pointer;
   border-radius:999px;background:var(--surface3);border:1px solid var(--border2);transition:background .2s;
