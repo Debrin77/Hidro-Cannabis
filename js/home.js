@@ -613,6 +613,42 @@ function buildInicioNutrientBlockHtml() {
   </section>`;
 }
 
+/** Resumen planta seleccionada / sitios y orientación de cosecha (debajo del nutriente en Inicio). */
+function buildInicioPlantasCosechaCardHtml() {
+  if (!myGrow || !myGrow.strain || !myGrow.startDate) return '';
+  const paused = !!myGrow.cultivationPaused;
+  const cls = paused ? 'inicio-plantas-card inicio-plantas-card--muted' : 'inicio-plantas-card';
+  const s = myGrow.strain;
+  const nPlantsRaw = typeof getPlantCount === 'function' ? getPlantCount(myGrow) : 1;
+  const nPlants = Math.max(1, Number.isFinite(nPlantsRaw) ? nPlantsRaw : 1);
+  const sel = Number.isFinite(myGrow.selectedPlant) && myGrow.selectedPlant >= 1 ? myGrow.selectedPlant : 1;
+  const vegW = Number(s.vegW) || 0;
+  const floW = Number(s.flowerW) || 0;
+  const totalW = vegW + floW + 2;
+  const start = myGrow.startDate instanceof Date ? myGrow.startDate : new Date(myGrow.startDate);
+  const endHarvest = new Date(start.getTime() + totalW * 7 * 86400000);
+  const daysToHarvest = Math.max(0, Math.ceil((endHarvest.getTime() - Date.now()) / 86400000));
+
+  let sumDays = 0;
+  for (let i = 1; i <= nPlants; i++) {
+    const d =
+      typeof getEffectivePlantAgeDays === 'function' ? Math.max(0, getEffectivePlantAgeDays(myGrow, i)) : 0;
+    sumDays += d;
+  }
+  const meanDays = Math.round((sumDays / nPlants) * 10) / 10;
+
+  return `<section class="${cls}" aria-labelledby="inicio-plantas-h">
+    <p id="inicio-plantas-h" class="inicio-plantas-card__label">Planta y cosecha</p>
+    <dl class="inicio-plantas-card__grid">
+      <div><dt>Número de planta</dt><dd>P${sel} <span class="inicio-plantas-card__of">/ ${nPlants}</span></dd></div>
+      <div><dt>Días de media</dt><dd>${meanDays} <span class="inicio-plantas-card__unit">d</span></dd></div>
+      <div><dt>Plantas a cosechar</dt><dd>${nPlants}</dd></div>
+      <div><dt>Días para cosecha</dt><dd>${daysToHarvest} <span class="inicio-plantas-card__unit">d</span></dd></div>
+    </dl>
+    <p class="form-hint inicio-plantas-card__hint">Cosecha orientativa al cabo de <strong>${totalW} semanas</strong> desde la fecha de inicio del cultivo. Si cada sitio tiene edad distinta, ajusta la edad en el mapa de plantas; la media usa esos valores.</p>
+  </section>`;
+}
+
 function toggleInicioCultivationPaused() {
   if (!myGrow) return;
   myGrow.cultivationPaused = !myGrow.cultivationPaused;
@@ -1084,12 +1120,9 @@ function renderInicio() {
 
     ${buildInicioNutrientBlockHtml()}
 
-    <details class="dash-check-section" id="dash-inicio-more-section">
-      <summary class="dash-check-summary dash-check-summary--bare">
-        <span class="sr-only">Más contenido: progreso, integración y accesos rápidos</span>
-        <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
-      </summary>
-      <div class="dash-check-section__body dash-check-section__body--loose">
+    ${buildInicioPlantasCosechaCardHtml()}
+
+    <section class="inicio-follow-stack" id="inicio-follow-panel" aria-label="Progreso e integración">
     ${buildInicioAppProgressCardHtml()}
 
     ${inicioPriorityHtml}
@@ -1118,22 +1151,15 @@ function renderInicio() {
     ${weatherAlerts}
     ${growAlertsHtml}
 
-      </div>
-    </details>
+    </section>
 
-    <details class="dash-check-section" id="dash-expert-check-section">
-      <summary class="dash-check-summary dash-check-summary--expert-bare">
-        <span class="sr-only">Lista de comprobación, ${done} de ${total} revisados</span>
-        <div class="dash-check-expert-summary-row">
-          <div class="dash-mini-bar dash-mini-bar--in-summary" style="--dash-pct:${pct}%"><span></span></div>
-          <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
-        </div>
-      </summary>
-      <div class="dash-check-section__toolbar">
+    <section class="dash-check-section dash-check-section--static" id="dash-expert-check-section" aria-label="Lista de comprobación">
+      <div class="dash-expert-static-head">
+        <div class="dash-mini-bar dash-mini-bar--static" style="--dash-pct:${pct}%"><span></span></div>
         <button type="button" class="btn btn-ghost btn--tiny" onclick="resetExpertChecklist()">Reiniciar</button>
       </div>
       <div class="dash-check-section__body expert-checklist expert-checklist--inset">${checklistRows}</div>
-    </details>
+    </section>
 
     <section class="inicio-system-reset" id="inicio-system-reset" aria-labelledby="inicio-reset-heading">
       <h2 id="inicio-reset-heading" class="inicio-system-reset__title">Zona sensible</h2>
