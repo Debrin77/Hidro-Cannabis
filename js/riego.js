@@ -445,8 +445,14 @@ function renderRiego() {
       '<p class="text-muted">Pulsa «Actualizar datos» para traer ET₀ y VPD del día según tu ubicación.</p>';
   }
 
+  const installScopeRiego =
+    typeof getActiveInstallationScopeBannerHtml === 'function'
+      ? getActiveInstallationScopeBannerHtml(myGrow, { compact: true })
+      : '';
+
   host.innerHTML = `
     <div class="card">
+      ${installScopeRiego}
       <div class="card-header"><div class="card-title"><i class="ti ti-droplet"></i>Tu instalación</div></div>
       <p class="body-prose">Emplazamiento: <strong>${escRiego(placement)}</strong> · Sistema: <strong>${escRiego(sys)}</strong>${
     resL != null ? ` · Depósito ~<strong>${resL} L</strong>` : ''

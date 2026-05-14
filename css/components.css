@@ -1199,6 +1199,21 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 .dash-progress-hint--tier{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(148,163,184,.25);font-size:12px;line-height:1.45}
 [data-theme='light'] .dash-progress-hint--tier{border-top-color:rgba(100,116,139,.28)}
 
+.dash-fusion-roadmap{
+  margin:1rem 0;padding:1rem 1.15rem;border-radius:var(--radius2);
+  border:1px solid rgba(148,163,184,.22);background:rgba(52,211,153,.05);
+}
+[data-theme='light'] .dash-fusion-roadmap{border-color:rgba(100,116,139,.28);background:rgba(5,150,105,.06)}
+.dash-fusion-roadmap__title{font-size:1.02rem;font-weight:700;margin:0 0 .65rem;letter-spacing:-0.02em}
+.dash-fusion-roadmap__list{margin:0;padding-left:1.2rem;color:var(--text2);font-size:13px;line-height:1.55}
+.dash-fusion-roadmap__list li{margin-bottom:8px}
+.dash-fusion-roadmap .form-hint{margin-top:10px;margin-bottom:0;font-size:11px}
+
+.install-scope-banner{margin-bottom:12px}
+.install-scope-banner--compact{margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--text2)}
+.install-scope-banner--compact .ti{margin-right:6px;vertical-align:-2px;color:var(--hydro-teal)}
+.monitor-active-system__scope-hint{margin-top:10px;max-width:52rem}
+
 .ayuda-flow-list{margin:0 0 1rem;padding-left:1.2rem;color:var(--text2);font-size:14px;line-height:1.55}
 .ayuda-flow-list li{margin-bottom:6px}
 .ayuda-action-grid{display:grid;grid-template-columns:1fr;gap:8px}

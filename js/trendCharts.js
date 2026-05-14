@@ -247,18 +247,46 @@ function renderTrendBySystemMode(rows, grow, phaseRef, strain, weekNum, modeId) 
   return renderTrendSolution(rows, phaseRef, targets);
 }
 
-function getStoredTrendMode(system) {
+function trendStorageKeyLegacy(system) {
+  return 'hydrogrow-pro.v1.trendMode.' + (system || 'DWC');
+}
+
+/** Preferencia por instalación + tipo (evita cruce al tener dos montajes del mismo tipo). */
+function trendStorageKeyFromGrow(grow) {
+  if (!grow || typeof grow !== 'object') return trendStorageKeyLegacy('DWC');
+  const sid = grow.activeInstallationId || 'default';
+  const sys = grow.system || 'DWC';
+  return 'hydrogrow-pro.v1.trendMode.' + encodeURIComponent(sys) + '.' + encodeURIComponent(sid);
+}
+
+/** Acepta `grow` (recomendado) o `system` string (compatibilidad). */
+function getStoredTrendMode(growOrSystem) {
   try {
-    const k = 'hydrogrow-pro.v1.trendMode.' + (system || 'DWC');
-    return localStorage.getItem(k) || 'solution';
+    const grow =
+      growOrSystem && typeof growOrSystem === 'object' && 'system' in growOrSystem ? growOrSystem : null;
+    if (grow) {
+      const k = trendStorageKeyFromGrow(grow);
+      const v = localStorage.getItem(k);
+      if (v) return v;
+      const leg = localStorage.getItem(trendStorageKeyLegacy(grow.system));
+      return leg || 'solution';
+    }
+    const sys = typeof growOrSystem === 'string' ? growOrSystem : 'DWC';
+    return localStorage.getItem(trendStorageKeyLegacy(sys)) || 'solution';
   } catch {
     return 'solution';
   }
 }
 
-function setStoredTrendMode(system, modeId) {
+function setStoredTrendMode(growOrSystem, modeId) {
   try {
-    localStorage.setItem('hydrogrow-pro.v1.trendMode.' + (system || 'DWC'), modeId);
+    const grow =
+      growOrSystem && typeof growOrSystem === 'object' && 'system' in growOrSystem ? growOrSystem : null;
+    if (grow) {
+      localStorage.setItem(trendStorageKeyFromGrow(grow), modeId);
+      return;
+    }
+    localStorage.setItem(trendStorageKeyLegacy(String(growOrSystem || 'DWC')), modeId);
   } catch (_) {
     /* ignore */
   }
@@ -266,7 +294,7 @@ function setStoredTrendMode(system, modeId) {
 
 function onTrendModeChange(selectEl) {
   if (!myGrow || !selectEl) return;
-  setStoredTrendMode(myGrow.system, selectEl.value);
+  setStoredTrendMode(myGrow, selectEl.value);
   if (typeof renderHistorial === 'function') renderHistorial();
   if (typeof renderMonitor === 'function') renderMonitor();
 }

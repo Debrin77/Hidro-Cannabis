@@ -115,6 +115,10 @@ function syncGrowFusionContext(grow) {
       typeof getSystemProfile === 'function' && grow.system
         ? getSystemProfile(grow.system).cannabisPortTier || null
         : null,
+    activeInstallationLabel:
+      grow.activeInstallationId && typeof getResolvedSystemDisplayName === 'function' && grow.system
+        ? String(getResolvedSystemDisplayName(grow, grow.system) || '').trim() || null
+        : null,
   };
 }
 

@@ -42,7 +42,11 @@ function renderSemanasCurrentWeekCardHtml(totalW, wActive, snap) {
 
 function renderSemanasFusionStrip(grow) {
   if (!grow) return '';
-  const ms = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const msRaw = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const ms = msRaw.filter(
+    (m) =>
+      typeof measurementBelongsToActiveInstallation !== 'function' || measurementBelongsToActiveInstallation(grow, m),
+  );
   let lastIso = '';
   for (let i = ms.length - 1; i >= 0; i--) {
     if (ms[i]?.date) {

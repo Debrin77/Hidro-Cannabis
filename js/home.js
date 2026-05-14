@@ -166,7 +166,11 @@ function getGrowReadinessFlags(grow) {
   const ext = grow.placement === 'exterior';
   const climaOk = !ext || !!(grow.siteWeather && grow.siteWeather.updatedAt);
   const strainOk = !!(grow.strain && grow.strain.name);
-  const ms = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const msRaw = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const ms = msRaw.filter(
+    (m) =>
+      typeof measurementBelongsToActiveInstallation !== 'function' || measurementBelongsToActiveInstallation(grow, m),
+  );
   const medirOk = ms.length > 0;
   const map = getExpertChecklistState();
   const checklistDone = expertChecklistItems.filter((x) => map[x.id]).length;
@@ -190,7 +194,11 @@ function getHcNativePortPhaseHits(grow) {
 
   const sw = grow.siteWeather;
   const rn = grow.fusion && grow.fusion.riegoNative;
-  const ms = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const msRaw = Array.isArray(grow.measurements) ? grow.measurements : [];
+  const ms = msRaw.filter(
+    (m) =>
+      typeof measurementBelongsToActiveInstallation !== 'function' || measurementBelongsToActiveInstallation(grow, m),
+  );
   const map = getExpertChecklistState();
   const chk = expertChecklistItems.filter((x) => map[x.id]).length;
   const fusion = grow.fusion && typeof grow.fusion === 'object' ? grow.fusion : {};
@@ -256,7 +264,7 @@ function buildInicioAppProgressCardHtml() {
   if (!myGrow) {
     return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
       <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
-      <p class="dash-progress-lead">Activa un cultivo en <strong>Cultivo</strong> para ver barras, el port respecto a HidroCultivo y avisos al guardar medidas o clima.</p>
+      <p class="dash-progress-lead">Activa un cultivo en <strong>Cultivo</strong> para ver el progreso de configuración, la migración a pantallas nativas y los avisos al guardar medidas o clima.</p>
       <div class="dash-progress-meter-wrap" aria-hidden="true">
         <div class="dash-progress-meter"><span style="width:0%"></span></div>
       </div>
@@ -274,14 +282,14 @@ function buildInicioAppProgressCardHtml() {
       : 'core';
   const hydroTierHint =
     hydroTier === 'extended'
-      ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>extendido</strong> (NFT/mesa): medición frecuente y, si hace falta, diagramas en HidroCultivo.</p>'
+      ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>extendido</strong> (NFT/mesa): medición frecuente; diagramas y checklist detallado en la vista de <strong>Más → Integración</strong>.</p>'
       : hydroTier === 'advanced'
-        ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>avanzado</strong> (aeroponía): revisa boquillas y ciclos; el embed HC aporta referencias técnicas.</p>'
+        ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>avanzado</strong> (aeroponía): revisa boquillas y ciclos; la vista de integración aporta referencias técnicas amplias.</p>'
         : '';
 
   return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
     <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
-    <p class="dash-progress-lead">Resumen de lo que ya enlazaste en este dispositivo: checklist operativo y fases del port nativo (orden en Más → HidroCultivo).</p>
+    <p class="dash-progress-lead">Resumen en este dispositivo: checklist operativo y avance del port a pantallas nativas (orden en <strong>Más → Integración</strong>).</p>
     <div class="dash-progress-rows">
       <div>
         <div class="dash-progress-row__head">
@@ -295,13 +303,13 @@ function buildInicioAppProgressCardHtml() {
       </div>
       <div>
         <div class="dash-progress-row__head">
-          <span class="dash-progress-row__label">Port HidroCultivo → nativo</span>
+          <span class="dash-progress-row__label">Port a pantallas nativas</span>
           <span class="dash-progress-row__val">${port.hits}/${port.total} · ${port.pct}%</span>
         </div>
         <div class="dash-progress-meter-wrap">
           <div class="dash-progress-meter dash-progress-meter--secondary"><span style="width:${port.pct}%"></span></div>
         </div>
-        <p class="dash-progress-hint">Abre al menos una pestaña embebida para contar la fase «Medir HC» (cultivos alimentarios).</p>
+        <p class="dash-progress-hint">Abre al menos una vez la vista de integración (<strong>Más</strong>) para contar la fase de medición extendida (cultivos no cannabis).</p>
       </div>
     </div>
     ${hydroTierHint}
@@ -342,6 +350,20 @@ function renderConsejosPage() {
   `;
 }
 
+/** Recomendaciones de producto para seguir acercando módulos nativos sin depender del embebido en el día a día. */
+function buildInicioFusionRoadmapHtml() {
+  return `<section class="dash-fusion-roadmap" aria-labelledby="dash-fusion-roadmap-title">
+    <h2 id="dash-fusion-roadmap-title" class="dash-fusion-roadmap__title"><i class="ti ti-route" aria-hidden="true"></i> Siguiente oleada de fusión</h2>
+    <ul class="dash-fusion-roadmap__list">
+      <li><strong>Calendario:</strong> densificar hitos nativos (recarga, calibración, tareas por fase) y dejar la malla embebida solo para casos complejos o torre.</li>
+      <li><strong>Sistema (fase 4):</strong> checklist y dimensionado ya separados por instalación; siguiente paso es profundizar UI nativa solo para núcleo RDWC/DWC y enlazar lo demás como «extendido».</li>
+      <li><strong>Historial / exportación:</strong> trazabilidad por <code>installationId</code> en mediciones (ya guardado) y, más adelante, PDF o CSV que respete la instalación activa.</li>
+      <li><strong>Clima ↔ Riego:</strong> documentar en ayuda los criterios de «misma rejilla» y pruebas automáticas cuando cambie la ciudad entre instalaciones.</li>
+    </ul>
+    <p class="form-hint">Para desarrollo, la lista ordenada de fases vive en <code>js/hcEmbed.js</code> (<code>HC_NATIVE_PORT_PHASES</code>).</p>
+  </section>`;
+}
+
 function buildInicioFusionStatusHtml() {
   if (!myGrow) return '';
   const bits = [];
@@ -371,10 +393,10 @@ function buildInicioHcOpsRowHtml() {
   if (!snap || !snap.updatedAt || snap.error) {
     return `<section class="dash-hc-ops" aria-label="Operativa de riego">
       <h3 class="dash-hc-ops__title"><i class="ti ti-droplet"></i> Riego y torre</h3>
-      <p class="dash-hc-ops__text">Abre <strong>Riego</strong> para calcular ET₀, demanda y pulsos con el tiempo, o el módulo completo de HidroCultivo si usas <strong>torre</strong> u otro esquema.</p>
+      <p class="dash-hc-ops__text">Abre <strong>Riego</strong> para ET₀, demanda y pulsos con el tiempo de tu ubicación. Si usas <strong>torre</strong> u otro esquema fino, entra en <strong>Más → Integración</strong> al riego extendido.</p>
       <div class="dash-hc-ops__btns">
         <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')">Riego (nativo)</button>
-        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('riego')">Riego HC</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('riego')">Riego extendido</button>
       </div>
     </section>`;
   }
@@ -391,8 +413,8 @@ function buildInicioHcOpsRowHtml() {
     <p class="dash-hc-ops__text">${line}</p>
     <div class="dash-hc-ops__btns">
       <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')">Abrir Riego</button>
-      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('riego')">Torre · HC</button>
-      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')">Panel HC</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('riego')">Torre / detalle</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')">Panel torre</button>
     </div>
   </section>`;
 }
@@ -579,7 +601,12 @@ function renderInicio() {
       <button type="button" class="btn btn-primary dash-priority-card__cta" onclick="navTo('cultivo')"><i class="ti ti-bucket" aria-hidden="true"></i> Configurar mi cultivo</button>
     </section>`;
   } else {
-    const ms = Array.isArray(myGrow.measurements) ? myGrow.measurements : [];
+    const msRaw = Array.isArray(myGrow.measurements) ? myGrow.measurements : [];
+    const ms = msRaw.filter(
+      (m) =>
+        typeof measurementBelongsToActiveInstallation !== 'function' ||
+        measurementBelongsToActiveInstallation(myGrow, m),
+    );
     let lastIso = '';
     for (let i = ms.length - 1; i >= 0; i--) {
       if (ms[i] && ms[i].date) {
@@ -633,19 +660,21 @@ function renderInicio() {
 
     ${buildInicioReadinessCardHtml()}
 
+    ${buildInicioFusionRoadmapHtml()}
+
     ${buildInicioFusionStatusHtml()}
 
     ${buildInicioHcOpsRowHtml()}
 
     <section class="dash-hc-strip" aria-labelledby="dash-hc-title">
-      <h2 id="dash-hc-title" class="dash-hc-strip__title"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> HidroCultivo (referencia)</h2>
-      <p class="dash-hc-strip__lead">Mismas pantallas que HidroCultivo; el port nativo va en orden de valor (1→9), priorizando <strong>RDWC/DWC</strong> para cannabis. Torre y hidro alimentario amplio siguen en HC. El <strong>Medir</strong> de cannabis sigue en la barra inferior.</p>
+      <h2 id="dash-hc-title" class="dash-hc-strip__title"><i class="ti ti-layout-grid" aria-hidden="true"></i> Accesos rápidos</h2>
+      <p class="dash-hc-strip__lead">Prioridad <strong>RDWC/DWC</strong> en pantallas nativas. Los botones 2–6 abren la <strong>vista de integración</strong> (menú <strong>Más</strong>) para meteo detallado, mallas, instalación completa, panel tipo torre e historial ampliado, sin mezclar datos con tu <strong>Medir</strong> de cannabis en la barra inferior.</p>
       <div class="dash-hc-grid">
-        <button type="button" class="dash-hc-btn" onclick="navTo('riego')">1 Riego</button>
+        <button type="button" class="dash-hc-btn" onclick="navTo('riego')">1 Riego nativo</button>
         <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('meteo')">2 Meteo</button>
         <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('calendario')">3 Cal.</button>
         <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('sistema')">4 Sistema</button>
-        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('inicio')">5 Inicio</button>
+        <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('inicio')">5 Torre / panel</button>
         <button type="button" class="dash-hc-btn" onclick="navToHcEmbed('historial')">6 Hist.</button>
       </div>
     </section>

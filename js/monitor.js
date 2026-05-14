@@ -614,6 +614,7 @@ function renderMonitorActiveSystemStripHtml() {
       </div>
       <div class="monitor-active-system__controls">${selectHtml}</div>
     </div>
+    <p class="monitor-active-system__scope-hint form-hint">Las mediciones y gráficos corresponden <strong>solo</strong> a la instalación seleccionada (cada una guarda depósito, ubicación/clima y riego nativo por separado). La variedad y las semanas del ciclo son comunes a todo el cultivo.</p>
   </section>`;
 }
 
@@ -885,6 +886,8 @@ function addMeasurement() {
   const reading = {
     date: new Date().toISOString(),
     plantId,
+    installationId: myGrow.activeInstallationId || null,
+    systemType: myGrow.system || null,
     ph: parseFloat(document.getElementById('mPH')?.value),
     ec: parseFloat(document.getElementById('mEC')?.value),
     volume: parseFloat(document.getElementById('mVolume')?.value),
@@ -1009,10 +1012,10 @@ function renderPlantTrendCard() {
       : prof.label || myGrow.system;
   const modesList =
     typeof getFilteredChartModes === 'function' ? getFilteredChartModes(myGrow) : prof.chartModes || [];
-  let mode = typeof getStoredTrendMode === 'function' ? getStoredTrendMode(myGrow.system) : 'solution';
+  let mode = typeof getStoredTrendMode === 'function' ? getStoredTrendMode(myGrow) : 'solution';
   if (!modesList.some((m) => m.id === mode)) {
     mode = modesList[0]?.id || 'solution';
-    if (typeof setStoredTrendMode === 'function') setStoredTrendMode(myGrow.system, mode);
+    if (typeof setStoredTrendMode === 'function') setStoredTrendMode(myGrow, mode);
   }
   const modeOpts = modesList
     .map((m) => `<option value="${m.id}" ${mode === m.id ? 'selected' : ''}>${m.label}</option>`)
@@ -1337,7 +1340,11 @@ function getPhaseReference(strain, weekNum) {
 }
 
 function renderHistorialMeasurementsTable() {
-  const meas = Array.isArray(myGrow.measurements) ? [...myGrow.measurements] : [];
+  let meas = Array.isArray(myGrow.measurements) ? [...myGrow.measurements] : [];
+  meas = meas.filter(
+    (m) =>
+      typeof measurementBelongsToActiveInstallation !== 'function' || measurementBelongsToActiveInstallation(myGrow, m),
+  );
   meas.sort((a, b) => new Date(b.date) - new Date(a.date));
   const rows = meas.slice(0, 40);
   if (!rows.length) {
@@ -1808,6 +1815,12 @@ function renderHistorial() {
     <div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div><p>No hay bitácora ni mediciones sin un cultivo activo.</p><button type="button" class="btn btn-primary" onclick="navTo('cultivo')">Configurar en Cultivo</button></div>`;
     return;
   }
+  const installScope =
+    typeof getActiveInstallationScopeBannerHtml === 'function'
+      ? getActiveInstallationScopeBannerHtml(myGrow, {
+          compact: typeof getAvailableWorkSystems === 'function' ? getAvailableWorkSystems().length <= 1 : true,
+        })
+      : '';
   const fusionCard = renderHistorialFusionCardHtml(myGrow);
   const logHtml = (myGrow.log || [])
     .slice(0, 50)
@@ -1834,6 +1847,7 @@ function renderHistorial() {
       <div class="cultivo-fold-card__body historial-trends-details__body">${trendBody}</div>
     </details>`;
   host.innerHTML = `${quickRef}
+    ${installScope}
     ${fusionCard}
     ${measureCard}
     ${trendsSection}

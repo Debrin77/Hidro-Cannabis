@@ -819,8 +819,14 @@ function renderClimatologia() {
         })()
       : '';
 
+  const installScopeClima =
+    myGrow && typeof getActiveInstallationScopeBannerHtml === 'function'
+      ? getActiveInstallationScopeBannerHtml(myGrow, { compact: true })
+      : '';
+
   host.innerHTML = `
     <div class="card">
+      ${installScopeClima}
       <div class="card-header card-header--split">
         <div class="card-title"><i class="ti ti-map-pin"></i>Ubicación del cultivo</div>
         <button type="button" class="btn btn-primary btn--compact" id="climaRefreshBtn" onclick="refreshClimatologiaFromUi()"><i class="ti ti-refresh"></i> Actualizar pronóstico</button>

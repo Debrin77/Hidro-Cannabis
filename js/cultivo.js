@@ -38,6 +38,44 @@ function getCultivoHydroChipOrder() {
     : WORK_SYSTEM_OPTIONS.slice();
 }
 
+/** Evita mezclar lecturas si hubiera filas huérfanas; las nuevas llevan `installationId`. */
+function measurementBelongsToActiveInstallation(grow, m) {
+  if (!grow || !m) return true;
+  const aid = grow.activeInstallationId;
+  if (!aid) return true;
+  if (m.installationId == null || m.installationId === '') return true;
+  return m.installationId === aid;
+}
+
+/**
+ * Aviso UI: cada instalación hidro tiene su propio depósito, clima guardado, fusion/riego y mediciones.
+ * La variedad y fechas del ciclo siguen siendo únicas del cultivo activo.
+ */
+function getActiveInstallationScopeBannerHtml(grow, opts) {
+  if (!grow) return '';
+  const compact = opts && opts.compact;
+  const inst =
+    typeof findInstallationById === 'function' && grow.activeInstallationId
+      ? findInstallationById(grow.activeInstallationId)
+      : null;
+  const disp =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? getResolvedSystemDisplayName(grow, grow.system || 'DWC')
+      : inst?.type || grow.system || '';
+  const typ = inst?.type || grow.system || '';
+  const multi =
+    typeof getAvailableWorkSystems === 'function' ? getAvailableWorkSystems().length > 1 : false;
+  const core = multi
+    ? `Depósito, emplazamiento, pronóstico guardado, riego nativo y tabla de mediciones son <strong>independientes por instalación</strong>. Ahora trabajas en <strong>${escapeHtmlText(disp)}</strong> (${escapeHtmlText(typ)}). Cambia de instalación en <strong>Medir</strong> o en el esquema de <strong>Cultivo</strong>.`
+    : `Instalación activa: <strong>${escapeHtmlText(disp)}</strong> (${escapeHtmlText(typ)}).`;
+  const tail = ' La variedad y el calendario de fases son <strong>comunes</strong> a todo el cultivo activo.';
+  const body = core + tail;
+  if (compact) {
+    return `<p class="form-hint install-scope-banner install-scope-banner--compact"><i class="ti ti-folders" aria-hidden="true"></i> ${body}</p>`;
+  }
+  return `<div class="alert info install-scope-banner" role="status"><i class="ti ti-folders" aria-hidden="true"></i><p class="body-prose body-prose--tight">${body}</p></div>`;
+}
+
 /** Tarjeta fase 4: contexto nativo por tier (RDWC/DWC núcleo vs resto). */
 function buildCultivoNativeHydroContextCardHtml(grow) {
   if (!grow) return '';
@@ -63,6 +101,7 @@ function buildCultivoNativeHydroContextCardHtml(grow) {
       : `<div class="cultivo-native-hydro-foot"><p class="form-hint">Este tipo exige más control de caudal, raíces y EC. Aquí tienes resumen, alertas y <strong>Medir</strong> por planta; usa la tarjeta <strong>HidroCultivo</strong> de abajo para diagramas y procedimientos al estilo «instalación completa».</p></div>`;
 
   return `<article class="card cultivo-native-hydro-card" aria-labelledby="cultivo-native-hydro-title">
+    ${getActiveInstallationScopeBannerHtml(grow, { compact: true })}
     <div class="card-header card-header--split">
       <h2 id="cultivo-native-hydro-title" class="card-title"><i class="ti ti-droplet"></i> Sistema hidro · cannabis</h2>
       <span class="cannabis-tier-pill ${tierClass}">${escapeHtmlText(tierLabel)}</span>
@@ -592,7 +631,7 @@ function confirmWorkSystemSelection() {
   myGrow.log.unshift({
     date: new Date().toISOString(),
     type: 'info',
-    text: `Instalación activa: ${prevLabel} → ${nextLabel} (${inst.type}).`,
+    text: `Instalación activa: ${prevLabel} → ${nextLabel} (${inst.type}). Los datos de depósito, ubicación/clima guardado, riego nativo y mediciones mostrados corresponden solo a «${nextLabel}»; la variedad y las semanas del cultivo no cambian.`,
   });
   saveGrowState();
   closeSystemWorkspaceSelector();
@@ -680,6 +719,8 @@ window.onOnboardingPlacementEnclosureSync = onOnboardingPlacementEnclosureSync;
 window.onCfgGrowPlacementEnclosureSync = onCfgGrowPlacementEnclosureSync;
 window.syncInstrumentComplementsUi = syncInstrumentComplementsUi;
 window.parseEnclosureVolumeM3Input = parseEnclosureVolumeM3Input;
+window.measurementBelongsToActiveInstallation = measurementBelongsToActiveInstallation;
+window.getActiveInstallationScopeBannerHtml = getActiveInstallationScopeBannerHtml;
 
 function renderInitialOnboarding() {
   if (appConfig) ensureAppConfigInstallations();
@@ -2546,7 +2587,9 @@ function measurementSiteLabel(grow, m) {
 }
 
 function getMeasurementsByPlant(grow, plantId) {
-  const list = Array.isArray(grow?.measurements) ? grow.measurements : [];
+  const list = Array.isArray(grow?.measurements)
+    ? grow.measurements.filter((m) => measurementBelongsToActiveInstallation(grow, m))
+    : [];
   if (isRdwcSharedSolution(grow)) {
     return [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
   }
