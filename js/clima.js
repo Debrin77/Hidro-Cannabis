@@ -80,6 +80,19 @@ function gridKeyFromForecast(wx) {
   return `${wx.latitude.toFixed(4)},${wx.longitude.toFixed(4)},${el}`;
 }
 
+/** Pronóstico usable: al menos un día y serie horaria (p. ej. ET₀, T, HR). */
+function openMeteoForecastHasCoreSeries(wx) {
+  return !!(
+    wx &&
+    wx.daily &&
+    Array.isArray(wx.daily.time) &&
+    wx.daily.time.length > 0 &&
+    wx.hourly &&
+    Array.isArray(wx.hourly.time) &&
+    wx.hourly.time.length > 0
+  );
+}
+
 function windDirLabel(deg) {
   if (!Number.isFinite(deg)) return '—';
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
@@ -506,14 +519,20 @@ function applyClimaBundleToGrowOrConfig(bundle, geoLabel) {
     if (!myGrow.climate) myGrow.climate = {};
     const cur = bundle.current;
     if (cur) {
-      myGrow.climate.summary = `Modelo (rejilla tierra): ${geoLabel}`;
+      myGrow.climate.summary =
+        bundle.gridPrimary?.mode === 'nearest'
+          ? `Open-Meteo (celda más cercana): ${geoLabel}`
+          : `Open-Meteo (rejilla superficie): ${geoLabel}`;
       myGrow.climate.temperature =
         cur.temperature_2m != null ? Number(cur.temperature_2m).toFixed(1) : myGrow.climate.temperature;
       myGrow.climate.humidity =
         cur.relative_humidity_2m != null ? Math.round(cur.relative_humidity_2m) : myGrow.climate.humidity;
       myGrow.climate.wind =
         cur.wind_speed_10m != null ? Number(cur.wind_speed_10m).toFixed(1) : myGrow.climate.wind;
-      myGrow.climate.source = 'Open-Meteo (rejilla + API elevación)';
+      myGrow.climate.source =
+        bundle.gridPrimary?.mode === 'nearest'
+          ? 'Open-Meteo (celda nearest + elevación DEM)'
+          : 'Open-Meteo (rejilla tierra + elevación DEM)';
     }
     saveGrowState();
     if (typeof window.scheduleFusionRiegoRefresh === 'function') window.scheduleFusionRiegoRefresh();
@@ -564,6 +583,7 @@ async function refreshClimatologiaData(opts = {}) {
     climaApiErrorMessage = '';
 
     const geo = await geocodeForClima(label);
+    /** Geocodificación Open-Meteo + celda «nearest» (punto de modelo más cercano al lat/lon) y celda superficie para contraste si difiere. */
     const [wxLand, wxNearest, elevPoint] = await Promise.all([
       fetchOpenMeteoForecast(geo.lat, geo.lon, null),
       fetchOpenMeteoForecast(geo.lat, geo.lon, 'nearest'),
@@ -573,6 +593,13 @@ async function refreshClimatologiaData(opts = {}) {
     const landKey = gridKeyFromForecast(wxLand);
     const nearestKey = gridKeyFromForecast(wxNearest);
     const nearestDiffers = nearestKey && landKey && nearestKey !== landKey;
+    /** Siempre el tiempo en la celda del modelo más cercana al punto indicado (Open-Meteo `cell_selection=nearest`). Respaldo a superficie si la respuesta nearest no trae serie. */
+    const useNearestPrimary = openMeteoForecastHasCoreSeries(wxNearest);
+    const wxMain = useNearestPrimary ? wxNearest : wxLand;
+    const wxAlt =
+      useNearestPrimary && nearestDiffers && wxLand && wxLand.current
+        ? wxLand
+        : null;
 
     const bundle = {
       updatedAt: new Date().toISOString(),
@@ -583,24 +610,24 @@ async function refreshClimatologiaData(opts = {}) {
       elevationQueryM: elevPoint,
       geocodeAlternates: geo.alternates || [],
       gridPrimary: {
-        mode: 'land',
-        latitude: wxLand.latitude,
-        longitude: wxLand.longitude,
-        elevation: wxLand.elevation,
+        mode: useNearestPrimary ? 'nearest' : 'land',
+        latitude: wxMain.latitude,
+        longitude: wxMain.longitude,
+        elevation: wxMain.elevation,
       },
-      gridNearest:
-        nearestDiffers && wxNearest
+      gridSecondary:
+        wxAlt && wxAlt.current
           ? {
-              mode: 'nearest',
-              latitude: wxNearest.latitude,
-              longitude: wxNearest.longitude,
-              elevation: wxNearest.elevation,
-              current: wxNearest.current || null,
+              mode: useNearestPrimary ? 'land' : 'nearest',
+              latitude: wxAlt.latitude,
+              longitude: wxAlt.longitude,
+              elevation: wxAlt.elevation,
+              current: wxAlt.current || null,
             }
           : null,
-      current: wxLand.current || null,
-      daily: wxLand.daily || null,
-      hourly: wxLand.hourly || null,
+      current: wxMain.current || null,
+      daily: wxMain.daily || null,
+      hourly: wxMain.hourly || null,
     };
 
     applyClimaBundleToGrowOrConfig(bundle, geo.label);
@@ -616,6 +643,8 @@ async function refreshClimatologiaData(opts = {}) {
     }
     renderClimatologia();
     if (typeof renderRiego === 'function') renderRiego();
+    const v = typeof location !== 'undefined' && location.hash ? location.hash.slice(1) : 'inicio';
+    if (v === 'inicio' && typeof renderInicio === 'function') renderInicio();
   }
 }
 
@@ -781,10 +810,15 @@ function renderClimatologia() {
       : `<div class="alert info"><i class="ti ti-cloud-off"></i><p>Con ubicación configurada, los datos se cargan <strong>al abrir esta pestaña</strong> (geocodificación + pronóstico en dos rejillas del modelo + elevación). También puedes usar <strong>Actualizar pronóstico</strong> para forzar una nueva consulta.</p></div>`;
 
   const gridPrimary = snap?.gridPrimary;
+  const gridKeyLabel =
+    snap?.gridPrimary?.mode === 'nearest'
+      ? 'Rejilla modelo (celda más cercana al punto)'
+      : 'Rejilla modelo (superficie tierra)';
   const gridRows =
     gridPrimary && Number.isFinite(gridPrimary.latitude)
-      ? `<div class="param-row"><span class="param-key">Rejilla modelo (tierra)</span><span class="param-val">${gridPrimary.latitude.toFixed(3)}°, ${gridPrimary.longitude.toFixed(3)}° · elev. ~${Number.isFinite(gridPrimary.elevation) ? Math.round(gridPrimary.elevation) + ' m' : '—'}</span></div>`
+      ? `<div class="param-row"><span class="param-key">${escapeHtmlClima(gridKeyLabel)}</span><span class="param-val">${gridPrimary.latitude.toFixed(3)}°, ${gridPrimary.longitude.toFixed(3)}° · elev. ~${Number.isFinite(gridPrimary.elevation) ? Math.round(gridPrimary.elevation) + ' m' : '—'}</span></div>`
       : '';
+
   const elevRow =
     Number.isFinite(snap?.elevationQueryM)
       ? `<div class="param-row"><span class="param-key">Elevación en tu coordenada</span><span class="param-val">~${Math.round(snap.elevationQueryM)} m (DEM 90 m, Open-Meteo)</span></div>`
@@ -800,14 +834,24 @@ function renderClimatologia() {
           .join('')}</ul>`
       : '';
 
+  const gridAlt =
+    snap?.gridSecondary && snap.gridSecondary.current && Number.isFinite(snap.gridSecondary.current.temperature_2m)
+      ? snap.gridSecondary
+      : snap?.gridNearest && snap.gridNearest.current && Number.isFinite(snap.gridNearest.current.temperature_2m)
+        ? snap.gridNearest
+        : null;
   const nearestBlock =
-    snap?.gridNearest && snap.gridNearest.current && Number.isFinite(snap.gridNearest.current.temperature_2m)
+    gridAlt && gridAlt.current
       ? (() => {
-          const gn = snap.gridNearest;
+          const gn = gridAlt;
           const c = gn.current;
+          const altTitle =
+            gn.mode === 'nearest'
+              ? 'Segundo punto de modelo (celda más cercana)'
+              : 'Segundo punto de modelo (superficie tierra)';
           return `<div class="card clima-nearest-card">
-            <div class="card-header"><div class="card-title"><i class="ti ti-grid-dots"></i>Segundo punto de modelo (rejilla «nearest»)</div></div>
-            <p class="body-prose clima-grid-note">Misma ubicación buscada, pero eligiendo la <strong>celda de modelo más cercana</strong> al punto (útil en costa/montaña). Si coincide con la rejilla «tierra», no se muestra esta tarjeta.</p>
+            <div class="card-header"><div class="card-title"><i class="ti ti-grid-dots"></i>${escapeHtmlClima(altTitle)}</div></div>
+            <p class="body-prose clima-grid-note">Misma ubicación geocodificada; esta tarjeta contrasta la <strong>celda alternativa</strong> del modelo numérico respecto a la principal (mejor afinidad en costa o relieve).</p>
             <div class="param-row"><span class="param-key">Coordenadas celda</span><span class="param-val">${gn.latitude.toFixed(3)}°, ${gn.longitude.toFixed(3)}° · ~${Number.isFinite(gn.elevation) ? Math.round(gn.elevation) + ' m' : '—'}</span></div>
             <div class="grid4 monitor-metrics">
               <div class="metric"><div class="metric-label">Tª ahora</div><div class="metric-val">${Number(c.temperature_2m).toFixed(1)}°C</div></div>
@@ -931,3 +975,6 @@ window.getDailyWeatherVisual = getDailyWeatherVisual;
 window.buildExteriorHydroSolutions = buildExteriorHydroSolutions;
 window.geocodeForClima = geocodeForClima;
 window.fetchOpenMeteoForecast = fetchOpenMeteoForecast;
+window.softRefreshClimatologiaIfLocation = function softRefreshClimatologiaIfLocation() {
+  return refreshClimatologiaData({ force: false, manageButton: false, notifyOnSuccess: false });
+};

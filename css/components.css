@@ -632,6 +632,13 @@
 .inicio-meteo-strip--muted{opacity:0.72}
 .inicio-meteo-strip__title{font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin:0 0 0.35rem}
 .inicio-meteo-strip__line{font-size:0.875rem;color:var(--text);line-height:1.45;margin:0}
+.inicio-meteo-loc{font-size:0.8125rem;font-weight:600;color:var(--text);margin:0 0 0.35rem;line-height:1.35}
+.inicio-meteo-now{font-size:0.875rem;color:var(--text);margin:0;line-height:1.45}
+.inicio-meteo-now--muted{color:var(--text3)}
+.inicio-meteo-now__cond{color:var(--text2);font-weight:500}
+.inicio-meteo-ts{font-size:0.6875rem;color:var(--text3);margin:0.25rem 0 0;font-variant-numeric:tabular-nums}
+.inicio-meteo-manual-line{font-size:0.6875rem;color:var(--text3);margin:0.5rem 0 0;line-height:1.35}
+.inicio-meteo-manual__tag{font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-size:0.625rem}
 .inicio-meteo-strip__actions{margin-top:0.5rem}
 .inicio-nutri-card{
   border-radius:var(--radius2);border:1px solid var(--border);

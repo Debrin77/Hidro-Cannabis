@@ -279,39 +279,54 @@ function buildInicioMeteoMiniHtml() {
   if (!myGrow) return '';
   const paused = !!myGrow.cultivationPaused;
   const cls = paused ? 'inicio-meteo-strip inicio-meteo-strip--muted' : 'inicio-meteo-strip';
+  const locQuery = (myGrow.location || '').trim();
+  const manualLine = `<p class="inicio-meteo-manual-line" role="note"><span class="inicio-meteo-manual__tag">Ubicación manual</span> · se aplicará al introducirla</p>`;
+
   const sw = myGrow.siteWeather;
-  if (sw?.daily?.time?.length) {
+  const cur = sw?.current;
+  const hasCurrent = cur && Number.isFinite(cur.temperature_2m);
+  const resolvedPlace = (sw?.label || '').trim();
+
+  let nowLine = '';
+  if (hasCurrent) {
+    const viz =
+      typeof window.getDailyWeatherVisual === 'function'
+        ? window.getDailyWeatherVisual(cur.weather_code)
+        : { label: '—' };
+    const parts = [
+      `${Number(cur.temperature_2m).toFixed(1)} °C`,
+      Number.isFinite(cur.relative_humidity_2m) ? `HR ${Math.round(cur.relative_humidity_2m)} %` : null,
+      Number.isFinite(cur.wind_speed_10m) ? `${Number(cur.wind_speed_10m).toFixed(1)} km/h` : null,
+    ].filter(Boolean);
+    nowLine = `<p class="inicio-meteo-now">${escapeHomeHtml(parts.join(' · '))} · <span class="inicio-meteo-now__cond">${escapeHomeHtml(viz.label)}</span></p>`;
+  } else if (sw?.daily?.time?.length) {
     const d = sw.daily;
     const tmax = d.temperature_2m_max?.[0];
     const tmin = d.temperature_2m_min?.[0];
-    const rainMm = d.precipitation_sum?.[0];
-    const prob = d.precipitation_probability_mean?.[0];
-    const loc = escapeHomeHtml(sw.label || myGrow.location || 'Ubicación');
-    const bits = [];
-    if (Number.isFinite(tmin) && Number.isFinite(tmax)) bits.push(`${Math.round(tmin)}–${Math.round(tmax)} °C`);
-    if (Number.isFinite(prob)) bits.push(`lluvia ~${Math.round(prob)} %`);
-    if (Number.isFinite(rainMm) && rainMm > 0.05) bits.push(`~${rainMm.toFixed(1)} mm`);
-    const sub = escapeHomeHtml(bits.join(' · ') || '—');
-    const when = sw.updatedAt ? escapeHomeHtml(new Date(sw.updatedAt).toLocaleString('es-ES')) : '';
-    return `<section class="${cls}" aria-label="Resumen meteorológico">
-      <h3 class="inicio-meteo-strip__title">Clima · esta instalación</h3>
-      <p class="inicio-meteo-strip__line"><strong>${loc}</strong> — Hoy: ${sub}</p>
-      ${when ? `<p class="form-hint" style="margin:0.35rem 0 0">Actualizado ${when}</p>` : ''}
-      <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')">Detalle y pronóstico</button></div>
-    </section>`;
+    if (Number.isFinite(tmin) && Number.isFinite(tmax)) {
+      nowLine = `<p class="inicio-meteo-now">${escapeHomeHtml(`Hoy ${Math.round(tmin)}–${Math.round(tmax)} °C`)}</p>`;
+    }
+  } else if (locQuery) {
+    nowLine = `<p class="inicio-meteo-now inicio-meteo-now--muted">Sin lectura actual</p>`;
   }
-  if (myGrow.climate?.summary) {
-    const loc = escapeHomeHtml(myGrow.location || 'Ubicación');
-    return `<section class="${cls}" aria-label="Clima simplificado">
-      <h3 class="inicio-meteo-strip__title">Clima · esta instalación</h3>
-      <p class="inicio-meteo-strip__line"><strong>${loc}</strong> — ${escapeHomeHtml(myGrow.climate.summary)} · ${escapeHomeHtml(String(myGrow.climate.temperature ?? '—'))} °C · HR ${escapeHomeHtml(String(myGrow.climate.humidity ?? '—'))} %</p>
-      <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')">Abrir climatología</button></div>
-    </section>`;
-  }
-  return `<section class="${cls}" aria-label="Sin datos de clima">
-    <h3 class="inicio-meteo-strip__title">Clima · esta instalación</h3>
-    <p class="inicio-meteo-strip__line">Aún no hay pronóstico guardado para esta ubicación.</p>
-    <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-primary btn--compact" onclick="navTo('climatologia')">Configurar climatología</button></div>
+
+  const placeLine =
+    resolvedPlace || locQuery
+      ? `<p class="inicio-meteo-loc">${escapeHomeHtml(resolvedPlace || locQuery)}</p>`
+      : '';
+
+  const ts =
+    sw?.updatedAt && (hasCurrent || sw?.daily?.time?.length)
+      ? `<p class="inicio-meteo-ts">${escapeHomeHtml(new Date(sw.updatedAt).toLocaleString('es-ES'))}</p>`
+      : '';
+
+  return `<section class="${cls}" aria-label="Clima actual">
+    <h3 class="inicio-meteo-strip__title">Ahora</h3>
+    ${placeLine}
+    ${nowLine || `<p class="inicio-meteo-now inicio-meteo-now--muted">—</p>`}
+    ${ts}
+    ${manualLine}
+    <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')">Climatología</button></div>
   </section>`;
 }
 

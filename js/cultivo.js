@@ -1192,7 +1192,9 @@ async function analyzeClimateContext() {
     if (!place) throw new Error('Ubicación no encontrada');
     const lat = place.latitude;
     const lon = place.longitude;
-    const wxResp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`);
+    const wxResp = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&cell_selection=nearest&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`,
+    );
     const wxData = await wxResp.json();
     const current = wxData?.current || {};
     appConfig.climate = {

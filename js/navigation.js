@@ -109,7 +109,14 @@ function applyNavView(view) {
 
   scrollBottomNavToActive(view);
 
-  if (view === 'inicio' && typeof renderInicio === 'function') renderInicio();
+  if (view === 'inicio') {
+    if (typeof renderInicio === 'function') renderInicio();
+    window.requestAnimationFrame(() => {
+      if (typeof window.softRefreshClimatologiaIfLocation === 'function') {
+        window.softRefreshClimatologiaIfLocation();
+      }
+    });
+  }
   if (view === 'cultivo' && typeof renderCultivo === 'function') renderCultivo();
   if (view === 'monitor' && typeof renderMonitor === 'function') renderMonitor();
   if (view === 'semanas' && typeof renderSemanas === 'function') renderSemanas();

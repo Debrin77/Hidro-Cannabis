@@ -61,11 +61,16 @@ async function riegoResolveCoords() {
   return { lat: geo.lat, lon: geo.lon, label: geo.label };
 }
 
-async function riegoFetchEt0Hourly(lat, lon) {
+async function riegoFetchEt0Hourly(lat, lon, cellSelection) {
+  const cell =
+    cellSelection && (cellSelection === 'nearest' || cellSelection === 'land')
+      ? `&cell_selection=${encodeURIComponent(cellSelection)}`
+      : '';
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     '&hourly=et0_fao_evapotranspiration,temperature_2m,relative_humidity_2m,wind_speed_10m' +
-    '&forecast_days=4&timezone=auto';
+    '&forecast_days=4&timezone=auto' +
+    cell;
   const r = await fetch(url);
   if (!r.ok) throw new Error('No se pudo consultar ET₀ (Open-Meteo).');
   return r.json();
@@ -242,7 +247,8 @@ async function refreshRiegoNativeData() {
 
     let et0Today = sumHourlyForCalendarDay(times, et0, today);
     if (et0Today == null || !Number.isFinite(et0Today)) {
-      const wx = await riegoFetchEt0Hourly(coords.lat, coords.lon);
+      const cellSel = sw?.gridPrimary?.mode === 'land' ? 'land' : 'nearest';
+      const wx = await riegoFetchEt0Hourly(coords.lat, coords.lon, cellSel);
       times = wx.hourly?.time;
       et0 = wx.hourly?.et0_fao_evapotranspiration;
       tH = wx.hourly?.temperature_2m;
