@@ -1,6 +1,6 @@
 /* Caché ligera del shell para uso offline parcial (PWA / Play).
  * Al cambiar lógica o recursos críticos, sube la versión para vaciar cachés antiguas. */
-const CACHE_NAME = 'hydro-cannabis-shell-v18';
+const CACHE_NAME = 'hydro-cannabis-shell-v19';
 const SHELL = [
   './',
   './index.html',

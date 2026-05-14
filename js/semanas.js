@@ -35,7 +35,7 @@ function renderSemanasCurrentWeekCardHtml(totalW, wActive, snap) {
     <p class="body-prose body-prose--tight">${escapeCalendarAttrText(snap.accion)}</p>
     <div class="cal-current-week-card__actions">
       <button type="button" class="btn btn-primary btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
-      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Malla HC</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Malla (integración)</button>
     </div>
   </div>`;
 }
@@ -63,21 +63,21 @@ function renderSemanasFusionStrip(grow) {
         ? 'Última lectura ayer: mantén el ritmo con esta fila.'
         : `Última lectura hace ${daysSince} días: conviene volver a Medir.`
     : 'Aún sin lecturas guardadas: Medir ancla EC y pH a esta tabla.';
-  return `<section class="cal-fusion-strip" aria-label="Fusión con HidroCultivo">
+  return `<section class="cal-fusion-strip" aria-label="Integración calendario y Medir">
     <div class="cal-fusion-strip__inner">
       <div>
-        <span class="cal-fusion-strip__label">Rutina · Medir + calendario HC</span>
-        <p class="cal-fusion-strip__text">${escapeCalendarAttrText(streakHint)} En HidroCultivo tienes mallas agrícolas y otros cultivos.</p>
+        <span class="cal-fusion-strip__label">Rutina · Medir + calendario extendido</span>
+        <p class="cal-fusion-strip__text">${escapeCalendarAttrText(streakHint)} En la vista de integración tienes mallas agrícolas y otros cultivos.</p>
       </div>
       <div class="cal-fusion-strip__actions">
         <button type="button" class="btn btn-primary btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
-        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Cal. HC</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> Cal. integración</button>
       </div>
     </div>
   </section>`;
 }
 
-/** Contexto tiempo + riego en la misma pantalla que el plan semanal (fusión HC). */
+/** Contexto tiempo + riego en la misma pantalla que el plan semanal (integración). */
 function renderSemanasWeatherFusionBar(grow) {
   if (!grow) return '';
   const sw = grow.siteWeather;

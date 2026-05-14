@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="Checklist y monitor de cultivo hidropónico: DWC, RDWC, nutrición, pH/EC, clima y calendario. Herramienta orientativa para autoconsumo responsable.">
-<title>Hydro Cannabis — Hidrocultivo</title>
+<title>Hydro Cannabis — hidroponía</title>
 <link rel="icon" type="image/svg+xml" href="assets/icons/cannabis-start.svg">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,7 +91,7 @@
   <div class="page-header">
     <div class="breadcrumb">Hydro Cannabis / Cultivo</div>
     <h1>Cultivo</h1>
-    <p>Checklist e ingeniería hidro: núcleo <strong>RDWC/DWC</strong> para cannabis; NFT, mesa flotante y aeroponía con guía en pantalla y complemento en HidroCultivo. Bombas, aire, depósitos y nutriente se alinean al guardar.</p>
+    <p>Checklist e ingeniería hidro: núcleo <strong>RDWC/DWC</strong> para cannabis; NFT, mesa flotante y aeroponía con guía en pantalla y complemento en la vista de <strong>integración</strong> (Más). Bombas, aire, depósitos y nutriente se alinean al guardar.</p>
   </div>
 
   <div id="cultivoContent"></div>
@@ -122,7 +122,7 @@
   <div class="page-header">
     <div class="breadcrumb">Hydro Cannabis / Riego</div>
     <h1>Riego y demanda hídrica</h1>
-    <p>Orientación con <strong>ET₀</strong> y VPD del día (Open-Meteo). Para <strong>torre, pulsos y nocturno</strong> como en HidroCultivo, usa el enlace a la app de referencia.</p>
+    <p>Orientación con <strong>ET₀</strong> y VPD del día (Open-Meteo). Para <strong>torre, pulsos y nocturno</strong> con más detalle, abre <strong>Más → Integración → Riego</strong>.</p>
   </div>
   <div id="riegoContent"></div>
 </div>
@@ -136,7 +136,7 @@
   <div id="historialContent"></div>
 </div>
 
-<!-- ══════════════ HIDROCULTIVO (REFERENCIA EMBEBIDA) ══════════════ -->
+<!-- ══════════════ INTEGRACIÓN (VISTA EMBEBIDA) ══════════════ -->
 <div class="view" id="view-hc-embed">
   <div class="hc-embed-view">
     <div class="hc-embed-chrome">
@@ -144,18 +144,18 @@
         <i class="ti ti-arrow-left" aria-hidden="true"></i> Hydro Cannabis
       </button>
       <div class="hc-embed-chrome-text">
-        <div class="breadcrumb">Integración / HidroCultivo</div>
+        <div class="breadcrumb">Integración / módulos extendidos</div>
         <h1 class="hc-embed-title">Módulos de referencia</h1>
         <p class="hc-embed-sub" id="hcEmbedSubtitle">Inicio</p>
       </div>
     </div>
     <div class="alert info hc-embed-alert">
       <i class="ti ti-info-circle" aria-hidden="true"></i>
-      <p>Aquí se carga la app <strong>HidroCultivo</strong> (hidroponía general: torre, riego, cultivos alimentarios). El port nativo prioriza <strong>RDWC/DWC</strong> en cannabis; el orden <strong>1–9</strong> está en <code>HC_NATIVE_PORT_PHASES</code> (<code>js/hcEmbed.js</code>); la fase <strong>0</strong> alinea el modelo de datos. Tus <strong>variedades</strong> y <strong>Medir</strong> cannabis siguen en la barra inferior. Los datos aquí usan otras claves de almacenaje (<code>cultiva_v1</code>, etc.) que el cultivo cannabis.</p>
+      <p>Aquí se carga un <strong>módulo extendido</strong> de hidroponía general (torre, riego, cultivos alimentarios). El port nativo prioriza <strong>RDWC/DWC</strong> en cannabis; el orden <strong>1–9</strong> está definido en <code>js/hcEmbed.js</code> (<code>EMBED_NATIVE_PORT_PHASES</code>); la fase <strong>0</strong> alinea el modelo de datos. Tus <strong>variedades</strong> y <strong>Medir</strong> cannabis siguen en la barra inferior. Los datos aquí usan otras claves de almacenaje (<code>cultiva_v1</code>, etc.) que el cultivo cannabis.</p>
     </div>
     <div class="hc-embed-frame-wrap" id="hcEmbedFrameWrap">
-      <div class="hc-embed-loading" id="hcEmbedLoading" role="status" aria-live="polite">Cargando HidroCultivo…</div>
-      <iframe id="hcEmbedFrame" class="hc-embed-frame" title="HidroCultivo — módulos de referencia"
+      <div class="hc-embed-loading" id="hcEmbedLoading" role="status" aria-live="polite">Cargando módulos extendidos…</div>
+      <iframe id="hcEmbedFrame" class="hc-embed-frame" title="Integración — módulos extendidos"
         loading="lazy"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
     </div>
@@ -207,18 +207,18 @@
       <span class="consejo-num">4</span>
       <div>
         <strong>Más (referencia)</strong>
-        <p>Variedades, nutrientes, legal y apariencia. Desde <strong>Más</strong> también abres los módulos <strong>HidroCultivo</strong> (torre, riego, meteo…). El tiempo de tu zona está en la pestaña <strong>Clima</strong> de la barra inferior.</p>
+        <p>Variedades, nutrientes, legal y apariencia. Desde <strong>Más → Integración</strong> abres torre, riego, meteo y el resto de módulos extendidos. El tiempo de tu zona está en la pestaña <strong>Clima</strong> de la barra inferior.</p>
       </div>
     </div>
     <div class="consejo-card">
       <span class="consejo-num">5</span>
       <div>
-        <strong>HidroCultivo (torre, alimentario)</strong>
-        <p>Los consejos y tablas de <strong>HidroCultivo</strong> están pensados sobre todo para <strong>cultivos alimentarios</strong> y torre; aquí los usas como referencia técnica (riego, meteo, mallas). El flujo de <strong>cannabis</strong> sigue siendo Cultivo → Medir → Calendario semanal de esta app.</p>
+        <strong>Torre y cultivos alimentarios (integración)</strong>
+        <p>Los consejos y tablas del módulo extendido están pensados sobre todo para <strong>cultivos alimentarios</strong> y torre; aquí los usas como referencia técnica (riego, meteo, mallas). El flujo de <strong>cannabis</strong> sigue siendo Cultivo → Medir → Calendario semanal de esta app.</p>
         <div class="consejos-hc-actions">
-          <button type="button" class="btn btn-primary btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-layout-dashboard"></i> Panel HC</button>
-          <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('consejos')"><i class="ti ti-book"></i> Consejos HC</button>
-          <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('mediciones')"><i class="ti ti-gauge"></i> Medir HC</button>
+          <button type="button" class="btn btn-primary btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-layout-dashboard"></i> Panel integración</button>
+          <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('consejos')"><i class="ti ti-book"></i> Consejos extendidos</button>
+          <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('mediciones')"><i class="ti ti-gauge"></i> Medir (extendido)</button>
         </div>
       </div>
     </div>
@@ -363,7 +363,7 @@
     <div class="page-header__col">
       <div class="breadcrumb">Hydro Cannabis / Ayuda</div>
       <h1>Ayuda y flujo de trabajo</h1>
-      <p>Resumen nativo; el manual largo de HidroCultivo sigue embebido.</p>
+      <p>Resumen nativo; el manual largo está en la vista de integración.</p>
     </div>
     <button type="button" class="page-header-close-btn" onclick="closeMoreHubView()" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
   </div>
@@ -475,15 +475,15 @@
     </div>
     <div class="more-menu-section-label">Integración · orden del port nativo</div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('riego')"><i class="ti ti-droplet"></i> 1 · Riego (HC)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('riego')"><i class="ti ti-droplet"></i> 1 · Riego (integración)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('meteo')"><i class="ti ti-cloud"></i> 2 · Meteorología (HC)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('meteo')"><i class="ti ti-cloud"></i> 2 · Meteorología (integración)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> 3 · Calendario (HC)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('calendario')"><i class="ti ti-calendar"></i> 3 · Calendario (integración)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
@@ -495,19 +495,19 @@
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('historial')"><i class="ti ti-chart-line"></i> 6 · Historial (HC)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('historial')"><i class="ti ti-chart-line"></i> 6 · Historial (integración)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('consejos')"><i class="ti ti-book"></i> 7 · Consejos (HC)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('consejos')"><i class="ti ti-book"></i> 7 · Consejos (integración)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('ayuda')"><i class="ti ti-help"></i> 8 · Ayuda / manual (HC)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('ayuda')"><i class="ti ti-help"></i> 8 · Ayuda / manual (integración)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-item">
-      <button type="button" class="more-menu-row" onclick="navToHcEmbed('mediciones')"><i class="ti ti-gauge"></i> 9 · Medir HC (alimentario)</button>
+      <button type="button" class="more-menu-row" onclick="navToHcEmbed('mediciones')"><i class="ti ti-gauge"></i> 9 · Medir (extendido, alimentario)</button>
       <button type="button" class="more-menu-item__x" onclick="closeMoreMenu()" aria-label="Cerrar menú"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="more-menu-section-label more-menu-section-label--after">Hydro Cannabis</div>

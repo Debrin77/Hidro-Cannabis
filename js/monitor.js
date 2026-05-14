@@ -1789,7 +1789,7 @@ function renderHistorialFusionCardHtml(grow) {
       <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2"></i> Medir</button>
       <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm"></i> Clima</button>
       <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego</button>
-      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('historial')"><i class="ti ti-chart-line"></i> Historial HC</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('historial')"><i class="ti ti-chart-line"></i> Historial (integración)</button>
     </div>
   </div>`;
 }

@@ -66,7 +66,7 @@ function setUiExperienceMode(mode) {
   if (typeof renderConsejosPage === 'function') renderConsejosPage();
 }
 
-/** Metadatos opcionales (p. ej. caché de módulos fusionados con HidroCultivo). */
+/** Metadatos opcionales (p. ej. caché de módulos de integración). */
 function normalizeGrowFusion(f) {
   if (!f || typeof f !== 'object' || Array.isArray(f)) return {};
   const out = { ...f };
@@ -80,7 +80,7 @@ function normalizeGrowFusion(f) {
 }
 
 /**
- * Resumen estable del cultivo para alinear fase 0 (modelo compartido / HC).
+ * Resumen estable del cultivo para alinear fase 0 (modelo compartido con integración).
  * Se actualiza al guardar estado; no sustituye el cultivo completo en JSON.
  */
 function syncGrowFusionContext(grow) {

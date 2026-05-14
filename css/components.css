@@ -881,7 +881,7 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 }
 .more-menu-section-label--after{padding-top:18px;border-top:1px solid var(--border);margin-top:4px}
 
-/* HidroCultivo embebido (iframe) */
+/* Vista de integración embebida (iframe) */
 #view-hc-embed.view.active{
   display:flex;
   flex-direction:column;
@@ -948,7 +948,7 @@ details.dash-check-section[open] > summary .dash-check-chev{transform:rotate(180
 }
 [data-theme='light'] .hc-embed-frame{background:rgba(255,255,255,0.5)}
 
-/* Accesos rápidos HidroCultivo en Inicio */
+/* Accesos rápidos a integración en Inicio */
 .dash-hc-strip{
   border-radius:var(--radius2);
   border:1px solid var(--border);

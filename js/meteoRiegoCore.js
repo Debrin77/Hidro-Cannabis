@@ -1,9 +1,9 @@
 /**
- * Núcleo compartido Meteo + Riego (lógica adaptada de HidroCultivo / riego-calculo-helpers).
- * Sin DOM ni estado HC; sirve a Climatología (VPD horario) y a Riego nativo.
+ * Núcleo compartido Meteo + Riego (lógica adaptada de helpers de riego de referencia).
+ * Sin DOM ni estado de integración; sirve a Climatología (VPD horario) y a Riego nativo.
  */
 
-/** VPD en kPa (Magnus–Tetens, mismo redondeo que HC). */
+/** VPD en kPa (Magnus–Tetens, redondeo alineado con el módulo extendido). */
 function hydroRiegoVPDkPa(tempC, rhPct) {
   const T = Math.max(-5, Math.min(50, Number(tempC) || 0));
   const rh = Math.max(5, Math.min(100, Number(rhPct) || 50));
@@ -12,7 +12,7 @@ function hydroRiegoVPDkPa(tempC, rhPct) {
 }
 
 /**
- * Demanda hídrica relativa (≈0.48–1.58) — misma filosofía que HC.
+ * Demanda hídrica relativa (≈0.48–1.58) — misma filosofía que el modelo extendido.
  */
 function hydroRiegoIndiceDemanda(params) {
   const vpd = Math.max(0.08, Math.min(2.4, params.vpdKpa || 0.5));
@@ -32,7 +32,7 @@ function hydroRiegoIndiceDemanda(params) {
   return Math.max(0.48, Math.min(1.58, d));
 }
 
-/** Kc FAO simplificado por % de ciclo y grupo (HC); cannabis ≈ grupo «frutos». */
+/** Kc FAO simplificado por % de ciclo y grupo de cultivo; cannabis ≈ grupo «frutos». */
 function hydroRiegoKcDesdePctYGrupo(pct, grupo) {
   const g = grupo || 'lechugas';
   let k;
@@ -56,13 +56,13 @@ function hydroRiegoKcDesdePctYGrupo(pct, grupo) {
   return Math.max(0.28, Math.min(1.32, k));
 }
 
-/** Sustrato tipo lana de roca / hidro medio (referencia HC onRef/minOFF/retención). */
+/** Sustrato tipo lana de roca / hidro medio (referencia onRef/minOFF/retención). */
 function hydroDefaultRockwoolLikeSubstrate() {
   return { onRef: 4.5, minOFFRef: 11, retencion: 0.52 };
 }
 
 /**
- * Minutos ON/OFF por pulso (HC); interior: OFF mínimo 10 min como en HC.
+ * Minutos ON/OFF por pulso (modelo extendido); interior: OFF mínimo 10 min.
  */
 function hydroRiegoMinutosDesdeDemanda(demanda, nPlantas, kc, sustrato, esInterior) {
   const { onRef, minOFFRef, retencion } = sustrato;

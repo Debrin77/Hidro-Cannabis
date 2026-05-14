@@ -186,9 +186,9 @@ function hcEmbedHasBeenVisited() {
   }
 }
 
-/** Alineado con HC_NATIVE_PORT_PHASES (js/hcEmbed.js), según datos guardados en el dispositivo. */
+/** Alineado con la lista de fases del módulo de integración (js/hcEmbed.js), según datos guardados en el dispositivo. */
 function getHcNativePortPhaseHits(grow) {
-  const phases = window.HC_NATIVE_PORT_PHASES || [];
+  const phases = window.EMBED_NATIVE_PORT_PHASES || [];
   if (!phases.length) return { hits: 0, total: 0, pct: 0 };
   if (!grow) return { hits: 0, total: phases.length, pct: 0 };
 
@@ -337,13 +337,13 @@ function renderConsejosPage() {
       ${learnBlock}
     </div>
     <div class="card consejos-fusion-card">
-      <div class="card-header"><div class="card-title"><i class="ti ti-link"></i> Fusión con HidroCultivo</div></div>
-      <p class="body-prose body-prose--tight">Aquí tienes el flujo <strong>cannabis</strong> (Medir, variedades, calendario por cepa). <strong>HidroCultivo</strong> embebido (Más) aporta torre, mallas agrícolas y módulos generales: la misma <strong>ubicación y pronóstico</strong> alimentan ET₀, VPD y riego nativo en esta app.</p>
+      <div class="card-header"><div class="card-title"><i class="ti ti-link"></i> Integración con módulos extendidos</div></div>
+      <p class="body-prose body-prose--tight">Aquí tienes el flujo <strong>cannabis</strong> (Medir, variedades, calendario por cepa). Desde <strong>Más → Integración</strong> puedes abrir torre, mallas agrícolas y otros módulos generales: la misma <strong>ubicación y pronóstico</strong> alimentan ET₀, VPD y riego nativo en esta app.</p>
       <p class="body-prose body-prose--tight">Al guardar en <strong>Climatología</strong>, el riego nativo se recalcula solo unos instantes después para mantener <strong>Historial</strong>, <strong>Calendario</strong> y <strong>Riego</strong> alineados.</p>
       <div class="consejos-fusion-actions">
         <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')"><i class="ti ti-droplet"></i> Riego nativo</button>
         <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('historial')"><i class="ti ti-history"></i> Historial</button>
-        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-layout-dashboard"></i> Panel HC</button>
+        <button type="button" class="btn btn-ghost btn--compact" onclick="navToHcEmbed('inicio')"><i class="ti ti-layout-dashboard"></i> Panel integración</button>
       </div>
     </div>
     ${renderStrainSpecsTableHtml()}
@@ -360,7 +360,7 @@ function buildInicioFusionRoadmapHtml() {
       <li><strong>Historial / exportación:</strong> trazabilidad por <code>installationId</code> en mediciones (ya guardado) y, más adelante, PDF o CSV que respete la instalación activa.</li>
       <li><strong>Clima ↔ Riego:</strong> documentar en ayuda los criterios de «misma rejilla» y pruebas automáticas cuando cambie la ciudad entre instalaciones.</li>
     </ul>
-    <p class="form-hint">Para desarrollo, la lista ordenada de fases vive en <code>js/hcEmbed.js</code> (<code>HC_NATIVE_PORT_PHASES</code>).</p>
+    <p class="form-hint">Para desarrollo, la lista ordenada de fases vive en <code>js/hcEmbed.js</code> (<code>EMBED_NATIVE_PORT_PHASES</code>).</p>
   </section>`;
 }
 
@@ -640,7 +640,7 @@ function renderInicio() {
     <section class="dash-hero">
       <div class="dash-hero-bg"></div>
       <div class="dash-hero-inner">
-        <p class="dash-eyebrow">Cannabis · Hidrocultivo</p>
+        <p class="dash-eyebrow">Cannabis · hidroponía</p>
         <h1 class="dash-headline">Hydro Cannabis</h1>
         <p class="dash-tagline">Guía para cultivar en hidroponía en casa: tú indicas tipo de cultivo hidropónico, variedad, nutriente y si está dentro o fuera; la app orienta recargas, valores razonables y qué vigilar según tus medidores, con el tiempo local cuando cultivas fuera. Puedes registrar cada medida y corrección sin liarte con tecnicismos.</p>
       </div>

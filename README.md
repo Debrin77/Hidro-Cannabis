@@ -1,6 +1,6 @@
 # Hydro Cannabis
 
-App web para planificar y monitorizar cultivos de **cannabis en hidrocultivo** (RDWC/DWC y referencias NFT), con checklist guiado, clima, nutrientes y registro diario.
+App web para planificar y monitorizar cultivos de **cannabis en hidroponía** (RDWC/DWC y referencias NFT), con checklist guiado, clima, nutrientes y registro diario.
 
 ## Estructura del proyecto
 
@@ -20,9 +20,9 @@ App web para planificar y monitorizar cultivos de **cannabis en hidrocultivo** (
 - `js/main.js`: inicialización de la app.
 - `assets/icons/`: iconos, favicon y logo splash.
 
-### Copia de HidroCultivo (`reference-hidrocultivo-web/`)
+### Carpeta `reference-hidrocultivo-web/`
 
-Mantén esta carpeta **alineada con el repositorio original de HidroCultivo**, sin parches propios. El módulo embebido se controla desde **Hydro Cannabis** (`js/hcEmbed.js`): el iframe carga HC con `?hydroEmbedTab=…` y la app padre invoca `goTab()` en el documento del iframe cuando el bundle HC ya está listo (requiere **mismo origen**, p. ej. servir la raíz del proyecto con `npx serve`).
+Código de referencia hidropónico general (torre, cultivos alimentarios, etc.) que Hydro Cannabis carga en iframe. Mantén esta carpeta **sincronizada con su repositorio de origen**, sin parches propios si quieres poder actualizarla en bloque. El shell la controla desde `js/hcEmbed.js`: el iframe usa `?hydroEmbedTab=…` y la app padre invoca `goTab()` en el documento del iframe cuando el bundle interno ya está listo (requiere **mismo origen**, p. ej. servir la raíz del proyecto con `npx serve`).
 
 ## Desarrollo local
 

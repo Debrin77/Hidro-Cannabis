@@ -717,7 +717,7 @@ function buildClimaHourlyVpdBlock(snap) {
     .join('');
   return `<div class="card clima-hourly-vpd-card">
     <div class="card-header"><div class="card-title"><i class="ti ti-droplet-half-2"></i>VPD horario (desde hoy, modelo)</div></div>
-    <p class="text-muted clima-hourly-vpd-hint">Magnus–Tetens (misma base que HidroCultivo). Cruza con <strong>Riego</strong> para demanda y pulsos orientativos.</p>
+    <p class="text-muted clima-hourly-vpd-hint">Magnus–Tetens (fórmula estándar). Cruza con <strong>Riego</strong> para demanda y pulsos orientativos.</p>
     <div class="clima-hourly-vpd-scroll">
       <table class="clima-hourly-vpd-table">
         <thead><tr><th>Hora</th><th>T (°C)</th><th>HR %</th><th>VPD kPa</th></tr></thead>

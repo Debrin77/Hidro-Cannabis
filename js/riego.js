@@ -1,6 +1,6 @@
 /**
- * Riego nativo: ET₀, VPD (núcleo HC), índice de demanda, pulsos ON/OFF orientativos.
- * Torre vertical, nocturno fino y NFT/DWC avanzado: «Riego completo (HC)».
+ * Riego nativo: ET₀, VPD, índice de demanda, pulsos ON/OFF orientativos.
+ * Torre vertical, nocturno fino y NFT/DWC avanzado: vista extendida en Integración.
  */
 
 function escRiego(s) {
@@ -429,14 +429,14 @@ function renderRiego() {
       ${
         Number.isFinite(snap.demandaRel)
           ? `<div class="card">
-        <div class="card-header"><div class="card-title"><i class="ti ti-activity"></i>Demanda y pulsos (modelo HC, adaptado)</div></div>
+        <div class="card-header"><div class="card-title"><i class="ti ti-activity"></i>Demanda y pulsos (modelo de referencia, adaptado)</div></div>
         <p class="body-prose body-prose--tight">Índice de demanda relativa <strong>${snap.demandaRel.toFixed(2)}</strong> (≈0,48–1,58) con VPD medio, viento horario medio, UV máx. del día, probabilidad de lluvia y ET₀. Kc operativo ≈<strong>${Number.isFinite(snap.riegoKc) ? snap.riegoKc.toFixed(2) : '—'}</strong> (ciclo cannabis ~${snap.riegoPctCiclo != null ? (snap.riegoPctCiclo * 100).toFixed(0) : '—'} % del total veg+flor, grupo «frutos»).</p>
         ${
           Number.isFinite(snap.pulseMinON) && Number.isFinite(snap.pulseMinOFF)
             ? `<p class="body-prose">Pulsos <strong>orientativos</strong> (sustrato tipo lana/roca hidro): bomba ~<strong>${snap.pulseMinON} min ON</strong> / ~<strong>${snap.pulseMinOFF} min OFF</strong> · ${snap.riegoPlants || 1} sitio(s). En <strong>RDWC</strong> suele mandar el depósito común; ajusta siempre con <strong>Medir</strong> y fabricante.</p>`
             : '<p class="text-muted">Sin minutos de pulso calculables.</p>'
         }
-        <p class="text-muted riego-disclaimer">No sustituye caudalímetro ni la app completa de torre; valida en <strong>Riego completo (HC)</strong> si usas goteo programado.</p>
+        <p class="text-muted riego-disclaimer">No sustituye caudalímetro ni la app completa de torre; valida en <strong>Riego extendido (integración)</strong> si usas goteo programado.</p>
       </div>`
           : ''
       }`;
@@ -457,12 +457,12 @@ function renderRiego() {
       <p class="body-prose">Emplazamiento: <strong>${escRiego(placement)}</strong> · Sistema: <strong>${escRiego(sys)}</strong>${
     resL != null ? ` · Depósito ~<strong>${resL} L</strong>` : ''
   }.</p>
-      <p class="body-prose body-prose--tight">Incluye <strong>ET₀</strong>, <strong>VPD</strong>, demanda tipo HC y <strong>pulsos ON/OFF</strong> orientativos. Tras guardar en <strong>Climatología</strong>, el cálculo se sincroniza solo en unos instantes. Torre vertical y compatibilidad avanzada siguen en <strong>Riego completo (HC)</strong>.</p>
+      <p class="body-prose body-prose--tight">Incluye <strong>ET₀</strong>, <strong>VPD</strong>, demanda relativa y <strong>pulsos ON/OFF</strong> orientativos. Tras guardar en <strong>Climatología</strong>, el cálculo se sincroniza solo en unos instantes. Torre vertical y compatibilidad avanzada siguen en <strong>Riego extendido (integración)</strong>.</p>
       <div class="riego-toolbar">
         <button type="button" class="btn btn-primary" onclick="refreshRiegoNativeData()" ${riegoUiLoading ? 'disabled' : ''}>
           <i class="ti ti-refresh"></i> Actualizar datos
         </button>
-        <button type="button" class="btn btn-ghost" onclick="navToHcEmbed('riego')"><i class="ti ti-external-link"></i> Riego completo (HC)</button>
+        <button type="button" class="btn btn-ghost" onclick="navToHcEmbed('riego')"><i class="ti ti-external-link"></i> Riego extendido (integración)</button>
         <button type="button" class="btn btn-ghost" onclick="navTo('monitor')"><i class="ti ti-gauge"></i> Medir</button>
       </div>
     </div>
