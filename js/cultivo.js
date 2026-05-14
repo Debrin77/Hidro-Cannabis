@@ -540,6 +540,7 @@ function buildDefaultWorkspaceForSystem(grow, systemName) {
     historyChecklist: Array.isArray(grow?.historyChecklist) ? [] : undefined,
     diaryEntries: Array.isArray(grow?.diaryEntries) ? [] : undefined,
     log: [{ date: new Date().toISOString(), text: `Espacio de trabajo creado para ${systemName}.`, type: 'info' }],
+    cultivationPaused: false,
   };
 }
 

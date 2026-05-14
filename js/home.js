@@ -149,6 +149,215 @@ function escapeHomeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function getInicioCourtesyGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Buenos días.';
+  if (h >= 12 && h < 21) return 'Buenas tardes.';
+  return 'Buenas noches.';
+}
+
+function formatInicioLongDate() {
+  return new Date().toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+/** Semana y fase alineadas con Cultivo; nutPhaseKey enlaza con `nutrients[].phases`. */
+function getGrowPhaseSummaryForInicio(grow) {
+  if (!grow || !grow.strain || !grow.startDate) {
+    return { weekNum: 1, phaseLabel: 'Sin ciclo', nutPhaseKey: 'veg' };
+  }
+  const s = grow.strain;
+  const sd = grow.startDate instanceof Date ? grow.startDate : new Date(grow.startDate);
+  const daysSince = Math.floor((Date.now() - sd.getTime()) / 86400000);
+  const weekNum = Math.max(1, Math.ceil((daysSince + 1) / 7));
+  let phaseLabel = '';
+  let nutPhaseKey = 'veg';
+  if (weekNum <= 1) {
+    phaseLabel = 'Germinación · semana 1';
+    nutPhaseKey = 'germ';
+  } else if (weekNum <= s.vegW) {
+    phaseLabel = `Vegetación · semana ${weekNum}`;
+    nutPhaseKey = 'veg';
+  } else if (weekNum <= s.vegW + 2) {
+    phaseLabel = `Prefloración · semana ${weekNum}`;
+    nutPhaseKey = 'flower';
+  } else if (weekNum <= s.vegW + s.flowerW - 2) {
+    phaseLabel = `Floración / fructificación · semana ${weekNum}`;
+    nutPhaseKey = 'flower';
+  } else if (weekNum <= s.vegW + s.flowerW) {
+    phaseLabel = `Engorde · semana ${weekNum}`;
+    nutPhaseKey = 'flower';
+  } else {
+    phaseLabel = `Flush / lavado · semana ${weekNum}`;
+    nutPhaseKey = 'flush';
+  }
+  return { weekNum, phaseLabel, nutPhaseKey };
+}
+
+function getNutrientPhaseDoseLine(n, nutPhaseKey) {
+  if (!n || !n.phases || typeof n.phases !== 'object') return '';
+  const k =
+    nutPhaseKey === 'germ' ? 'germ' : nutPhaseKey === 'veg' ? 'veg' : nutPhaseKey === 'flush' ? 'flush' : 'flower';
+  return n.phases[k] || n.phases.veg || '';
+}
+
+function inicioStrainNutriHint(strain, nutPhaseKey) {
+  if (!strain || !strain.nutriProfile) return '';
+  if (nutPhaseKey === 'veg' || nutPhaseKey === 'germ') return strain.nutriProfile.veg || '';
+  return strain.nutriProfile.flower || '';
+}
+
+function buildInicioHeroV2Html() {
+  return `<header class="inicio-hero-v2" role="banner">
+    <div class="inicio-hero-v2__bg" aria-hidden="true"></div>
+    <div class="inicio-hero-v2__inner">
+      <h1 class="inicio-hero-v2__title">${escapeHomeHtml('Hydro Cannabis')}</h1>
+      <p class="inicio-hero-v2__meta">
+        <span class="inicio-hero-v2__date">${escapeHomeHtml(formatInicioLongDate())}</span>
+        <span class="inicio-hero-v2__greet">${escapeHomeHtml(getInicioCourtesyGreeting())}</span>
+      </p>
+    </div>
+  </header>`;
+}
+
+function buildInicioInstallAndControlsHtml() {
+  if (!myGrow) {
+    return `<div class="inicio-install-card">
+      <p class="inicio-install-card__sub" style="margin:0">Aún no hay cultivo activo. Cada instalación hidropónica guarda su propio depósito, ubicación, clima y mediciones sin mezclarse con otras.</p>
+      <div class="inicio-install-card__row">
+        <button type="button" class="btn btn-primary btn--compact" onclick="navTo('cultivo')"><i class="ti ti-bucket"></i> Configurar cultivo</button>
+      </div>
+    </div>`;
+  }
+  const inst =
+    typeof findInstallationById === 'function' && myGrow.activeInstallationId
+      ? findInstallationById(myGrow.activeInstallationId)
+      : null;
+  const label =
+    typeof getResolvedSystemDisplayName === 'function'
+      ? getResolvedSystemDisplayName(myGrow, myGrow.system || 'DWC')
+      : String(inst?.name || '').trim() || inst?.type || myGrow.system || '—';
+  const typ = inst?.type || myGrow.system || '';
+  const loc = (myGrow.location || '').trim() || 'Sin ubicación indicada';
+  const place = myGrow.placement === 'exterior' ? 'Exterior' : 'Interior';
+  let multi = false;
+  try {
+    multi = typeof getAvailableWorkSystems === 'function' && getAvailableWorkSystems().length > 1;
+  } catch (_) {
+    multi = false;
+  }
+  const changeBtn = multi
+    ? `<button type="button" class="btn btn-ghost btn--compact" onclick="openSystemWorkspaceSelector()" title="Elegir otra instalación"><i class="ti ti-switch-horizontal"></i> Cambiar instalación</button>`
+    : '';
+  return `<div class="inicio-install-card">
+    <p class="inicio-install-card__label">Instalación activa</p>
+    <h2 class="inicio-install-card__name">${escapeHomeHtml(label)}</h2>
+    <p class="inicio-install-card__sub"><strong>${escapeHomeHtml(typ)}</strong> · ${escapeHomeHtml(place)} · ${escapeHomeHtml(loc)}</p>
+    <p class="form-hint" style="margin:0.5rem 0 0">Cada instalación mantiene sus datos de cultivo, sistema, localización y cálculos por separado. Usa <strong>Cambiar instalación</strong> cuando tengas más de una.</p>
+    <div class="inicio-install-card__row">
+      ${changeBtn}
+      <button type="button" class="btn btn-primary btn--compact" onclick="navTo('riego')" title="ET₀, demanda y pulsos"><i class="ti ti-calculator"></i> Cálculos</button>
+      <button type="button" class="btn btn-ghost btn--compact" onclick="navTo('cultivo')"><i class="ti ti-settings"></i> Cultivo</button>
+    </div>
+  </div>`;
+}
+
+function buildInicioCultivationToggleHtml() {
+  if (!myGrow) return '';
+  const paused = !!myGrow.cultivationPaused;
+  return `<div class="inicio-toggle-row" role="group" aria-labelledby="inicio-cult-toggle-label">
+    <div class="inicio-toggle-row__text">
+      <p id="inicio-cult-toggle-label" class="inicio-toggle-row__title">Cultivo en esta instalación</p>
+      <p class="inicio-toggle-row__hint">Desactívalo al limpiar el sistema o cuando no haya plantas; los datos no se borran.</p>
+    </div>
+    <button type="button" class="inicio-switch" role="switch" aria-checked="${paused ? 'true' : 'false'}" aria-label="Cultivo activo en esta instalación" onclick="toggleInicioCultivationPaused()"></button>
+  </div>
+  ${
+    paused
+      ? `<div class="inicio-pause-banner" role="status"><i class="ti ti-player-pause" aria-hidden="true"></i> Instalación en pausa: las rutinas diarias quedan en espera hasta que reactives.</div>`
+      : ''
+  }`;
+}
+
+function buildInicioMeteoMiniHtml() {
+  if (!myGrow) return '';
+  const paused = !!myGrow.cultivationPaused;
+  const cls = paused ? 'inicio-meteo-strip inicio-meteo-strip--muted' : 'inicio-meteo-strip';
+  const sw = myGrow.siteWeather;
+  if (sw?.daily?.time?.length) {
+    const d = sw.daily;
+    const tmax = d.temperature_2m_max?.[0];
+    const tmin = d.temperature_2m_min?.[0];
+    const rainMm = d.precipitation_sum?.[0];
+    const prob = d.precipitation_probability_mean?.[0];
+    const loc = escapeHomeHtml(sw.label || myGrow.location || 'Ubicación');
+    const bits = [];
+    if (Number.isFinite(tmin) && Number.isFinite(tmax)) bits.push(`${Math.round(tmin)}–${Math.round(tmax)} °C`);
+    if (Number.isFinite(prob)) bits.push(`lluvia ~${Math.round(prob)} %`);
+    if (Number.isFinite(rainMm) && rainMm > 0.05) bits.push(`~${rainMm.toFixed(1)} mm`);
+    const sub = escapeHomeHtml(bits.join(' · ') || '—');
+    const when = sw.updatedAt ? escapeHomeHtml(new Date(sw.updatedAt).toLocaleString('es-ES')) : '';
+    return `<section class="${cls}" aria-label="Resumen meteorológico">
+      <h3 class="inicio-meteo-strip__title">Clima · esta instalación</h3>
+      <p class="inicio-meteo-strip__line"><strong>${loc}</strong> — Hoy: ${sub}</p>
+      ${when ? `<p class="form-hint" style="margin:0.35rem 0 0">Actualizado ${when}</p>` : ''}
+      <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')">Detalle y pronóstico</button></div>
+    </section>`;
+  }
+  if (myGrow.climate?.summary) {
+    const loc = escapeHomeHtml(myGrow.location || 'Ubicación');
+    return `<section class="${cls}" aria-label="Clima simplificado">
+      <h3 class="inicio-meteo-strip__title">Clima · esta instalación</h3>
+      <p class="inicio-meteo-strip__line"><strong>${loc}</strong> — ${escapeHomeHtml(myGrow.climate.summary)} · ${escapeHomeHtml(String(myGrow.climate.temperature ?? '—'))} °C · HR ${escapeHomeHtml(String(myGrow.climate.humidity ?? '—'))} %</p>
+      <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('climatologia')">Abrir climatología</button></div>
+    </section>`;
+  }
+  return `<section class="${cls}" aria-label="Sin datos de clima">
+    <h3 class="inicio-meteo-strip__title">Clima · esta instalación</h3>
+    <p class="inicio-meteo-strip__line">Aún no hay pronóstico guardado para esta ubicación.</p>
+    <div class="inicio-meteo-strip__actions"><button type="button" class="btn btn-primary btn--compact" onclick="navTo('climatologia')">Configurar climatología</button></div>
+  </section>`;
+}
+
+function buildInicioNutrientBlockHtml() {
+  if (!myGrow || !myGrow.strain) return '';
+  const paused = !!myGrow.cultivationPaused;
+  const cls = paused ? 'inicio-nutri-card inicio-nutri-card--muted' : 'inicio-nutri-card';
+  const rank = Number.isFinite(myGrow.nutri) ? myGrow.nutri : 1;
+  const n = typeof nutrients !== 'undefined' ? nutrients.find((x) => x.rank === rank) || nutrients[0] : null;
+  if (!n) return '';
+  const phSum = getGrowPhaseSummaryForInicio(myGrow);
+  const doseLine = getNutrientPhaseDoseLine(n, phSum.nutPhaseKey);
+  const strainHint = inicioStrainNutriHint(myGrow.strain, phSum.nutPhaseKey);
+  const phaseHuman =
+    phSum.nutPhaseKey === 'veg' || phSum.nutPhaseKey === 'germ'
+      ? 'vegetativo / arranque'
+      : phSum.nutPhaseKey === 'flush'
+        ? 'lavado final'
+        : 'floración y fructificación';
+  return `<section class="${cls}" aria-labelledby="inicio-nutri-h">
+    <p id="inicio-nutri-h" class="inicio-nutri-card__label">Nutriente seleccionado</p>
+    <h2 class="inicio-nutri-card__name">${escapeHomeHtml(n.name)}</h2>
+    <p class="inicio-nutri-card__brand">${escapeHomeHtml(n.brand)}</p>
+    <p class="inicio-nutri-card__phase">Fase del calendario: <strong>${escapeHomeHtml(phSum.phaseLabel)}</strong>. En fase de <strong>${escapeHomeHtml(phaseHuman)}</strong> conviene priorizar la pauta de abono correspondiente (más énfasis en N en vegetación; más P-K en floración / fructificación).</p>
+    ${doseLine ? `<div class="inicio-nutri-card__rec"><strong>${escapeHomeHtml(n.name)}</strong> (${escapeHomeHtml(phaseHuman)}): ${escapeHomeHtml(doseLine)}</div>` : ''}
+    ${strainHint ? `<p class="form-hint" style="margin:0.5rem 0 0"><strong>Cepa:</strong> ${escapeHomeHtml(strainHint)}</p>` : ''}
+    <div style="margin-top:0.65rem"><button type="button" class="btn btn-ghost btn--compact" onclick="navTo('nutrientes')">Ver líneas y catálogo</button></div>
+  </section>`;
+}
+
+function toggleInicioCultivationPaused() {
+  if (!myGrow) return;
+  myGrow.cultivationPaused = !myGrow.cultivationPaused;
+  if (typeof syncCurrentSystemWorkspaceState === 'function') syncCurrentSystemWorkspaceState();
+  saveGrowState();
+  renderInicio();
+}
+
 function getGrowReadinessFlags(grow) {
   const checklistTotal = expertChecklistItems.length;
   if (!grow) {
@@ -513,37 +722,6 @@ function renderInicio() {
   const pct = total ? Math.round((done / total) * 100) : 0;
 
   const hasGrow = !!myGrow;
-  const skipWelcome = isSkipInitialWelcome();
-  const appDone = !!appConfig?.completed;
-
-  let statusLabel = 'Configura tu instalación';
-  let statusSublineHtml =
-    '<p class="dash-status-text">En <strong>Cultivo</strong> indicas el hidro (RDWC, DWC, NFT…), la variedad, el nutriente y si está dentro o fuera. Con eso las pantallas te guían con números y recordatorios acordes a tu equipo, sin obligarte a ser técnico.</p>';
-  if (hasGrow) {
-    const rank = Number.isFinite(myGrow.nutri) ? myGrow.nutri : 1;
-    const n =
-      typeof nutrients !== 'undefined'
-        ? nutrients.find((x) => x.rank === rank) || nutrients[0]
-        : null;
-    if (n) {
-      statusLabel = `Nutriente · ${n.name} — ${n.brand}`;
-      statusSublineHtml = '';
-    } else {
-      statusLabel = 'Cultivo activo';
-      statusSublineHtml =
-        '<p class="dash-status-text">' +
-        escapeHomeHtml('Sigue la semana en curso, registra en Medir y revisa Cultivo para el resumen.') +
-        '</p>';
-    }
-  } else if (appDone || skipWelcome) {
-    statusLabel = 'Listo para arrancar';
-    statusSublineHtml =
-      skipWelcome && !appDone
-        ? '<p class="dash-status-text">' +
-          escapeHomeHtml('Modo desarrollo activo. Entra en Cultivo para el asistente completo.') +
-          '</p>'
-        : '<p class="dash-status-text">Abre <strong>Cultivo</strong> o <strong>Variedades</strong> para empezar; los kits de tienda se configuran igual que un montaje casero: introduces lo que pone en la caja o la placa de la bomba.</p>';
-  }
 
   const checklistRows = expertChecklistItems
     .map(
@@ -558,10 +736,6 @@ function renderInicio() {
   `,
     )
     .join('');
-
-  const weatherLabel = myGrow?.climate
-    ? `<div class="alert info"><i class="ti ti-cloud"></i><p><strong>${escapeHomeHtml(myGrow.location || 'Ubicación')} (${escapeHomeHtml(myGrow.placement || 'interior')})</strong> · ${escapeHomeHtml(myGrow.climate.summary || 'Clima')} · ${escapeHomeHtml(myGrow.climate.temperature)}°C · HR ${escapeHomeHtml(myGrow.climate.humidity)}% · Viento ${escapeHomeHtml(myGrow.climate.wind)} km/h</p></div>`
-    : '';
 
   const weatherAlerts = (() => {
     try {
@@ -637,23 +811,29 @@ function renderInicio() {
 
   try {
     host.innerHTML = `
-    <section class="dash-hero">
-      <div class="dash-hero-bg"></div>
-      <div class="dash-hero-inner">
-        <p class="dash-eyebrow">Cannabis · hidroponía</p>
-        <h1 class="dash-headline">Hydro Cannabis</h1>
-        <p class="dash-tagline">Guía para cultivar en hidroponía en casa: tú indicas tipo de cultivo hidropónico, variedad, nutriente y si está dentro o fuera; la app orienta recargas, valores razonables y qué vigilar según tus medidores, con el tiempo local cuando cultivas fuera. Puedes registrar cada medida y corrección sin liarte con tecnicismos.</p>
-      </div>
-    </section>
+    ${buildInicioHeroV2Html()}
 
-    <section class="dash-status-card">
-      <div class="dash-status-icon"><i class="ti ti-plant"></i></div>
-      <div>
-        <div class="dash-status-label">${escapeHomeHtml(statusLabel)}</div>
-        ${statusSublineHtml}
-      </div>
-    </section>
+    ${buildInicioInstallAndControlsHtml()}
 
+    ${buildInicioCultivationToggleHtml()}
+
+    ${buildInicioMeteoMiniHtml()}
+
+    ${buildInicioNutrientBlockHtml()}
+
+    <details class="dash-check-section" id="dash-inicio-more-section">
+      <summary class="dash-check-summary">
+        <div class="dash-check-summary__grow">
+          <div class="dash-check-summary__topline">
+            <div>
+              <h2 class="dash-section-title">Progreso, checklist y más</h2>
+              <p class="dash-section-sub">Resumen de configuración, integración y buenas prácticas</p>
+            </div>
+            <i class="ti ti-chevron-down dash-check-chev" aria-hidden="true"></i>
+          </div>
+        </div>
+      </summary>
+      <div class="dash-check-section__body dash-check-section__body--loose">
     ${buildInicioAppProgressCardHtml()}
 
     ${inicioPriorityHtml}
@@ -679,11 +859,11 @@ function renderInicio() {
       </div>
     </section>
 
-    ${weatherLabel}
-    ${buildInicioForecastWidgetHtml()}
-
     ${weatherAlerts}
     ${growAlertsHtml}
+
+      </div>
+    </details>
 
     <details class="dash-check-section" id="dash-expert-check-section">
       <summary class="dash-check-summary">
@@ -733,3 +913,4 @@ window.goToMonitor = goToMonitor;
 window.goToSemanas = goToSemanas;
 window.goToHistorial = goToHistorial;
 window.renderConsejosPage = renderConsejosPage;
+window.toggleInicioCultivationPaused = toggleInicioCultivationPaused;
