@@ -770,8 +770,7 @@ function buildInicioCultivoSetupPct(gf) {
 
 function buildInicioAppProgressCardHtml() {
   if (!myGrow) {
-    return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
-      <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
+    return `<section class="dash-progress-card" aria-label="Configuración y port a pantallas nativas">
       <p class="dash-progress-lead">Activa un cultivo en <strong>Cultivo</strong> para ver el progreso de configuración, la migración a pantallas nativas y los avisos al guardar medidas o clima.</p>
       <div class="dash-progress-meter-wrap" aria-hidden="true">
         <div class="dash-progress-meter"><span style="width:0%"></span></div>
@@ -795,8 +794,7 @@ function buildInicioAppProgressCardHtml() {
         ? '<p class="dash-progress-hint dash-progress-hint--tier">Hidro <strong>avanzado</strong> (aeroponía): revisa boquillas y ciclos; la vista de integración aporta referencias técnicas amplias.</p>'
         : '';
 
-  return `<section class="dash-progress-card" aria-labelledby="dash-progress-title">
-    <h2 id="dash-progress-title" class="dash-progress-title"><i class="ti ti-progress"></i> Progreso en la app</h2>
+  return `<section class="dash-progress-card" aria-label="Configuración y port a pantallas nativas">
     <p class="dash-progress-lead">Resumen en este dispositivo: checklist operativo y avance del port a pantallas nativas (orden en <strong>Más → Integración</strong>).</p>
     <div class="dash-progress-rows">
       <div>
@@ -822,7 +820,7 @@ function buildInicioAppProgressCardHtml() {
     </div>
     ${hydroTierHint}
     <div class="dash-progress-actions">
-      <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-ready-card')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Listo para cultivar</button>
+      <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-ready-card')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Ver preparación</button>
       <button type="button" class="btn btn-ghost btn--tiny" onclick="document.getElementById('dash-expert-check-section')?.scrollIntoView({behavior:'smooth',block:'nearest'})">Ir a la lista</button>
     </div>
   </section>`;
@@ -856,20 +854,6 @@ function renderConsejosPage() {
     </div>
     ${renderStrainSpecsTableHtml()}
   `;
-}
-
-/** Recomendaciones de producto para seguir acercando módulos nativos sin depender del embebido en el día a día. */
-function buildInicioFusionRoadmapHtml() {
-  return `<section class="dash-fusion-roadmap" aria-labelledby="dash-fusion-roadmap-title">
-    <h2 id="dash-fusion-roadmap-title" class="dash-fusion-roadmap__title"><i class="ti ti-route" aria-hidden="true"></i> Siguiente oleada de fusión</h2>
-    <ul class="dash-fusion-roadmap__list">
-      <li><strong>Calendario:</strong> densificar hitos nativos (recarga, calibración, tareas por fase) y dejar la malla embebida solo para casos complejos o torre.</li>
-      <li><strong>Sistema (fase 4):</strong> checklist y dimensionado ya separados por instalación; siguiente paso es profundizar UI nativa solo para núcleo RDWC/DWC y enlazar lo demás como «extendido».</li>
-      <li><strong>Historial / exportación:</strong> trazabilidad por <code>installationId</code> en mediciones (ya guardado) y, más adelante, PDF o CSV que respete la instalación activa.</li>
-      <li><strong>Clima ↔ Riego:</strong> documentar en ayuda los criterios de «misma rejilla» y pruebas automáticas cuando cambie la ciudad entre instalaciones.</li>
-    </ul>
-    <p class="form-hint">Para desarrollo, la lista ordenada de fases vive en <code>js/hcEmbed.js</code> (<code>EMBED_NATIVE_PORT_PHASES</code>).</p>
-  </section>`;
 }
 
 function buildInicioFusionStatusHtml() {
@@ -1004,8 +988,7 @@ function buildInicioReadinessCardHtml() {
     row(medirOk, 'Medir', medirHint, 'monitor', 'Medir'),
   ].join('');
 
-  return `<section id="dash-ready-card" class="dash-ready-card" aria-labelledby="dash-ready-title">
-    <h2 id="dash-ready-title" class="dash-ready-title"><i class="ti ti-checklist"></i> Listo para cultivar</h2>
+  return `<section id="dash-ready-card" class="dash-ready-card" aria-label="Preparación del cultivo">
     <p class="dash-ready-lead">${escapeHomeHtml(`Lista inferior: ${done}/${total} · ${pct}%.`)}</p>
     <ul class="dash-ready-list">${rows}</ul>
   </section>`;
@@ -1097,8 +1080,7 @@ function renderInicio() {
       myGrow.placement === 'exterior'
         ? `<button type="button" class="btn btn-ghost" onclick="navTo('climatologia')"><i class="ti ti-cloud-storm" aria-hidden="true"></i> Climatología</button>`
         : '';
-    inicioPriorityHtml = `<section class="dash-priority-card" aria-labelledby="dash-priority-title">
-      <h2 id="dash-priority-title" class="dash-priority-card__title">Rutina recomendada</h2>
+    inicioPriorityHtml = `<section class="dash-priority-card" aria-label="Medir, calendario y clima">
       <p class="dash-priority-card__lead">${hint}</p>
       <div class="dash-priority-card__row">
         <button type="button" class="btn btn-primary" onclick="navTo('monitor')"><i class="ti ti-droplet-half-2" aria-hidden="true"></i> Medir</button>
@@ -1128,8 +1110,6 @@ function renderInicio() {
     ${inicioPriorityHtml}
 
     ${buildInicioReadinessCardHtml()}
-
-    ${buildInicioFusionRoadmapHtml()}
 
     ${buildInicioFusionStatusHtml()}
 
